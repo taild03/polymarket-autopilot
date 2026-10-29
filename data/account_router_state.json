@@ -6,21 +6,21 @@
   "accounts": {
     "account_1": {
       "slot_id": "account_1",
-      "label": "Google Argon #1 (Primary)",
+      "label": "Nick Google #1 (leductai21204@gmail.com)",
       "model_tier": "Gemini 4 Argon (High)",
       "configured": true,
       "status": "ACTIVE",
-      "calls_succeeded": 42,
+      "calls_succeeded": 62,
       "quota_hits": 2,
       "cooldown_until_iso": "",
-      "last_used_iso": "2026-10-29T07:14:27.399345+00:00"
+      "last_used_iso": "2026-10-29T08:30:27.513385+00:00"
     },
     "account_2": {
       "slot_id": "account_2",
-      "label": "Google Argon #2 (Backup Failover)",
+      "label": "Nick Google #2 (taoyeumaygianga@gmail.com)",
       "model_tier": "Gemini 4 Argon (High)",
-      "configured": false,
-      "status": "READY_TO_LINK",
+      "configured": true,
+      "status": "STANDBY",
       "calls_succeeded": 14,
       "quota_hits": 1,
       "cooldown_until_iso": "",

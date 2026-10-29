@@ -18,25 +18,25 @@ function translateLogReasoning(log: AiBrainLogItem): string {
   if (log.verdict === "TAKE_PROFIT") {
     const match = r.match(/mark=([0-9.]+)\s+vs\s+entry=([0-9.]+)/i);
     if (match) {
-      const markCents = ( parseFloat(match[1]) * 100 ).toFixed(1);
-      const entryCents = ( parseFloat(match[2]) * 100 ).toFixed(1);
-      return `Giá kèo đã tăng từ lúc mua ${entryCents} xu lên ${markCents} xu. Máy tự động bán thu hồi vốn gốc và đút túi +$${Math.abs(log.impact_usdc).toFixed(2)} tiền lãi vào két.`;
+      const markCents = (parseFloat(match[1]) * 100).toFixed(1);
+      const entryCents = (parseFloat(match[2]) * 100).toFixed(1);
+      return `Giá tăng từ lúc mua ${entryCents}¢ lên ${markCents}¢. Máy tự bán thu hồi vốn gốc và bỏ két +$${Math.abs(log.impact_usdc).toFixed(2)} tiền lãi thật.`;
     }
-    return `Giá đã tăng đạt mục tiêu. Máy tự động bán chốt lời và thu về +$${Math.abs(log.impact_usdc).toFixed(2)} tiền lãi thật.`;
+    return `Giá chạm mục tiêu chốt lời. Máy tự động bán thu về +$${Math.abs(log.impact_usdc).toFixed(2)} tiền lãi thật.`;
   }
 
   if (log.verdict === "VETO_TRAP") {
     if (r.toLowerCase().includes("liquidity")) {
-      return "Máy phát hiện kèo này có quá ít người mua bán (dưới mức an toàn $5,000). Đã chặn không mua để tránh bị kẹt vốn.";
+      return "Phát hiện thanh khoản quá mỏng (dưới $5,000). Đã chặn mua để không bị kẹt vốn.";
     }
     if (r.toLowerCase().includes("spread")) {
-      return "Chênh lệch giữa giá mua và giá bán trên sàn quá rộng. Máy tự động bỏ qua để không bị thiệt giá.";
+      return "Chênh lệch giá mua và bán quá rộng. Máy bỏ qua để không bị thiệt giá.";
     }
-    return "Điều kiện kèo không đạt chuẩn an toàn của hệ thống kiểm soát rủi ro nên máy đã từ chối xuống tiền.";
+    return "Kèo không đạt chuẩn an toàn nên máy đã từ chối xuống tiền.";
   }
 
   if (log.verdict === "STRONG_BUY") {
-    return `Kèo đạt chuẩn thanh khoản cao và luật phân xử rõ ràng. Máy đã tự động trích $${Math.abs(log.impact_usdc).toFixed(2)} từ két để mua vào.`;
+    return `Kèo đạt chuẩn thanh khoản lớn và luật chơi rõ ràng. Máy tự trích $${Math.abs(log.impact_usdc).toFixed(2)} từ két để vào lệnh.`;
   }
 
   return r;
@@ -46,140 +46,114 @@ function getVerdictStyle(verdict: string, impact: number) {
   switch (verdict) {
     case "TAKE_PROFIT":
       return {
-        label: "Chốt lời thu tiền về",
-        badgeClass: "bg-[#EDF3EC] text-[#346538]",
-        dotClass: "bg-[#346538]",
-        amountText: `+$${Math.abs(impact).toFixed(2)} lãi`,
-        amountClass: "text-[#346538] font-semibold",
+        label: "ĐÃ CHỐT LỜI VỀ KÉT",
+        cardBg: "bg-[#B8F397]",
+        badgeBg: "bg-[#111111] text-[#B8F397]",
+        amountText: `+$${Math.abs(impact).toFixed(2)} LÃI`,
       };
     case "STRONG_BUY":
       return {
-        label: "Mua vào kèo mới",
-        badgeClass: "bg-[#E1F3FE] text-[#1F6C9F]",
-        dotClass: "bg-[#1F6C9F]",
-        amountText: `Đặt $${Math.abs(impact).toFixed(2)}`,
-        amountClass: "text-[#111111] font-medium",
+        label: "MUA VÀO KÈO MỚI",
+        cardBg: "bg-[#D8E6FF]",
+        badgeBg: "bg-[#111111] text-white",
+        amountText: `ĐẶT $${Math.abs(impact).toFixed(2)}`,
       };
     case "VETO_TRAP":
       return {
-        label: "Né kèo bẫy rủi ro",
-        badgeClass: "bg-[#FDEBEC] text-[#9F2F2D]",
-        dotClass: "bg-[#9F2F2D]",
-        amountText: "Đã giữ tiền",
-        amountClass: "text-[#9F2F2D] font-medium",
+        label: "ĐÃ CHẶN KÈO BẪY",
+        cardBg: "bg-[#FFD6D6]",
+        badgeBg: "bg-[#FF3B30] text-white",
+        amountText: "GIỮ TIỀN",
       };
     default:
       return {
-        label: "Kiểm tra định kỳ",
-        badgeClass: "bg-[#F4F3EF] text-[#787774]",
-        dotClass: "bg-[#787774]",
-        amountText: "An toàn",
-        amountClass: "text-[#787774]",
+        label: "QUÉT ĐỊNH KỲ",
+        cardBg: "bg-[#FAF8F5]",
+        badgeBg: "bg-[#111111] text-white",
+        amountText: "AN TOÀN",
       };
   }
 }
 
 export function AiBrainFeed() {
   const { state } = useAutopilot();
-  const { data } = state;
-  const logs = (data.ai_brain_logs || []).slice(0, 10);
+  const { data, secondsToNextSync } = state;
+  const logs = (data.ai_brain_logs || []).slice(0, 8);
 
   return (
-    <div className="rounded-[8px] border border-[#EAEAEA] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+    <div className="rounded-[20px] border-2 border-[#111111] bg-white p-5 shadow-[6px_6px_0px_#111111] sm:p-7">
       {/* Header */}
-      <div className="border-b border-[#EAEAEA] p-5 sm:px-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-[#111111]">
-              Nhật ký máy vừa tự làm gì
-            </h2>
-            <p className="mt-0.5 text-[13px] text-[#787774]">
-              Mọi quyết định mua mới, chốt lời hay né bẫy đều được ghi lại rõ ràng
-            </p>
-          </div>
-          <span className="rounded-[4px] bg-[#EDF3EC] px-2 py-0.5 text-[11px] font-medium text-[#346538]">
-            Trực tiếp
+      <div className="border-b-2 border-[#111111] pb-4">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-display text-[22px] font-bold uppercase tracking-[-0.02em] text-[#111111] sm:text-[26px]">
+            NHẬT KÝ MÁY VỪA TỰ LÀM
+          </h2>
+          <span className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#111111] bg-[#111111] px-3 py-1 text-[12px] font-extrabold uppercase text-[#B8F397] tabular-nums">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#22C55E] live-beacon" />
+            <span>{secondsToNextSync}s</span>
           </span>
         </div>
-      </div>
-
-      {/* Plain-Vietnamese Daily Summary Box */}
-      <div className="border-b border-[#EAEAEA] bg-[#FAF9F6] px-5 py-3.5 sm:px-6">
-        <div className="text-[12px] font-medium text-[#111111]">
-          Tình trạng vận hành hiện tại
-        </div>
-        <p className="mt-1 text-[12.5px] leading-relaxed text-[#787774]">
-          Hệ thống đang duy trì chế độ bảo toàn vốn: giữ{" "}
-          <strong className="font-medium text-[#111111]">
-            ${data.metrics.cash_usdc.toFixed(2)}
-          </strong>{" "}
-          tiền mặt trong két, đồng thời tự động chốt lời ngay khi các kèo đang giữ tăng chạm đích.
+        <p className="mt-1 text-[15px] font-semibold text-[#52514E]">
+          Cập nhật liên tục từng giây mọi lệnh chốt lời, mua mới và né bẫy
         </p>
       </div>
 
-      {/* Vertical Timeline List */}
-      <div className="p-5 sm:px-6">
+      {/* Activity Cards Stream */}
+      <div className="mt-5 space-y-4">
         {logs.length === 0 ? (
-          <p className="py-6 text-center text-[13px] text-[#787774]">
+          <p className="py-6 text-center text-[16px] font-bold text-[#52514E]">
             Chưa có nhật ký hoạt động nào.
           </p>
         ) : (
-          <ol className="relative border-l border-[#EAEAEA] ml-2 space-y-5">
-            {logs.map((log: AiBrainLogItem) => {
-              const style = getVerdictStyle(log.verdict, log.impact_usdc);
-              const { accountTag, title } = cleanHeadline(log.headline);
-              const timeStr = (() => {
-                try {
-                  return new Date(log.timestamp).toLocaleTimeString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-                } catch {
-                  return "";
-                }
-              })();
+          logs.map((log: AiBrainLogItem) => {
+            const style = getVerdictStyle(log.verdict, log.impact_usdc);
+            const { title } = cleanHeadline(log.headline);
+            const timeStr = (() => {
+              try {
+                return new Date(log.timestamp).toLocaleTimeString("vi-VN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                });
+              } catch {
+                return "";
+              }
+            })();
 
-              return (
-                <li key={log.id} className="ml-4">
+            return (
+              <div
+                key={log.id}
+                className={`rounded-[14px] border-2 border-[#111111] p-4 shadow-[3px_3px_0px_#111111] ${style.cardBg}`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <span
-                    className={`absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full ring-4 ring-white ${style.dotClass}`}
-                  />
+                    className={`rounded-[6px] px-2.5 py-1 text-[12px] font-extrabold uppercase ${style.badgeBg}`}
+                  >
+                    {style.label}
+                  </span>
 
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`rounded-[4px] px-2 py-0.5 text-[11px] font-medium ${style.badgeClass}`}
-                      >
-                        {style.label}
+                  <div className="flex items-center gap-2 tabular-nums">
+                    <span className="rounded-[6px] border-2 border-[#111111] bg-white px-2.5 py-0.5 text-[15px] font-extrabold text-[#111111]">
+                      {style.amountText}
+                    </span>
+                    {timeStr && (
+                      <span className="font-mono text-[12px] font-bold text-[#111111]">
+                        {timeStr}
                       </span>
-                      {accountTag && (
-                        <span className="text-[11px] text-[#787774]">
-                          • {accountTag}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 text-[12px] tabular-nums">
-                      <span className={style.amountClass}>
-                        {style.amountText}
-                      </span>
-                      {timeStr && (
-                        <span className="text-[#787774]">{timeStr}</span>
-                      )}
-                    </div>
+                    )}
                   </div>
+                </div>
 
-                  <h3 className="mt-1.5 text-[13.5px] font-medium leading-snug text-[#111111]">
-                    {title}
-                  </h3>
+                <h3 className="mt-2.5 text-[17px] font-extrabold leading-snug text-[#111111]">
+                  {title}
+                </h3>
 
-                  <p className="mt-1 text-[12.5px] leading-relaxed text-[#787774]">
-                    {translateLogReasoning(log)}
-                  </p>
-                </li>
-              );
-            })}
-          </ol>
+                <p className="mt-1.5 text-[14.5px] font-semibold leading-relaxed text-[#111111]/85">
+                  {translateLogReasoning(log)}
+                </p>
+              </div>
+            );
+          })
         )}
       </div>
     </div>

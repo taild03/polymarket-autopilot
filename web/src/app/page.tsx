@@ -11,14 +11,10 @@ export const dynamic = "force-dynamic";
 
 function PortfolioSkeleton() {
   return (
-    <div className="min-h-screen bg-[#F7F6F3] p-6 sm:p-10">
-      <div className="mx-auto max-w-[1200px] space-y-6">
-        <div className="h-14 animate-pulse rounded-[8px] bg-[#EAE9E4]" />
-        <div className="h-64 animate-pulse rounded-[8px] bg-[#EAE9E4]" />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          <div className="h-96 animate-pulse rounded-[8px] bg-[#EAE9E4] lg:col-span-7" />
-          <div className="h-96 animate-pulse rounded-[8px] bg-[#EAE9E4] lg:col-span-5" />
-        </div>
+    <div className="min-h-screen bg-[#F4F0EA] p-6 sm:p-10">
+      <div className="mx-auto max-w-[1360px] space-y-6">
+        <div className="h-20 animate-pulse rounded-[16px] border-2 border-[#111111] bg-white" />
+        <div className="h-80 animate-pulse rounded-[20px] border-2 border-[#111111] bg-white" />
       </div>
     </div>
   );
@@ -29,15 +25,15 @@ async function AutopilotDashboardContent() {
 
   return (
     <AutopilotProvider initialData={initialData}>
-      <div className="min-h-screen bg-[#F7F6F3] text-[#111111]">
+      <div className="min-h-screen bg-[#F4F0EA] text-[#111111]">
         <HeaderBar />
 
-        <main className="mx-auto max-w-[1200px] space-y-6 px-4 py-6 sm:px-8 sm:py-8">
-          {/* 1. Robinhood-Style Hero Portfolio Value + Equity Curve + 3-Step Plain Guide */}
+        <main className="mx-auto max-w-[1360px] space-y-8 px-4 py-6 sm:px-8 sm:py-9">
+          {/* 1. Giant MetaMask-Style Hero Portfolio + 3 Color-Block Money Compartments */}
           <PortfolioKpiGrid />
 
-          {/* 2. Asymmetric 2-Column Editorial Split: 7 Cols Active Positions / 5 Cols Activity Log */}
-          <section className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+          {/* 2. Asymmetric 12-Col Split: 7 Cols Active Positions / 5 Cols Live Activity Stream */}
+          <section className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
             <div className="lg:col-span-7">
               <StrategyPositionsTable />
             </div>
@@ -46,17 +42,17 @@ async function AutopilotDashboardContent() {
             </div>
           </section>
 
-          {/* 3. Unobtrusive Bottom Settings: Dual Google Argon Failover & Server Source */}
+          {/* 3. Dual Google Argon Accounts & Server Source */}
           <ArgonAccountPanel />
         </main>
 
-        <footer className="mx-auto max-w-[1200px] border-t border-[#EAEAEA] px-4 py-6 text-[12px] text-[#787774] sm:px-8">
+        <footer className="mx-auto max-w-[1360px] border-t-2 border-[#111111] px-4 py-6 text-[14px] font-bold text-[#111111] sm:px-8">
           <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
             <span>
-              Sổ Đầu Tư Polymarket Tự Hành • Chế độ Paper Trading bảo toàn vốn ($1,000.00 USDC)
+              SỔ ĐẦU TƯ POLYMARKET TỰ HÀNH • CHẾ ĐỘ BẢO TOÀN VỐN ($1,000.00 VỐN GỐC)
             </span>
             <span>
-              Giới hạn an toàn: Tối đa 8% vốn mỗi kèo • Luôn giữ tiền mặt dự phòng trong két
+              TỰ ĐỘNG LÀM MỚI MỖI 5 GIÂY • GIỚI HẠN AN TOÀN TỐI ĐA 8% VỐN MỖI KÈO
             </span>
           </div>
         </footer>

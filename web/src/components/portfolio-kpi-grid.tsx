@@ -16,20 +16,18 @@ function formatUsd(val: number, showSign = false): string {
 
 export function PortfolioKpiGrid() {
   const { state } = useAutopilot();
-  const { data } = state;
+  const { data, liveClock, justUpdated } = state;
   const m = data.metrics;
-  const [showHowItWorks, setShowHowItWorks] = useState(true);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const isPositive = m.total_pnl_usdc >= 0;
 
-  // Build a smooth, deterministic 8-point equity curve from initial capital ($1,000) to current total_equity_usdc
   const chartPoints = React.useMemo(() => {
     const start = m.initial_capital_usdc || 1000;
     const end = m.total_equity_usdc || start;
     const diff = end - start;
     const totalCycles = Math.max(m.cycle_count, 1);
-    const ratios = [0, 0.11, 0.24, 0.39, 0.52, 0.68, 0.85, 1];
+    const ratios = [0, 0.12, 0.25, 0.4, 0.55, 0.7, 0.85, 1];
 
     return ratios.map((r, idx) => {
       const cycleNum =
@@ -40,7 +38,7 @@ export function PortfolioKpiGrid() {
             : Math.max(1, Math.round(totalCycles * r));
       const value = Number((start + diff * Math.pow(r, 0.92)).toFixed(2));
       return {
-        label: idx === 0 ? "Lúc bắt đầu" : `Vòng quét #${cycleNum}`,
+        label: idx === 0 ? "VỐN BAN ĐẦU" : `VÒNG QUÉT #${cycleNum}`,
         value,
         pnl: Number((value - start).toFixed(2)),
       };
@@ -52,14 +50,13 @@ export function PortfolioKpiGrid() {
       ? chartPoints[hoverIdx]
       : chartPoints[chartPoints.length - 1];
 
-  // Compute SVG coordinates (width 520, height 130)
   const svgGeometry = React.useMemo(() => {
-    const w = 520;
-    const h = 130;
-    const padX = 12;
-    const padY = 16;
+    const w = 540;
+    const h = 165;
+    const padX = 16;
+    const padY = 20;
     const values = chartPoints.map((p) => p.value);
-    const minV = Math.min(...values) * 0.995;
+    const minV = Math.min(...values) * 0.992;
     const maxV = Math.max(...values) * 1.005;
     const range = Math.max(maxV - minV, 1);
 
@@ -85,127 +82,124 @@ export function PortfolioKpiGrid() {
   const investedPct = 100 - cashPct;
 
   return (
-    <section className="space-y-4">
-      {/* Main Robinhood + Linear Editorial Portfolio Card */}
-      <div className="overflow-hidden rounded-[8px] border border-[#EAEAEA] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-        <div className="grid grid-cols-1 gap-8 p-6 sm:p-8 lg:grid-cols-12 lg:items-center">
-          {/* Left 6 cols: Big Balance & Plain Explanation */}
-          <div className="lg:col-span-6">
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] font-medium uppercase tracking-[0.04em] text-[#787774]">
-                Tổng tài sản hiện có
+    <section className="space-y-6">
+      {/* 1. OVERSIZED METAMASK-STYLE HERO CARD */}
+      <div
+        className={`overflow-hidden rounded-[20px] border-2 border-[#111111] bg-white shadow-[6px_6px_0px_#111111] transition-colors duration-300 ${
+          justUpdated ? "ring-4 ring-[#22C55E]" : ""
+        }`}
+      >
+        <div className="grid grid-cols-1 gap-8 p-6 sm:p-9 lg:grid-cols-12 lg:items-center">
+          {/* Left 7 cols: Giant Display Number */}
+          <div className="lg:col-span-7">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="rounded-[8px] border-2 border-[#111111] bg-[#111111] px-3 py-1 text-[13px] font-extrabold uppercase tracking-[0.05em] text-[#B8F397]">
+                TỔNG TÀI SẢN TRỰC TIẾP
               </span>
-              <span className="text-[12px] text-[#D4D4D0]">•</span>
-              <span className="text-[12px] text-[#787774]">
-                {activePoint.label}
+              <span className="rounded-[8px] border-2 border-[#111111] bg-[#F4F0EA] px-3 py-1 text-[13px] font-bold uppercase text-[#111111] tabular-nums">
+                {activePoint.label} • {liveClock}
               </span>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-baseline gap-3">
-              <h1 className="tabular-nums text-[40px] font-semibold leading-none tracking-[-0.03em] text-[#111111] sm:text-[48px]">
+            <div className="mt-4 flex flex-wrap items-baseline gap-4">
+              <div className="font-display tabular-nums text-[52px] font-bold leading-none tracking-[-0.04em] text-[#111111] sm:text-[72px] xl:text-[82px]">
                 {formatUsd(activePoint.value)}
-              </h1>
-              <span
-                className={`inline-flex items-center gap-1 rounded-[4px] px-2.5 py-1 text-[13px] font-medium tabular-nums ${
+              </div>
+
+              <div
+                className={`inline-flex items-center rounded-[12px] border-2 border-[#111111] px-4 py-2 text-[20px] font-extrabold tabular-nums shadow-[3px_3px_0px_#111111] sm:text-[24px] ${
                   isPositive
-                    ? "bg-[#EDF3EC] text-[#346538]"
-                    : "bg-[#FDEBEC] text-[#9F2F2D]"
+                    ? "bg-[#B8F397] text-[#111111]"
+                    : "bg-[#FFD6D6] text-[#9F1D1D]"
                 }`}
               >
                 {formatUsd(activePoint.pnl, true)} (
                 {m.return_pct >= 0 ? "+" : ""}
-                {m.return_pct.toFixed(2)}%)
-              </span>
+                {m.return_pct.toFixed(1)}%)
+              </div>
             </div>
 
-            <p className="mt-3 max-w-[52ch] text-[14px] leading-relaxed text-[#787774]">
-              Từ{" "}
-              <strong className="font-medium text-[#111111]">
+            <p className="mt-5 max-w-[54ch] text-[17px] font-semibold leading-snug text-[#3A3936] sm:text-[19px]">
+              Khởi đầu từ{" "}
+              <span className="underline decoration-2 underline-offset-4 text-[#111111] font-extrabold">
                 {formatUsd(m.initial_capital_usdc)}
-              </strong>{" "}
-              vốn gốc ban đầu, hệ thống đã tự chạy qua{" "}
-              <strong className="font-medium text-[#111111]">
-                {m.cycle_count} vòng quét
-              </strong>{" "}
-              và tạo ra{" "}
-              <strong className="font-medium text-[#346538]">
+              </span>{" "}
+              vốn gốc, máy đã tự quét{" "}
+              <span className="font-extrabold text-[#111111]">
+                {m.cycle_count} vòng
+              </span>{" "}
+              và đút túi thêm{" "}
+              <span className="rounded-[6px] bg-[#B8F397] px-2 py-0.5 font-extrabold text-[#111111] border border-[#111111]">
                 {formatUsd(m.total_pnl_usdc, true)}
-              </strong>{" "}
-              tiền lời ròng mà bạn không cần tự đặt lệnh.
+              </span>{" "}
+              tiền lời ròng.
             </p>
 
-            {/* Simple Capital Allocation Progress Bar */}
+            {/* Chunky Allocation Bar */}
             <div className="mt-6">
-              <div className="mb-1.5 flex items-center justify-between text-[12px]">
-                <span className="text-[#787774]">
-                  Tỷ lệ phân bổ tiền hiện tại
-                </span>
-                <span className="tabular-nums font-medium text-[#111111]">
-                  {cashPct}% Tiền mặt rảnh / {investedPct}% Đang đặt kèo
-                </span>
+              <div className="mb-2 flex items-center justify-between text-[14px] font-extrabold uppercase">
+                <span>ĐANG ĐẶT KÈO: {investedPct}%</span>
+                <span>TIỀN MẶT RẢNH TRONG KÉT: {cashPct}%</span>
               </div>
-              <div className="flex h-2 w-full overflow-hidden rounded-full bg-[#F4F3EF]">
+              <div className="flex h-5 w-full overflow-hidden rounded-[10px] border-2 border-[#111111] bg-[#F4F0EA]">
                 <div
-                  className="bg-[#346538] transition-all duration-300"
-                  style={{ width: `${Math.max(investedPct, 4)}%` }}
-                  title="Tiền đang làm việc trong các kèo cược"
+                  className="bg-[#FF5C16] border-r-2 border-[#111111] transition-all duration-300"
+                  style={{ width: `${Math.max(investedPct, 8)}%` }}
                 />
                 <div
-                  className="bg-[#D8D7D2] transition-all duration-300"
+                  className="bg-[#B8F397] transition-all duration-300"
                   style={{ width: `${cashPct}%` }}
-                  title="Tiền mặt rảnh trong két"
                 />
               </div>
             </div>
           </div>
 
-          {/* Right 6 cols: Interactive SVG Growth Curve */}
-          <div className="lg:col-span-6">
-            <div className="rounded-[6px] border border-[#EAEAEA] bg-[#FAF9F6] p-4">
-              <div className="mb-2 flex items-center justify-between text-[12px] text-[#787774]">
-                <span>Biểu đồ tăng trưởng tài sản (Di chuột để xem từng mốc)</span>
-                <span className="font-mono text-[11px] text-[#346538]">
-                  +$1,000.00 -&gt; {formatUsd(m.total_equity_usdc)}
+          {/* Right 5 cols: Bold Real-Time Equity Curve Block */}
+          <div className="lg:col-span-5">
+            <div className="rounded-[16px] border-2 border-[#111111] bg-[#111111] p-5 text-white shadow-[4px_4px_0px_#FF5C16]">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-[14px] font-extrabold uppercase tracking-[0.03em] text-[#B8F397]">
+                  ĐƯỜNG CONG TĂNG TRƯỞNG TÀI SẢN
+                </span>
+                <span className="rounded-[6px] bg-white/15 px-2.5 py-1 font-mono text-[13px] font-bold text-white tabular-nums">
+                  {formatUsd(m.initial_capital_usdc)} -&gt;{" "}
+                  {formatUsd(m.total_equity_usdc)}
                 </span>
               </div>
 
               <svg
                 viewBox={`0 0 ${svgGeometry.w} ${svgGeometry.h}`}
-                className="h-[130px] w-full overflow-visible"
+                className="h-[165px] w-full overflow-visible"
                 onMouseLeave={() => setHoverIdx(null)}
               >
                 <defs>
-                  <linearGradient id="equityFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#346538" stopOpacity="0.16" />
-                    <stop offset="100%" stopColor="#346538" stopOpacity="0.0" />
+                  <linearGradient id="mmFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#B8F397" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="#B8F397" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
 
-                {/* Subtle horizontal baseline */}
                 <line
-                  x1="12"
-                  y1={svgGeometry.h - 16}
-                  x2={svgGeometry.w - 12}
-                  y2={svgGeometry.h - 16}
-                  stroke="#E5E4DF"
-                  strokeDasharray="3 3"
-                  strokeWidth="1"
+                  x1="16"
+                  y1={svgGeometry.h - 20}
+                  x2={svgGeometry.w - 16}
+                  y2={svgGeometry.h - 20}
+                  stroke="#3F3F46"
+                  strokeDasharray="4 4"
+                  strokeWidth="1.5"
                 />
 
-                {/* Area under curve */}
-                <path d={svgGeometry.areaPath} fill="url(#equityFill)" />
+                <path d={svgGeometry.areaPath} fill="url(#mmFill)" />
 
-                {/* Main equity curve */}
                 <path
                   d={svgGeometry.linePath}
                   fill="none"
-                  stroke="#346538"
-                  strokeWidth="2.25"
+                  stroke="#B8F397"
+                  strokeWidth="4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
 
-                {/* Interactive nodes */}
                 {svgGeometry.coords.map((pt, idx) => {
                   const isActive =
                     hoverIdx === idx ||
@@ -223,150 +217,129 @@ export function PortfolioKpiGrid() {
                         height={svgGeometry.h}
                         fill="transparent"
                       />
-                      {isActive && (
-                        <line
-                          x1={pt.x}
-                          y1={10}
-                          x2={pt.x}
-                          y2={svgGeometry.h - 16}
-                          stroke="#346538"
-                          strokeOpacity="0.3"
-                          strokeWidth="1"
-                        />
-                      )}
                       <circle
                         cx={pt.x}
                         cy={pt.y}
-                        r={isActive ? 4.5 : 2.5}
-                        fill={isActive ? "#346538" : "#FFFFFF"}
-                        stroke="#346538"
-                        strokeWidth={isActive ? "2" : "1.5"}
+                        r={isActive ? 7 : 4}
+                        fill={isActive ? "#FF5C16" : "#111111"}
+                        stroke="#B8F397"
+                        strokeWidth="3"
                       />
                     </g>
                   );
                 })}
               </svg>
 
-              <div className="mt-1 flex items-center justify-between text-[11px] text-[#787774]">
-                <span>Vốn gốc: {formatUsd(m.initial_capital_usdc)}</span>
-                <span>Hiện tại (Vòng #{m.cycle_count}): {formatUsd(m.total_equity_usdc)}</span>
+              <div className="mt-2 flex items-center justify-between text-[13px] font-bold text-white/80 tabular-nums">
+                <span>LÚC ĐẦU: {formatUsd(m.initial_capital_usdc)}</span>
+                <span className="text-[#B8F397]">
+                  ĐỈNH HIỆN TẠI: {formatUsd(m.total_equity_usdc)}
+                </span>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Bottom 3-Column Hairline Breakdown: Plain Everyday Vietnamese */}
-        <div className="grid grid-cols-1 divide-y divide-[#EAEAEA] border-t border-[#EAEAEA] bg-[#FAF9F6] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-          {/* Bucket 1: Cash in safe */}
-          <div className="p-5 sm:px-6">
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] font-medium text-[#787774]">
-                1. Tiền mặt rảnh trong két
-              </span>
-              <span className="rounded-[4px] bg-[#EAE9E4] px-2 py-0.5 text-[11px] font-medium text-[#111111]">
-                An toàn tuyệt đối
-              </span>
-            </div>
-            <p className="mt-1.5 tabular-nums text-[22px] font-semibold tracking-[-0.02em] text-[#111111]">
-              {formatUsd(m.cash_usdc)}
-            </p>
-            <p className="mt-1 text-[12px] text-[#787774]">
-              Tiền mặt chưa đặt cược, sẵn sàng bắt kèo mới bất cứ lúc nào.
-            </p>
-          </div>
-
-          {/* Bucket 2: Money working in active bets */}
-          <div className="p-5 sm:px-6">
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] font-medium text-[#787774]">
-                2. Tiền đang đặt trong {m.open_positions_count} kèo
-              </span>
-              <span className="rounded-[4px] bg-[#EDF3EC] px-2 py-0.5 text-[11px] font-medium text-[#346538] tabular-nums">
-                Đang lời {formatUsd(m.unrealized_pnl_usdc, true)}
-              </span>
-            </div>
-            <p className="mt-1.5 tabular-nums text-[22px] font-semibold tracking-[-0.02em] text-[#111111]">
-              {formatUsd(m.open_market_value_usdc)}
-            </p>
-            <p className="mt-1 text-[12px] text-[#787774]">
-              Vốn gốc bỏ ra {formatUsd(m.current_exposure_usdc)}, đang chờ tới ngày chốt sổ.
-            </p>
-          </div>
-
-          {/* Bucket 3: Realized profit locked in */}
-          <div className="p-5 sm:px-6">
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] font-medium text-[#787774]">
-                3. Lãi đã chốt xong về két
-              </span>
-              <span className="rounded-[4px] bg-[#EDF3EC] px-2 py-0.5 text-[11px] font-medium text-[#346538]">
-                Đã bán {m.closed_positions_count} kèo
-              </span>
-            </div>
-            <p className="mt-1.5 tabular-nums text-[22px] font-semibold tracking-[-0.02em] text-[#346538]">
-              {formatUsd(m.realized_pnl_usdc, true)}
-            </p>
-            <p className="mt-1 text-[12px] text-[#787774]">
-              Tiền lời thật đã bán thu về và cộng thẳng vào tiền mặt ở mục 1.
-            </p>
           </div>
         </div>
       </div>
 
-      {/* Plain-Language Explainer Strip: "Máy đang làm gì cho bạn?" */}
-      <div className="rounded-[8px] border border-[#EAEAEA] bg-white px-5 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#111111] text-[11px] font-semibold text-white">
-              ?
+      {/* 2. THREE GIANT COLOR-BLOCK MONEY BUCKETS */}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        {/* Bucket 1: Cash in safe */}
+        <div className="rounded-[18px] border-2 border-[#111111] bg-white p-6 shadow-[5px_5px_0px_#111111]">
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-extrabold uppercase tracking-[0.03em] text-[#52514E]">
+              1. TIỀN MẶT TRONG KÉT
             </span>
-            <h2 className="text-[13px] font-semibold text-[#111111]">
-              Giải thích nhanh: Máy tự kiếm lời cho bạn theo 3 bước nào?
-            </h2>
+            <span className="rounded-[6px] border-2 border-[#111111] bg-[#F4F0EA] px-2.5 py-0.5 text-[12px] font-extrabold text-[#111111]">
+              AN TOÀN 100%
+            </span>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowHowItWorks((prev) => !prev)}
-            className="text-[12px] font-medium text-[#787774] hover:text-[#111111] cursor-pointer"
-          >
-            {showHowItWorks ? "Thu gọn" : "Xem giải thích"}
-          </button>
+          <div className="mt-3 font-display tabular-nums text-[38px] font-bold leading-none tracking-[-0.03em] text-[#111111] sm:text-[44px]">
+            {formatUsd(m.cash_usdc)}
+          </div>
+          <p className="mt-3 text-[15px] font-semibold leading-snug text-[#52514E]">
+            Tiền mặt đang nằm nghỉ trong két, chưa đặt cược, sẵn sàng bắt kèo mới.
+          </p>
         </div>
 
-        {showHowItWorks && (
-          <div className="mt-3.5 grid grid-cols-1 gap-4 border-t border-[#EAEAEA] pt-3.5 md:grid-cols-3">
-            <div className="rounded-[6px] bg-[#FAF9F6] p-3.5">
-              <div className="text-[12px] font-semibold text-[#111111]">
-                Bước 1. Săn kèo lệch giá hoặc đã rõ kết quả
-              </div>
-              <p className="mt-1 text-[12px] leading-relaxed text-[#787774]">
-                Máy không đoán mò đỏ đen. Nó chỉ mua khi tổng giá các cửa rẻ hơn{" "}
-                <strong className="text-[#111111]">$1.00</strong> (mua cả giỏ chắc chắn lời) hoặc khi sự kiện đã rõ kết quả{" "}
-                <strong className="text-[#111111]">95%+</strong> sắp kết thúc.
-              </p>
-            </div>
-
-            <div className="rounded-[6px] bg-[#FAF9F6] p-3.5">
-              <div className="text-[12px] font-semibold text-[#111111]">
-                Bước 2. AI đọc luật chơi để loại bỏ kèo bẫy
-              </div>
-              <p className="mt-1 text-[12px] leading-relaxed text-[#787774]">
-                Trước khi mua, AI kiểm tra kèo đó phải có trên{" "}
-                <strong className="text-[#111111]">$5,000</strong> thanh khoản và điều kiện phân xử rõ ràng. Các kèo câu chữ mập mờ sẽ bị chặn đứng ngay.
-              </p>
-            </div>
-
-            <div className="rounded-[6px] bg-[#FAF9F6] p-3.5">
-              <div className="text-[12px] font-semibold text-[#111111]">
-                Bước 3. Chia nhỏ tiền và tự động bán chốt lời
-              </div>
-              <p className="mt-1 text-[12px] leading-relaxed text-[#787774]">
-                Mỗi kèo chỉ dùng tối đa{" "}
-                <strong className="text-[#111111]">8% vốn</strong> để không bao giờ rủi ro lớn. Khi giá tăng đạt mục tiêu, máy tự bán thu tiền gốc lẫn lãi về két.
-              </p>
-            </div>
+        {/* Bucket 2: Money working in active bets */}
+        <div className="rounded-[18px] border-2 border-[#111111] bg-[#FFF0D9] p-6 shadow-[5px_5px_0px_#111111]">
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-extrabold uppercase tracking-[0.03em] text-[#111111]">
+              2. ĐANG ĐẶT {m.open_positions_count} KÈO
+            </span>
+            <span className="rounded-[6px] border-2 border-[#111111] bg-[#FF5C16] px-2.5 py-0.5 text-[12px] font-extrabold text-white tabular-nums">
+              LỜI TẠM {formatUsd(m.unrealized_pnl_usdc, true)}
+            </span>
           </div>
-        )}
+          <div className="mt-3 font-display tabular-nums text-[38px] font-bold leading-none tracking-[-0.03em] text-[#111111] sm:text-[44px]">
+            {formatUsd(m.open_market_value_usdc)}
+          </div>
+          <p className="mt-3 text-[15px] font-semibold leading-snug text-[#3A3936]">
+            Vốn gốc bỏ ra {formatUsd(m.current_exposure_usdc)}, đang chờ tăng đủ giá để bán.
+          </p>
+        </div>
+
+        {/* Bucket 3: Realized profit locked in */}
+        <div className="rounded-[18px] border-2 border-[#111111] bg-[#B8F397] p-6 shadow-[5px_5px_0px_#111111]">
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-extrabold uppercase tracking-[0.03em] text-[#111111]">
+              3. LÃI ĐÃ BỎ TÚI VỀ KÉT
+            </span>
+            <span className="rounded-[6px] border-2 border-[#111111] bg-[#111111] px-2.5 py-0.5 text-[12px] font-extrabold text-[#B8F397]">
+              ĐÃ CHỐT {m.closed_positions_count} KÈO
+            </span>
+          </div>
+          <div className="mt-3 font-display tabular-nums text-[38px] font-bold leading-none tracking-[-0.03em] text-[#111111] sm:text-[44px]">
+            {formatUsd(m.realized_pnl_usdc, true)}
+          </div>
+          <p className="mt-3 text-[15px] font-semibold leading-snug text-[#111111]">
+            Tiền lời thật đã bán xong và cộng thẳng vào tiền mặt ở mục số 1.
+          </p>
+        </div>
+      </div>
+
+      {/* 3. BOLD 3-STEP EXPLAINER STRIP */}
+      <div className="rounded-[18px] border-2 border-[#111111] bg-white p-6 shadow-[5px_5px_0px_#111111]">
+        <div className="text-[16px] font-extrabold uppercase tracking-[0.02em] text-[#111111] sm:text-[18px]">
+          CƠ CHẾ TỰ ĐỘNG KIẾM TIỀN TRONG 3 BƯỚC RÕ RÀNG:
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-[12px] border-2 border-[#111111] bg-[#F4F0EA] p-4">
+            <span className="inline-block rounded-[6px] bg-[#111111] px-2.5 py-0.5 text-[12px] font-extrabold text-[#B8F397]">
+              BƯỚC 01
+            </span>
+            <h3 className="mt-2 text-[17px] font-extrabold text-[#111111]">
+              Săn kèo lệch giá dưới $1.00
+            </h3>
+            <p className="mt-1 text-[14.5px] font-medium leading-relaxed text-[#3A3936]">
+              Chỉ mua khi tổng giá các cửa cộng lại rẻ hơn <strong>$1.00</strong> (ăn chắc chênh lệch) hoặc kèo đã rõ kết quả <strong>95%+</strong>.
+            </p>
+          </div>
+
+          <div className="rounded-[12px] border-2 border-[#111111] bg-[#F4F0EA] p-4">
+            <span className="inline-block rounded-[6px] bg-[#111111] px-2.5 py-0.5 text-[12px] font-extrabold text-[#FFD166]">
+              BƯỚC 02
+            </span>
+            <h3 className="mt-2 text-[17px] font-extrabold text-[#111111]">
+              AI lọc sạch kèo bẫy ít tiền
+            </h3>
+            <p className="mt-1 text-[14.5px] font-medium leading-relaxed text-[#3A3936]">
+              Kèo nào thanh khoản dưới <strong>$5,000</strong> hoặc luật chơi mập mờ sẽ bị AI chặn đứng ngay lập tức để bảo vệ vốn.
+            </p>
+          </div>
+
+          <div className="rounded-[12px] border-2 border-[#111111] bg-[#F4F0EA] p-4">
+            <span className="inline-block rounded-[6px] bg-[#111111] px-2.5 py-0.5 text-[12px] font-extrabold text-[#FF5C16]">
+              BƯỚC 03
+            </span>
+            <h3 className="mt-2 text-[17px] font-extrabold text-[#111111]">
+              Chia nhỏ vốn &amp; Tự bán chốt lời
+            </h3>
+            <p className="mt-1 text-[14.5px] font-medium leading-relaxed text-[#3A3936]">
+              Mỗi kèo chỉ đi tối đa <strong>8% vốn</strong>. Ngay khi giá tăng đạt đích, máy tự động bán thu cả gốc lẫn lãi về két.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );

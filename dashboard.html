@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Polymarket AI Autopilot — Zero-Touch Command Center</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-6 space-y-6">
+
+  <!-- Top Banner -->
+  <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+        <h1 class="text-xl font-bold text-[var(--foreground)]">Polymarket AI Autopilot — Zero-Touch Command Center</h1>
+        <span id="badge-cycle" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">AI DAEMON ACTIVE • CYCLE #3</span>
+      </div>
+      <p id="ai-executive-note" class="text-[var(--muted-foreground)] text-sm mt-1">
+        Hệ thống đang sinh lời tự động (+$5.46 USDC | Đã chốt lời: +$0.51, Đang mở: +$4.95). AI tự động vào lệnh, chốt lời và quay vòng vốn 24/7.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="text-right">
+        <div class="text-xs text-[var(--muted-foreground)]">Chế độ Vận hành Tự chủ</div>
+        <div class="text-sm font-semibold text-emerald-500">100% ZERO-TOUCH AI • Auto-Poll 5s</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Tổng Tài Sản (Total Equity)</div>
+      <div class="text-2xl font-bold mt-1" id="kpi-equity">$1,005.46 USDC</div>
+      <div class="text-xs text-emerald-500 font-medium mt-1" id="kpi-return">+$5.46 (+0.55%) Tổng Lãi</div>
+    </div>
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Lãi Đã Chốt / Tạm Tính</div>
+      <div class="text-2xl font-bold mt-1 text-emerald-500" id="kpi-pnl">+$0.51 / +$4.95</div>
+      <div class="text-xs text-[var(--muted-foreground)] mt-1">AI đã tự động chốt lời 2 vòng</div>
+    </div>
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Tiền Mặt / Đang Mở Lệnh</div>
+      <div class="text-2xl font-bold mt-1" id="kpi-cash-deploy">$770.51 / $230.00</div>
+      <div class="text-xs text-[var(--muted-foreground)] mt-1">Tỷ lệ dùng vốn 22.9% (Trần 50%)</div>
+    </div>
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Kiểm Toán Ngữ Nghĩa AI</div>
+      <div class="text-2xl font-bold mt-1 text-emerald-500">6 Duyệt / 1 Veto</div>
+      <div class="text-xs text-rose-400 font-medium mt-1">AI tự động chặn bẫy UMA Oracle</div>
+    </div>
+  </div>
+
+  <!-- Live AI Brain Feed (Nhật ký Tư duy & Quyết định Tự động của AI) -->
+  <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h2 class="text-lg font-semibold">Live AI Brain Feed — Nhật Ký Quyết Định Tự Động (<code class="font-mono text-sm">src/ai_analyst.py</code>)</h2>
+        <p class="text-xs text-[var(--muted-foreground)]">Mọi quyết định đọc luật phân xử, vào lệnh, phủ quyết bẫy (Veto) và tự động chốt lời (Take-Profit) đều do AI thực hiện</p>
+      </div>
+      <span class="px-2.5 py-1 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]">Engine: AutonomousAIAnalyst</span>
+    </div>
+
+    <div id="ai-feed-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Interactive Strategy Positions & Risk Filter Section -->
+  <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold">Danh Mục Vị Thế & Tín Hiệu Định Lượng</h2>
+        <p class="text-xs text-[var(--muted-foreground)]">Lọc theo chiến lược để xem chi tiết lý do vào lệnh hoặc lý do bị AI & Risk Manager từ chối</p>
+      </div>
+      <div class="flex flex-wrap gap-1.5" id="filter-buttons">
+        <button onclick="filterSignals('ALL')" data-filter="ALL" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">Tất cả (7)</button>
+        <button onclick="filterSignals('BUNDLE_ARB')" data-filter="BUNDLE_ARB" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]">Bundle Arbitrage (1)</button>
+        <button onclick="filterSignals('BOND_CARRY')" data-filter="BOND_CARRY" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]">Bond Carry (3)</button>
+        <button onclick="filterSignals('MAKER_SPREAD')" data-filter="MAKER_SPREAD" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]">Maker Spread (2)</button>
+        <button onclick="filterSignals('REJECTED')" data-filter="REJECTED" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] text-rose-400 border border-rose-500/30">Bẫy Đã Chặn (1)</button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)]">
+            <th class="py-2.5 pr-3">Thị trường & Phân tích Định lượng</th>
+            <th class="py-2.5 px-3">Chiến lược</th>
+            <th class="py-2.5 px-3">Hướng / Loại lệnh</th>
+            <th class="py-2.5 px-3">Giá Vào → Fair</th>
+            <th class="py-2.5 px-3">Vốn Phân Bổ</th>
+            <th class="py-2.5 px-3">APR Kỳ vọng</th>
+            <th class="py-2.5 pl-3 text-right">Phán quyết của AI</th>
+          </tr>
+        </thead>
+        <tbody id="signals-tbody" class="divide-y divide-[var(--border)]">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const AI_BRAIN_LOGS = [
+      {
+        type: "AI_AUTO_EXIT",
+        verdict: "TAKE_PROFIT",
+        headline: "Spot ETH ETF Weekly Net Flows",
+        reasoning: "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.610) đã hội tụ 100% về Fair Value ($0.610). Tự động chốt lời +$0.30 (+2.00%) để thu hồi vốn quay vòng.",
+        impact: "+$0.30 USDC"
+      },
+      {
+        type: "AI_AUTO_EXIT",
+        verdict: "TAKE_PROFIT",
+        headline: "NYC Central Park Daily High Temperature",
+        reasoning: "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.719) đã hội tụ 100% về Fair Value ($0.719). Tự động chốt lời +$0.21 (+1.40%) và tái đầu tư.",
+        impact: "+$0.21 USDC"
+      },
+      {
+        type: "AI_SIGNAL_AUDIT",
+        verdict: "STRONG_BUY",
+        headline: "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
+        reasoning: "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (83.0/100, nguồn FEDERAL RESERVE). Xác nhận lợi thế +330 bps (BUNDLE_ARB).",
+        impact: "Giải ngân $50.00"
+      },
+      {
+        type: "AI_SIGNAL_AUDIT",
+        verdict: "VETO_TRAP",
+        headline: "Will X account post a meme coin ticker before midnight?",
+        reasoning: "[AI VETO] Phát hiện rủi ro tranh chấp UMA Oracle (Clarity 5.0/100). Cảnh báo: Luật phân xử quá ngắn (<40 ký tự), thiếu nguồn dữ liệu chính thống, từ khóa mơ hồ 'meme'.",
+        impact: "CHẶN LỆNH ($0.00)"
+      }
+    ];
+
+    const SIGNALS_DATA = [
+      {
+        question: "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
+        rationale: "Tổng giá mua toàn bộ 3 cửa loại trừ nhau chỉ bằng $0.967 (< $1.00). Khóa lợi nhuận toán học +3.30% khi sự kiện phân xử sau 9.0 ngày.",
+        strategy: "BUNDLE_ARB",
+        side: "BUY_BUNDLE (LIMIT_IOC)",
+        entry: 0.967,
+        fair: 1.000,
+        size: 50.00,
+        apr: 138.4,
+        approved: true,
+        statusText: "AI STRONG_BUY ($50.00)",
+        checks: "Clarity 83/100 • 7/7 Gates OK"
+      },
+      {
+        question: "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
+        rationale: "Kèo xác suất cao (94.5%) đáo hạn ngắn (4.5 ngày). Lợi suất đáo hạn +5.82% (tương đương ~472% APR).",
+        strategy: "BOND_CARRY",
+        side: "BUY_YES (LIMIT_MAKER)",
+        entry: 0.945,
+        fair: 0.973,
+        size: 50.00,
+        apr: 472.1,
+        approved: true,
+        statusText: "AI STRONG_BUY ($50.00)",
+        checks: "Clarity 99/100 • Nguồn COINBASE"
+      },
+      {
+        question: "Will the US Federal Government remain open through November 5?",
+        rationale: "Kèo xác suất cao (95.8%) đáo hạn ngắn (7.0 ngày). Lợi suất đáo hạn +4.38% (tương đương ~229% APR).",
+        strategy: "BOND_CARRY",
+        side: "BUY_YES (LIMIT_MAKER)",
+        entry: 0.958,
+        fair: 0.986,
+        size: 50.00,
+        apr: 228.6,
+        approved: true,
+        statusText: "AI STRONG_BUY ($50.00)",
+        checks: "Clarity 99/100 • Nguồn OPM"
+      },
+      {
+        question: "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
+        rationale: "Kèo xác suất cao cửa NO (97.2%) đáo hạn ngắn (9.0 ngày). Lợi suất đáo hạn +2.88% (tương đương ~117% APR).",
+        strategy: "BOND_CARRY",
+        side: "BUY_NO (LIMIT_MAKER)",
+        entry: 0.972,
+        fair: 0.992,
+        size: 50.00,
+        apr: 116.8,
+        approved: true,
+        statusText: "AI STRONG_BUY ($50.00)",
+        checks: "Clarity 99/100 • Nguồn FOMC"
+      },
+      {
+        question: "Will NYC Central Park high temperature exceed 58°F tomorrow?",
+        rationale: "Sổ lệnh giãn Spread 2.8¢ trên thị trường thanh khoản $38,500. AI đã tự động chốt lời vòng 1 (+$0.21) và đặt lại lệnh Limit Maker vòng 2.",
+        strategy: "MAKER_SPREAD",
+        side: "BUY_YES (LIMIT_MAKER)",
+        entry: 0.709,
+        fair: 0.719,
+        size: 15.00,
+        apr: 257.4,
+        approved: true,
+        statusText: "AI AUTO-ROTATED ($15.00)",
+        checks: "Clarity 99/100 • Nguồn NWS"
+      },
+      {
+        question: "Will US Spot Ethereum ETFs record positive net inflows this week?",
+        rationale: "Sổ lệnh giãn Spread 3.2¢ trên thị trường thanh khoản $84,000. AI đã tự động chốt lời vòng 1 (+$0.30) và đặt lại lệnh Limit Maker vòng 2.",
+        strategy: "MAKER_SPREAD",
+        side: "BUY_YES (LIMIT_MAKER)",
+        entry: 0.598,
+        fair: 0.610,
+        size: 15.00,
+        apr: 122.1,
+        approved: true,
+        statusText: "AI AUTO-ROTATED ($15.00)",
+        checks: "Clarity 95/100 • Nguồn FARSIDE"
+      },
+      {
+        question: "Will X account post a meme coin ticker before midnight?",
+        rationale: "Trông có vẻ lãi cao (94.0% trong 2.5 ngày) nhưng bị AI phủ quyết (Clarity 5/100) do điều khoản mơ hồ và thanh khoản mỏng ($1,200).",
+        strategy: "BOND_CARRY",
+        side: "BUY_YES (VETOED)",
+        entry: 0.940,
+        fair: 0.968,
+        size: 0.00,
+        apr: 931.9,
+        approved: false,
+        statusText: "AI VETO + RISK BLOCKED",
+        checks: "Clarity 5/100 • LOW_LIQUIDITY"
+      }
+    ];
+
+    function renderAIFeed(logs) {
+      const container = document.getElementById('ai-feed-container');
+      container.innerHTML = logs.map(item => {
+        const isVeto = item.verdict === 'VETO_TRAP';
+        const isTP = item.verdict === 'TAKE_PROFIT';
+        const borderCls = isVeto ? 'border-rose-500/40 bg-rose-500/5' : (isTP ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-[var(--border)] bg-[var(--background)]');
+        const badgeCls = isVeto ? 'bg-rose-500/20 text-rose-400' : (isTP ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400');
+        return `
+          <div class="p-3.5 rounded-lg border ${borderCls} space-y-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="px-2 py-0.5 rounded font-semibold ${badgeCls}">${item.verdict}</span>
+              <span class="font-mono font-semibold">${item.impact}</span>
+            </div>
+            <div class="font-semibold text-[var(--foreground)]">${item.headline}</div>
+            <div class="text-[var(--muted-foreground)] leading-relaxed">${item.reasoning}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function badgeForStrategy(strat) {
+      if (strat === 'BUNDLE_ARB') return '<span class="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-400 font-semibold">BUNDLE_ARB</span>';
+      if (strat === 'BOND_CARRY') return '<span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-semibold">BOND_CARRY</span>';
+      return '<span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 font-semibold">MAKER_SPREAD</span>';
+    }
+
+    function filterSignals(mode) {
+      document.querySelectorAll('#filter-buttons button').forEach(btn => {
+        const active = btn.getAttribute('data-filter') === mode;
+        btn.className = active
+          ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]'
+          : 'px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]';
+      });
+
+      const tbody = document.getElementById('signals-tbody');
+      const filtered = SIGNALS_DATA.filter(item => {
+        if (mode === 'ALL') return true;
+        if (mode === 'REJECTED') return !item.approved;
+        return item.approved && item.strategy === mode;
+      });
+
+      tbody.innerHTML = filtered.map(item => `
+        <tr class="${item.approved ? '' : 'bg-rose-500/5'}">
+          <td class="py-3 pr-3">
+            <div class="font-semibold text-[var(--foreground)]">${item.question}</div>
+            <div class="text-[var(--muted-foreground)] mt-0.5">${item.rationale}</div>
+          </td>
+          <td class="py-3 px-3 whitespace-nowrap">${badgeForStrategy(item.strategy)}</td>
+          <td class="py-3 px-3 whitespace-nowrap font-mono">${item.side}</td>
+          <td class="py-3 px-3 whitespace-nowrap font-mono">$${item.entry.toFixed(3)} → $${item.fair.toFixed(3)}</td>
+          <td class="py-3 px-3 whitespace-nowrap font-semibold">${item.approved ? '$' + item.size.toFixed(2) : '$0.00'}</td>
+          <td class="py-3 px-3 whitespace-nowrap font-bold ${item.approved ? 'text-emerald-500' : 'text-[var(--muted-foreground)] line-through'}">${item.apr.toFixed(1)}%</td>
+          <td class="py-3 pl-3 text-right whitespace-nowrap">
+            <div class="font-semibold ${item.approved ? 'text-emerald-500' : 'text-rose-400'}">${item.statusText}</div>
+            <div class="text-[var(--muted-foreground)]">${item.checks}</div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function pollLiveState() {
+      try {
+        let res = await fetch('/api/state').catch(() => null);
+        if (!res || !res.ok) {
+          res = await fetch('./state.json').catch(() => null);
+        }
+        if (!res || !res.ok) return;
+        const state = await res.json();
+        const m = state.metrics;
+        if (m) {
+          document.getElementById('badge-cycle').textContent = 'AGY CLI AGENT ACTIVE • CYCLE #' + (m.cycle_count || 3);
+          document.getElementById('kpi-equity').textContent = '$' + m.total_equity_usdc.toFixed(2) + ' USDC';
+          document.getElementById('kpi-return').textContent = '+$' + m.total_pnl_usdc.toFixed(2) + ' (+' + m.return_pct.toFixed(2) + '%) Tổng Lãi';
+          document.getElementById('kpi-pnl').textContent = '+$' + m.realized_pnl_usdc.toFixed(2) + ' / +$' + m.unrealized_pnl_usdc.toFixed(2);
+          document.getElementById('kpi-cash-deploy').textContent = '$' + m.cash_usdc.toFixed(2) + ' / $' + m.current_exposure_usdc.toFixed(2);
+        }
+        if (state.ai_summary && state.ai_summary.executive_summary) {
+          document.getElementById('ai-executive-note').textContent = state.ai_summary.executive_summary;
+        }
+      } catch (e) {
+        // Static artifact view mode
+      }
+    }
+
+    renderAIFeed(AI_BRAIN_LOGS);
+    filterSignals('ALL');
+    setInterval(pollLiveState, 5000);
+  </script>
+</body>
+</html>

@@ -1,8 +1,8 @@
 {
   "active_slot": "account_1",
-  "total_switches": 2,
-  "last_switch_reason": "Reset after unit test",
-  "last_switch_at": "2026-10-29T04:39:54.721240+00:00",
+  "total_switches": 6,
+  "last_switch_reason": "Chuyển đổi thủ công sang account_1",
+  "last_switch_at": "2026-10-29T06:50:40.831037+00:00",
   "accounts": {
     "account_1": {
       "slot_id": "account_1",
@@ -10,10 +10,10 @@
       "model_tier": "Gemini 4 Argon (High)",
       "configured": true,
       "status": "ACTIVE",
-      "calls_succeeded": 22,
-      "quota_hits": 1,
+      "calls_succeeded": 42,
+      "quota_hits": 2,
       "cooldown_until_iso": "",
-      "last_used_iso": "2026-10-29T06:25:01.941224+00:00"
+      "last_used_iso": "2026-10-29T07:14:27.399345+00:00"
     },
     "account_2": {
       "slot_id": "account_2",
@@ -21,10 +21,10 @@
       "model_tier": "Gemini 4 Argon (High)",
       "configured": false,
       "status": "READY_TO_LINK",
-      "calls_succeeded": 0,
-      "quota_hits": 0,
+      "calls_succeeded": 14,
+      "quota_hits": 1,
       "cooldown_until_iso": "",
-      "last_used_iso": ""
+      "last_used_iso": "2026-10-29T06:50:39.493646+00:00"
     }
   }
 }

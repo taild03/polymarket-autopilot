@@ -1,12 +1,43 @@
 {
-  "generated_at": "2026-10-29T06:48:35.960714+00:00",
+  "generated_at": "2026-10-29T07:14:27.403171+00:00",
   "data_source": "SNAPSHOT_FALLBACK (URLError)",
   "ai_summary": {
-    "timestamp": "2026-10-29T06:48:35.960073+00:00",
-    "ai_mode": "QUANT_SEMANTIC_AI",
+    "timestamp": "2026-10-29T07:14:27.402444+00:00",
+    "ai_mode": "AGY_CLI_AGENT",
+    "agy_cli_path": "/Users/taileduc/.local/bin/agy",
     "regime": "OPTIMAL_COMPOUNDING",
-    "capital_utilization_pct": 21.8,
-    "executive_summary": "Hệ thống đang sinh lời tự động (+$601.34 USDC | Đã chốt: +$593.77, Đang mở: +$7.57). Tỷ lệ sử dụng vốn 21.8%. AI duy trì phân bổ ưu tiên BUNDLE_ARB & BOND_CARRY."
+    "capital_utilization_pct": 21.7,
+    "executive_summary": "[account_1 ACTIVE] Hệ thống đang sinh lời tự động (+$744.44 USDC | Đã chốt: +$739.25, Đang mở: +$5.19). Tự động Failover giữa 2 tài khoản Google Argon khi chạm Quota.",
+    "account_router": {
+      "active_slot": "account_1",
+      "total_switches": 6,
+      "last_switch_reason": "Chuyển đổi thủ công sang account_1",
+      "last_switch_at": "2026-10-29T06:50:40.831037+00:00",
+      "accounts": {
+        "account_1": {
+          "slot_id": "account_1",
+          "label": "Google Argon #1 (Primary)",
+          "model_tier": "Gemini 4 Argon (High)",
+          "configured": true,
+          "status": "ACTIVE",
+          "calls_succeeded": 42,
+          "quota_hits": 2,
+          "cooldown_until_iso": "",
+          "last_used_iso": "2026-10-29T07:14:27.399345+00:00"
+        },
+        "account_2": {
+          "slot_id": "account_2",
+          "label": "Google Argon #2 (Backup Failover)",
+          "model_tier": "Gemini 4 Argon (High)",
+          "configured": false,
+          "status": "READY_TO_LINK",
+          "calls_succeeded": 14,
+          "quota_hits": 1,
+          "cooldown_until_iso": "",
+          "last_used_iso": "2026-10-29T06:50:39.493646+00:00"
+        }
+      }
+    }
   },
   "config": {
     "initial_capital_usdc": 1000.0,
@@ -17,16 +48,16 @@
     "max_spread_taker": 0.045
   },
   "metrics": {
-    "cycle_count": 167,
+    "cycle_count": 198,
     "initial_capital_usdc": 1000.0,
-    "cash_usdc": 1245.13,
-    "current_exposure_usdc": 348.64,
-    "open_market_value_usdc": 356.21,
-    "unrealized_pnl_usdc": 7.57,
-    "realized_pnl_usdc": 593.77,
-    "total_pnl_usdc": 601.34,
-    "total_equity_usdc": 1601.34,
-    "return_pct": 60.13,
+    "cash_usdc": 1361.41,
+    "current_exposure_usdc": 377.84,
+    "open_market_value_usdc": 383.03,
+    "unrealized_pnl_usdc": 5.19,
+    "realized_pnl_usdc": 739.25,
+    "total_pnl_usdc": 744.44,
+    "total_equity_usdc": 1744.44,
+    "return_pct": 74.44,
     "open_positions_count": 6,
     "closed_positions_count": 0
   },
@@ -39,17 +70,17 @@
       "strategy": "BOND_CARRY",
       "side": "BUY_YES",
       "order_type": "LIMIT_MAKER",
-      "shares_qty": 84.3,
+      "shares_qty": 92.02,
       "entry_price": 0.945,
-      "mark_price": 0.9671,
+      "mark_price": 0.959,
       "fair_value": 0.973,
-      "cost_basis_usdc": 79.66,
-      "market_value_usdc": 81.53,
-      "unrealized_pnl_usdc": 1.87,
+      "cost_basis_usdc": 86.96,
+      "market_value_usdc": 88.25,
+      "unrealized_pnl_usdc": 1.29,
       "expected_apr_pct": 472.1,
       "days_to_expiry": 4.5,
       "rationale": "Kèo xác suất cao (94.5%) đáo hạn ngắn (4.5 ngày). Lợi suất đáo hạn +5.82% (tương đương ~472% APR).",
-      "opened_at": "2026-10-29T06:47:35.952241+00:00",
+      "opened_at": "2026-10-29T07:14:27.390246+00:00",
       "status": "OPEN"
     },
     {
@@ -70,7 +101,7 @@
       "expected_apr_pct": 257.4,
       "days_to_expiry": 2.0,
       "rationale": "Sổ lệnh giãn Spread 2.8¢ trên thị trường thanh khoản $38,500. Đặt lệnh Limit Maker tại $0.709 (Fair Mid $0.719), hưởng lợi thế +100 bps.",
-      "opened_at": "2026-10-29T06:48:35.959120+00:00",
+      "opened_at": "2026-10-29T07:14:27.399758+00:00",
       "status": "OPEN"
     },
     {
@@ -81,17 +112,17 @@
       "strategy": "BOND_CARRY",
       "side": "BUY_YES",
       "order_type": "LIMIT_MAKER",
-      "shares_qty": 83.15,
+      "shares_qty": 90.77,
       "entry_price": 0.958,
-      "mark_price": 0.9801,
+      "mark_price": 0.972,
       "fair_value": 0.986,
-      "cost_basis_usdc": 79.66,
-      "market_value_usdc": 81.5,
-      "unrealized_pnl_usdc": 1.84,
+      "cost_basis_usdc": 86.96,
+      "market_value_usdc": 88.23,
+      "unrealized_pnl_usdc": 1.27,
       "expected_apr_pct": 228.6,
       "days_to_expiry": 7.0,
       "rationale": "Kèo xác suất cao (95.8%) đáo hạn ngắn (7.0 ngày). Lợi suất đáo hạn +4.38% (tương đương ~229% APR).",
-      "opened_at": "2026-10-29T06:47:35.953054+00:00",
+      "opened_at": "2026-10-29T07:14:27.393516+00:00",
       "status": "OPEN"
     },
     {
@@ -102,17 +133,17 @@
       "strategy": "BUNDLE_ARB",
       "side": "BUY_BUNDLE",
       "order_type": "LIMIT_IOC",
-      "shares_qty": 82.38,
+      "shares_qty": 89.93,
       "entry_price": 0.967,
-      "mark_price": 0.9916,
+      "mark_price": 0.9802,
       "fair_value": 1.0,
-      "cost_basis_usdc": 79.66,
-      "market_value_usdc": 81.69,
-      "unrealized_pnl_usdc": 2.03,
+      "cost_basis_usdc": 86.96,
+      "market_value_usdc": 88.15,
+      "unrealized_pnl_usdc": 1.19,
       "expected_apr_pct": 138.4,
       "days_to_expiry": 9.0,
       "rationale": "Tổng giá mua toàn bộ 3 cửa loại trừ nhau chỉ bằng $0.967 (< $1.00). Khóa lợi nhuận toán học +3.30% khi sự kiện phân xử sau 9.0 ngày.",
-      "opened_at": "2026-10-29T06:47:35.949951+00:00",
+      "opened_at": "2026-10-29T07:14:27.383342+00:00",
       "status": "OPEN"
     },
     {
@@ -133,7 +164,7 @@
       "expected_apr_pct": 122.1,
       "days_to_expiry": 6.0,
       "rationale": "Sổ lệnh giãn Spread 3.2¢ trên thị trường thanh khoản $84,000. Đặt lệnh Limit Maker tại $0.598 (Fair Mid $0.610), hưởng lợi thế +120 bps.",
-      "opened_at": "2026-10-29T06:48:35.958397+00:00",
+      "opened_at": "2026-10-29T07:14:27.398456+00:00",
       "status": "OPEN"
     },
     {
@@ -144,17 +175,17 @@
       "strategy": "BOND_CARRY",
       "side": "BUY_NO",
       "order_type": "LIMIT_MAKER",
-      "shares_qty": 81.95,
+      "shares_qty": 89.47,
       "entry_price": 0.972,
-      "mark_price": 0.9878,
+      "mark_price": 0.982,
       "fair_value": 0.992,
-      "cost_basis_usdc": 79.66,
-      "market_value_usdc": 80.95,
-      "unrealized_pnl_usdc": 1.29,
+      "cost_basis_usdc": 86.96,
+      "market_value_usdc": 87.86,
+      "unrealized_pnl_usdc": 0.9,
       "expected_apr_pct": 116.8,
       "days_to_expiry": 9.0,
       "rationale": "Kèo xác suất cao (97.2%) đáo hạn ngắn (9.0 ngày). Lợi suất đáo hạn +2.88% (tương đương ~117% APR).",
-      "opened_at": "2026-10-29T06:47:35.953655+00:00",
+      "opened_at": "2026-10-29T07:14:27.396763+00:00",
       "status": "OPEN"
     }
   ],
@@ -307,13 +338,19 @@
       "market_id": "pm-fed-nov-hold",
       "question": "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
       "strategy": "BUNDLE_ARB",
-      "approved": false,
-      "recommended_size_usdc": 0.0,
-      "shares_qty": 0.0,
+      "approved": true,
+      "recommended_size_usdc": 86.96,
+      "shares_qty": 89.93,
       "entry_price": 0.967,
-      "reject_reason": "DUPLICATE_POSITION: Đã có vị thế đang mở trên thị trường này",
+      "reject_reason": "",
       "risk_checks_passed": [
-        "KILL_SWITCH_OK"
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR",
+        "EXPOSURE_BUDGET_OK",
+        "KELLY_SIZED_$86.96"
       ]
     },
     {
@@ -336,13 +373,19 @@
       "market_id": "pm-btc-above-55k-week",
       "question": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
       "strategy": "BOND_CARRY",
-      "approved": false,
-      "recommended_size_usdc": 0.0,
-      "shares_qty": 0.0,
+      "approved": true,
+      "recommended_size_usdc": 86.96,
+      "shares_qty": 92.02,
       "entry_price": 0.945,
-      "reject_reason": "DUPLICATE_POSITION: Đã có vị thế đang mở trên thị trường này",
+      "reject_reason": "",
       "risk_checks_passed": [
-        "KILL_SWITCH_OK"
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR",
+        "EXPOSURE_BUDGET_OK",
+        "KELLY_SIZED_$86.96"
       ]
     },
     {
@@ -350,13 +393,19 @@
       "market_id": "pm-us-gov-shutdown-week",
       "question": "Will the US Federal Government remain open through November 5?",
       "strategy": "BOND_CARRY",
-      "approved": false,
-      "recommended_size_usdc": 0.0,
-      "shares_qty": 0.0,
+      "approved": true,
+      "recommended_size_usdc": 86.96,
+      "shares_qty": 90.77,
       "entry_price": 0.958,
-      "reject_reason": "DUPLICATE_POSITION: Đã có vị thế đang mở trên thị trường này",
+      "reject_reason": "",
       "risk_checks_passed": [
-        "KILL_SWITCH_OK"
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR",
+        "EXPOSURE_BUDGET_OK",
+        "KELLY_SIZED_$86.96"
       ]
     },
     {
@@ -364,13 +413,19 @@
       "market_id": "pm-fed-nov-50bps",
       "question": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
       "strategy": "BOND_CARRY",
-      "approved": false,
-      "recommended_size_usdc": 0.0,
-      "shares_qty": 0.0,
+      "approved": true,
+      "recommended_size_usdc": 86.96,
+      "shares_qty": 89.47,
       "entry_price": 0.972,
-      "reject_reason": "DUPLICATE_POSITION: Đã có vị thế đang mở trên thị trường này",
+      "reject_reason": "",
       "risk_checks_passed": [
-        "KILL_SWITCH_OK"
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR",
+        "EXPOSURE_BUDGET_OK",
+        "KELLY_SIZED_$86.96"
       ]
     },
     {
@@ -416,8 +471,8 @@
   ],
   "audit_logs": [
     {
-      "id": 830,
-      "timestamp": "2026-10-29T06:48:35.959120+00:00",
+      "id": 987,
+      "timestamp": "2026-10-29T07:14:27.399758+00:00",
       "signal_id": "sig-maker-pm-nyc-temp-bracket",
       "market_id": "pm-nyc-temp-bracket",
       "question": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
@@ -429,8 +484,8 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
     },
     {
-      "id": 829,
-      "timestamp": "2026-10-29T06:48:35.958397+00:00",
+      "id": 986,
+      "timestamp": "2026-10-29T07:14:27.398456+00:00",
       "signal_id": "sig-maker-pm-eth-etf-inflows-pos",
       "market_id": "pm-eth-etf-inflows-pos",
       "question": "Will US Spot Ethereum ETFs record positive net inflows this week?",
@@ -442,86 +497,47 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
     },
     {
-      "id": 828,
-      "timestamp": "2026-10-29T06:48:35.956883+00:00",
-      "signal_id": "sig-bond-pm-illiquid-meme-trap",
-      "market_id": "pm-illiquid-meme-trap",
-      "question": "Will X account post a meme coin ticker before midnight?",
-      "strategy": "BOND_CARRY",
-      "approved": 0,
-      "size_usdc": 0.0,
-      "entry_price": 0.94,
-      "reason": "LOW_LIQUIDITY: Thanh khoản $1,200 < mức tối thiểu $5,000",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\"]"
-    },
-    {
-      "id": 827,
-      "timestamp": "2026-10-29T06:47:35.954969+00:00",
-      "signal_id": "sig-maker-pm-nyc-temp-bracket",
-      "market_id": "pm-nyc-temp-bracket",
-      "question": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
-      "strategy": "MAKER_SPREAD",
-      "approved": 1,
-      "size_usdc": 15.0,
-      "entry_price": 0.709,
-      "reason": "APPROVED_AND_FILLED",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
-    },
-    {
-      "id": 826,
-      "timestamp": "2026-10-29T06:47:35.954246+00:00",
-      "signal_id": "sig-maker-pm-eth-etf-inflows-pos",
-      "market_id": "pm-eth-etf-inflows-pos",
-      "question": "Will US Spot Ethereum ETFs record positive net inflows this week?",
-      "strategy": "MAKER_SPREAD",
-      "approved": 1,
-      "size_usdc": 15.0,
-      "entry_price": 0.598,
-      "reason": "APPROVED_AND_FILLED",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
-    },
-    {
-      "id": 825,
-      "timestamp": "2026-10-29T06:47:35.953655+00:00",
+      "id": 985,
+      "timestamp": "2026-10-29T07:14:27.396763+00:00",
       "signal_id": "sig-bond-pm-fed-nov-50bps",
       "market_id": "pm-fed-nov-50bps",
       "question": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
       "strategy": "BOND_CARRY",
       "approved": 1,
-      "size_usdc": 79.66,
+      "size_usdc": 86.96,
       "entry_price": 0.972,
       "reason": "APPROVED_AND_FILLED",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$79.66\"]"
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.96\"]"
     },
     {
-      "id": 824,
-      "timestamp": "2026-10-29T06:47:35.953054+00:00",
+      "id": 984,
+      "timestamp": "2026-10-29T07:14:27.393516+00:00",
       "signal_id": "sig-bond-pm-us-gov-shutdown-week",
       "market_id": "pm-us-gov-shutdown-week",
       "question": "Will the US Federal Government remain open through November 5?",
       "strategy": "BOND_CARRY",
       "approved": 1,
-      "size_usdc": 79.66,
+      "size_usdc": 86.96,
       "entry_price": 0.958,
       "reason": "APPROVED_AND_FILLED",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$79.66\"]"
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.96\"]"
     },
     {
-      "id": 823,
-      "timestamp": "2026-10-29T06:47:35.952241+00:00",
+      "id": 983,
+      "timestamp": "2026-10-29T07:14:27.390246+00:00",
       "signal_id": "sig-bond-pm-btc-above-55k-week",
       "market_id": "pm-btc-above-55k-week",
       "question": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
       "strategy": "BOND_CARRY",
       "approved": 1,
-      "size_usdc": 79.66,
+      "size_usdc": 86.96,
       "entry_price": 0.945,
       "reason": "APPROVED_AND_FILLED",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$79.66\"]"
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.96\"]"
     },
     {
-      "id": 822,
-      "timestamp": "2026-10-29T06:47:35.951529+00:00",
+      "id": 982,
+      "timestamp": "2026-10-29T07:14:27.387239+00:00",
       "signal_id": "sig-bond-pm-illiquid-meme-trap",
       "market_id": "pm-illiquid-meme-trap",
       "question": "Will X account post a meme coin ticker before midnight?",
@@ -533,21 +549,21 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\"]"
     },
     {
-      "id": 821,
-      "timestamp": "2026-10-29T06:47:35.949951+00:00",
+      "id": 981,
+      "timestamp": "2026-10-29T07:14:27.383342+00:00",
       "signal_id": "sig-arb-evt-fed-rate-decision",
       "market_id": "pm-fed-nov-hold",
       "question": "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
       "strategy": "BUNDLE_ARB",
       "approved": 1,
-      "size_usdc": 79.66,
+      "size_usdc": 86.96,
       "entry_price": 0.967,
       "reason": "APPROVED_AND_FILLED",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$79.66\"]"
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.96\"]"
     },
     {
-      "id": 820,
-      "timestamp": "2026-10-29T06:46:35.924856+00:00",
+      "id": 980,
+      "timestamp": "2026-10-29T07:13:36.592244+00:00",
       "signal_id": "sig-maker-pm-nyc-temp-bracket",
       "market_id": "pm-nyc-temp-bracket",
       "question": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
@@ -559,8 +575,8 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
     },
     {
-      "id": 819,
-      "timestamp": "2026-10-29T06:46:35.923936+00:00",
+      "id": 979,
+      "timestamp": "2026-10-29T07:13:36.591449+00:00",
       "signal_id": "sig-maker-pm-eth-etf-inflows-pos",
       "market_id": "pm-eth-etf-inflows-pos",
       "question": "Will US Spot Ethereum ETFs record positive net inflows this week?",
@@ -572,8 +588,8 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
     },
     {
-      "id": 818,
-      "timestamp": "2026-10-29T06:46:35.922651+00:00",
+      "id": 978,
+      "timestamp": "2026-10-29T07:13:36.589219+00:00",
       "signal_id": "sig-bond-pm-illiquid-meme-trap",
       "market_id": "pm-illiquid-meme-trap",
       "question": "Will X account post a meme coin ticker before midnight?",
@@ -585,8 +601,8 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\"]"
     },
     {
-      "id": 817,
-      "timestamp": "2026-10-29T06:45:35.905696+00:00",
+      "id": 977,
+      "timestamp": "2026-10-29T07:12:36.566012+00:00",
       "signal_id": "sig-maker-pm-nyc-temp-bracket",
       "market_id": "pm-nyc-temp-bracket",
       "question": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
@@ -598,8 +614,8 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
     },
     {
-      "id": 816,
-      "timestamp": "2026-10-29T06:45:35.905016+00:00",
+      "id": 976,
+      "timestamp": "2026-10-29T07:12:36.565331+00:00",
       "signal_id": "sig-maker-pm-eth-etf-inflows-pos",
       "market_id": "pm-eth-etf-inflows-pos",
       "question": "Will US Spot Ethereum ETFs record positive net inflows this week?",
@@ -611,47 +627,47 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
     },
     {
-      "id": 815,
-      "timestamp": "2026-10-29T06:45:35.904401+00:00",
+      "id": 975,
+      "timestamp": "2026-10-29T07:12:36.564194+00:00",
       "signal_id": "sig-bond-pm-fed-nov-50bps",
       "market_id": "pm-fed-nov-50bps",
       "question": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
       "strategy": "BOND_CARRY",
       "approved": 1,
-      "size_usdc": 79.23,
+      "size_usdc": 86.49,
       "entry_price": 0.972,
       "reason": "APPROVED_AND_FILLED",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$79.23\"]"
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.49\"]"
     },
     {
-      "id": 814,
-      "timestamp": "2026-10-29T06:45:35.903681+00:00",
+      "id": 974,
+      "timestamp": "2026-10-29T07:12:36.562902+00:00",
       "signal_id": "sig-bond-pm-us-gov-shutdown-week",
       "market_id": "pm-us-gov-shutdown-week",
       "question": "Will the US Federal Government remain open through November 5?",
       "strategy": "BOND_CARRY",
       "approved": 1,
-      "size_usdc": 79.23,
+      "size_usdc": 86.49,
       "entry_price": 0.958,
       "reason": "APPROVED_AND_FILLED",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$79.23\"]"
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.49\"]"
     },
     {
-      "id": 813,
-      "timestamp": "2026-10-29T06:45:35.902943+00:00",
+      "id": 973,
+      "timestamp": "2026-10-29T07:12:36.561456+00:00",
       "signal_id": "sig-bond-pm-btc-above-55k-week",
       "market_id": "pm-btc-above-55k-week",
       "question": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
       "strategy": "BOND_CARRY",
       "approved": 1,
-      "size_usdc": 79.23,
+      "size_usdc": 86.49,
       "entry_price": 0.945,
       "reason": "APPROVED_AND_FILLED",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$79.23\"]"
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.49\"]"
     },
     {
-      "id": 812,
-      "timestamp": "2026-10-29T06:45:35.901842+00:00",
+      "id": 972,
+      "timestamp": "2026-10-29T07:12:36.559975+00:00",
       "signal_id": "sig-bond-pm-illiquid-meme-trap",
       "market_id": "pm-illiquid-meme-trap",
       "question": "Will X account post a meme coin ticker before midnight?",
@@ -663,21 +679,21 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\"]"
     },
     {
-      "id": 811,
-      "timestamp": "2026-10-29T06:45:35.900354+00:00",
+      "id": 971,
+      "timestamp": "2026-10-29T07:12:36.558447+00:00",
       "signal_id": "sig-arb-evt-fed-rate-decision",
       "market_id": "pm-fed-nov-hold",
       "question": "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
       "strategy": "BUNDLE_ARB",
       "approved": 1,
-      "size_usdc": 79.23,
+      "size_usdc": 86.49,
       "entry_price": 0.967,
       "reason": "APPROVED_AND_FILLED",
-      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$79.23\"]"
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.49\"]"
     },
     {
-      "id": 810,
-      "timestamp": "2026-10-29T06:44:35.875575+00:00",
+      "id": 970,
+      "timestamp": "2026-10-29T07:11:36.538913+00:00",
       "signal_id": "sig-maker-pm-nyc-temp-bracket",
       "market_id": "pm-nyc-temp-bracket",
       "question": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
@@ -689,8 +705,8 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
     },
     {
-      "id": 809,
-      "timestamp": "2026-10-29T06:44:35.874204+00:00",
+      "id": 969,
+      "timestamp": "2026-10-29T07:11:36.537836+00:00",
       "signal_id": "sig-maker-pm-eth-etf-inflows-pos",
       "market_id": "pm-eth-etf-inflows-pos",
       "question": "Will US Spot Ethereum ETFs record positive net inflows this week?",
@@ -702,8 +718,8 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
     },
     {
-      "id": 808,
-      "timestamp": "2026-10-29T06:44:35.871135+00:00",
+      "id": 968,
+      "timestamp": "2026-10-29T07:11:36.535310+00:00",
       "signal_id": "sig-bond-pm-illiquid-meme-trap",
       "market_id": "pm-illiquid-meme-trap",
       "question": "Will X account post a meme coin ticker before midnight?",
@@ -715,8 +731,8 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\"]"
     },
     {
-      "id": 807,
-      "timestamp": "2026-10-29T06:43:35.850306+00:00",
+      "id": 967,
+      "timestamp": "2026-10-29T07:10:36.511610+00:00",
       "signal_id": "sig-maker-pm-nyc-temp-bracket",
       "market_id": "pm-nyc-temp-bracket",
       "question": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
@@ -728,8 +744,8 @@
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
     },
     {
-      "id": 806,
-      "timestamp": "2026-10-29T06:43:35.849679+00:00",
+      "id": 966,
+      "timestamp": "2026-10-29T07:10:36.511028+00:00",
       "signal_id": "sig-maker-pm-eth-etf-inflows-pos",
       "market_id": "pm-eth-etf-inflows-pos",
       "question": "Will US Spot Ethereum ETFs record positive net inflows this week?",
@@ -739,42 +755,131 @@
       "entry_price": 0.598,
       "reason": "APPROVED_AND_FILLED",
       "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$15.00\"]"
+    },
+    {
+      "id": 965,
+      "timestamp": "2026-10-29T07:10:36.510366+00:00",
+      "signal_id": "sig-bond-pm-fed-nov-50bps",
+      "market_id": "pm-fed-nov-50bps",
+      "question": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
+      "strategy": "BOND_CARRY",
+      "approved": 1,
+      "size_usdc": 86.02,
+      "entry_price": 0.972,
+      "reason": "APPROVED_AND_FILLED",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.02\"]"
+    },
+    {
+      "id": 964,
+      "timestamp": "2026-10-29T07:10:36.509574+00:00",
+      "signal_id": "sig-bond-pm-us-gov-shutdown-week",
+      "market_id": "pm-us-gov-shutdown-week",
+      "question": "Will the US Federal Government remain open through November 5?",
+      "strategy": "BOND_CARRY",
+      "approved": 1,
+      "size_usdc": 86.02,
+      "entry_price": 0.958,
+      "reason": "APPROVED_AND_FILLED",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.02\"]"
+    },
+    {
+      "id": 963,
+      "timestamp": "2026-10-29T07:10:36.508892+00:00",
+      "signal_id": "sig-bond-pm-btc-above-55k-week",
+      "market_id": "pm-btc-above-55k-week",
+      "question": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
+      "strategy": "BOND_CARRY",
+      "approved": 1,
+      "size_usdc": 86.02,
+      "entry_price": 0.945,
+      "reason": "APPROVED_AND_FILLED",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\", \"EXPOSURE_BUDGET_OK\", \"KELLY_SIZED_$86.02\"]"
     }
   ],
   "ai_brain_logs": [
     {
-      "id": 1488,
-      "timestamp": "2026-10-29T06:48:35.959120+00:00",
+      "id": 1771,
+      "timestamp": "2026-10-29T07:14:27.399758+00:00",
       "event_type": "AI_SIGNAL_AUDIT",
       "market_id": "pm-nyc-temp-bracket",
       "headline": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
-      "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn NATIONAL WEATHER SERVICE). Xác nhận lợi thế +100 bps (MAKER_SPREAD).",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn NATIONAL WEATHER SERVICE). Xác nhận lợi thế +100 bps (MAKER_SPREAD).",
       "verdict": "STRONG_BUY",
       "impact_usdc": 15.0
     },
     {
-      "id": 1487,
-      "timestamp": "2026-10-29T06:48:35.958397+00:00",
+      "id": 1770,
+      "timestamp": "2026-10-29T07:14:27.398456+00:00",
       "event_type": "AI_SIGNAL_AUDIT",
       "market_id": "pm-eth-etf-inflows-pos",
       "headline": "Will US Spot Ethereum ETFs record positive net inflows this week?",
-      "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (95.0/100, nguồn FARSIDE). Xác nhận lợi thế +120 bps (MAKER_SPREAD).",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (95.0/100, nguồn FARSIDE). Xác nhận lợi thế +120 bps (MAKER_SPREAD).",
       "verdict": "STRONG_BUY",
       "impact_usdc": 15.0
     },
     {
-      "id": 1486,
-      "timestamp": "2026-10-29T06:48:35.956883+00:00",
+      "id": 1769,
+      "timestamp": "2026-10-29T07:14:27.396763+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "pm-fed-nov-50bps",
+      "headline": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn FEDERAL RESERVE). Xác nhận lợi thế +200 bps (BOND_CARRY).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 86.96
+    },
+    {
+      "id": 1768,
+      "timestamp": "2026-10-29T07:14:27.393516+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "pm-us-gov-shutdown-week",
+      "headline": "Will the US Federal Government remain open through November 5?",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn OPM). Xác nhận lợi thế +280 bps (BOND_CARRY).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 86.96
+    },
+    {
+      "id": 1767,
+      "timestamp": "2026-10-29T07:14:27.390246+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "pm-btc-above-55k-week",
+      "headline": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn COINBASE). Xác nhận lợi thế +280 bps (BOND_CARRY).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 86.96
+    },
+    {
+      "id": 1766,
+      "timestamp": "2026-10-29T07:14:27.387239+00:00",
       "event_type": "AI_SIGNAL_AUDIT",
       "market_id": "pm-illiquid-meme-trap",
       "headline": "Will X account post a meme coin ticker before midnight?",
-      "reasoning": "[AI VETO] Phát hiện rủi ro tranh chấp UMA Oracle (Clarity 5.0/100). Cảnh báo: Luật phân xử quá ngắn (<40 ký tự), Thiếu nguồn dữ liệu đối chiếu chính thống (Oracle Source), Từ khóa rủi ro thao túng/mơ hồ: 'meme', Từ khóa rủi ro thao túng/mơ hồ: 'vague'.",
+      "reasoning": "[account_1 VETO] Phát hiện rủi ro tranh chấp UMA Oracle (Clarity 5.0/100). Cảnh báo: Luật phân xử quá ngắn (<40 ký tự), Thiếu nguồn dữ liệu đối chiếu chính thống (Oracle Source), Từ khóa rủi ro thao túng/mơ hồ: 'meme', Từ khóa rủi ro thao túng/mơ hồ: 'vague'.",
       "verdict": "VETO_TRAP",
       "impact_usdc": 0.0
     },
     {
-      "id": 1485,
-      "timestamp": "2026-10-29T06:48:35.955348+00:00",
+      "id": 1765,
+      "timestamp": "2026-10-29T07:14:27.383342+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "pm-fed-nov-hold",
+      "headline": "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (95.0/100, nguồn OFFICIAL). Xác nhận lợi thế +330 bps (BUNDLE_ARB).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 86.96
+    },
+    {
+      "id": 1764,
+      "timestamp": "2026-10-29T07:14:27.379302+00:00",
+      "event_type": "AI_AUTO_EXIT",
+      "market_id": "pm-fed-nov-50bps",
+      "headline": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
+      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.990) đã hội tụ 89% về Fair Value ($0.992). Tự động chốt lời +$1.58 (+1.83%) để thu hồi vốn quay vòng.",
+      "verdict": "TAKE_PROFIT",
+      "impact_usdc": 1.58
+    },
+    {
+      "id": 1763,
+      "timestamp": "2026-10-29T07:14:27.379302+00:00",
       "event_type": "AI_AUTO_EXIT",
       "market_id": "pm-eth-etf-inflows-pos",
       "headline": "Will US Spot Ethereum ETFs record positive net inflows this week?",
@@ -783,8 +888,28 @@
       "impact_usdc": 0.3
     },
     {
-      "id": 1484,
-      "timestamp": "2026-10-29T06:48:35.955348+00:00",
+      "id": 1762,
+      "timestamp": "2026-10-29T07:14:27.379302+00:00",
+      "event_type": "AI_AUTO_EXIT",
+      "market_id": "pm-fed-nov-hold",
+      "headline": "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
+      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.995) đã hội tụ 83% về Fair Value ($1.000). Tự động chốt lời +$2.46 (+2.84%) để thu hồi vốn quay vòng.",
+      "verdict": "TAKE_PROFIT",
+      "impact_usdc": 2.46
+    },
+    {
+      "id": 1761,
+      "timestamp": "2026-10-29T07:14:27.379302+00:00",
+      "event_type": "AI_AUTO_EXIT",
+      "market_id": "pm-us-gov-shutdown-week",
+      "headline": "Will the US Federal Government remain open through November 5?",
+      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.982) đã hội tụ 86% về Fair Value ($0.986). Tự động chốt lời +$2.18 (+2.52%) để thu hồi vốn quay vòng.",
+      "verdict": "TAKE_PROFIT",
+      "impact_usdc": 2.18
+    },
+    {
+      "id": 1760,
+      "timestamp": "2026-10-29T07:14:27.379302+00:00",
       "event_type": "AI_AUTO_EXIT",
       "market_id": "pm-nyc-temp-bracket",
       "headline": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
@@ -793,8 +918,18 @@
       "impact_usdc": 0.21
     },
     {
-      "id": 1483,
-      "timestamp": "2026-10-29T06:47:35.954969+00:00",
+      "id": 1759,
+      "timestamp": "2026-10-29T07:14:27.379302+00:00",
+      "event_type": "AI_AUTO_EXIT",
+      "market_id": "pm-btc-above-55k-week",
+      "headline": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
+      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.969) đã hội tụ 86% về Fair Value ($0.973). Tự động chốt lời +$2.21 (+2.56%) để thu hồi vốn quay vòng.",
+      "verdict": "TAKE_PROFIT",
+      "impact_usdc": 2.21
+    },
+    {
+      "id": 1758,
+      "timestamp": "2026-10-29T07:13:36.592244+00:00",
       "event_type": "AI_SIGNAL_AUDIT",
       "market_id": "pm-nyc-temp-bracket",
       "headline": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
@@ -803,8 +938,8 @@
       "impact_usdc": 15.0
     },
     {
-      "id": 1482,
-      "timestamp": "2026-10-29T06:47:35.954246+00:00",
+      "id": 1757,
+      "timestamp": "2026-10-29T07:13:36.591449+00:00",
       "event_type": "AI_SIGNAL_AUDIT",
       "market_id": "pm-eth-etf-inflows-pos",
       "headline": "Will US Spot Ethereum ETFs record positive net inflows this week?",
@@ -813,38 +948,88 @@
       "impact_usdc": 15.0
     },
     {
-      "id": 1481,
-      "timestamp": "2026-10-29T06:47:35.953655+00:00",
+      "id": 1756,
+      "timestamp": "2026-10-29T07:13:36.589219+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "pm-illiquid-meme-trap",
+      "headline": "Will X account post a meme coin ticker before midnight?",
+      "reasoning": "[AI VETO] Phát hiện rủi ro tranh chấp UMA Oracle (Clarity 5.0/100). Cảnh báo: Luật phân xử quá ngắn (<40 ký tự), Thiếu nguồn dữ liệu đối chiếu chính thống (Oracle Source), Từ khóa rủi ro thao túng/mơ hồ: 'meme', Từ khóa rủi ro thao túng/mơ hồ: 'vague'.",
+      "verdict": "VETO_TRAP",
+      "impact_usdc": 0.0
+    },
+    {
+      "id": 1755,
+      "timestamp": "2026-10-29T07:13:36.586396+00:00",
+      "event_type": "AI_AUTO_EXIT",
+      "market_id": "pm-eth-etf-inflows-pos",
+      "headline": "Will US Spot Ethereum ETFs record positive net inflows this week?",
+      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.610) đã hội tụ 100% về Fair Value ($0.610). Tự động chốt lời +$0.30 (+2.00%) để thu hồi vốn quay vòng.",
+      "verdict": "TAKE_PROFIT",
+      "impact_usdc": 0.3
+    },
+    {
+      "id": 1754,
+      "timestamp": "2026-10-29T07:13:36.586396+00:00",
+      "event_type": "AI_AUTO_EXIT",
+      "market_id": "pm-nyc-temp-bracket",
+      "headline": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
+      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.719) đã hội tụ 100% về Fair Value ($0.719). Tự động chốt lời +$0.21 (+1.40%) để thu hồi vốn quay vòng.",
+      "verdict": "TAKE_PROFIT",
+      "impact_usdc": 0.21
+    },
+    {
+      "id": 1753,
+      "timestamp": "2026-10-29T07:12:36.566012+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "pm-nyc-temp-bracket",
+      "headline": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
+      "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn NATIONAL WEATHER SERVICE). Xác nhận lợi thế +100 bps (MAKER_SPREAD).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 15.0
+    },
+    {
+      "id": 1752,
+      "timestamp": "2026-10-29T07:12:36.565331+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "pm-eth-etf-inflows-pos",
+      "headline": "Will US Spot Ethereum ETFs record positive net inflows this week?",
+      "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (95.0/100, nguồn FARSIDE). Xác nhận lợi thế +120 bps (MAKER_SPREAD).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 15.0
+    },
+    {
+      "id": 1751,
+      "timestamp": "2026-10-29T07:12:36.564194+00:00",
       "event_type": "AI_SIGNAL_AUDIT",
       "market_id": "pm-fed-nov-50bps",
       "headline": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
       "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn FEDERAL RESERVE). Xác nhận lợi thế +200 bps (BOND_CARRY).",
       "verdict": "STRONG_BUY",
-      "impact_usdc": 79.66
+      "impact_usdc": 86.49
     },
     {
-      "id": 1480,
-      "timestamp": "2026-10-29T06:47:35.953054+00:00",
+      "id": 1750,
+      "timestamp": "2026-10-29T07:12:36.562902+00:00",
       "event_type": "AI_SIGNAL_AUDIT",
       "market_id": "pm-us-gov-shutdown-week",
       "headline": "Will the US Federal Government remain open through November 5?",
       "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn OPM). Xác nhận lợi thế +280 bps (BOND_CARRY).",
       "verdict": "STRONG_BUY",
-      "impact_usdc": 79.66
+      "impact_usdc": 86.49
     },
     {
-      "id": 1479,
-      "timestamp": "2026-10-29T06:47:35.952241+00:00",
+      "id": 1749,
+      "timestamp": "2026-10-29T07:12:36.561456+00:00",
       "event_type": "AI_SIGNAL_AUDIT",
       "market_id": "pm-btc-above-55k-week",
       "headline": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
       "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn COINBASE). Xác nhận lợi thế +280 bps (BOND_CARRY).",
       "verdict": "STRONG_BUY",
-      "impact_usdc": 79.66
+      "impact_usdc": 86.49
     },
     {
-      "id": 1478,
-      "timestamp": "2026-10-29T06:47:35.951529+00:00",
+      "id": 1748,
+      "timestamp": "2026-10-29T07:12:36.559975+00:00",
       "event_type": "AI_SIGNAL_AUDIT",
       "market_id": "pm-illiquid-meme-trap",
       "headline": "Will X account post a meme coin ticker before midnight?",
@@ -853,144 +1038,14 @@
       "impact_usdc": 0.0
     },
     {
-      "id": 1477,
-      "timestamp": "2026-10-29T06:47:35.949951+00:00",
+      "id": 1747,
+      "timestamp": "2026-10-29T07:12:36.558447+00:00",
       "event_type": "AI_SIGNAL_AUDIT",
       "market_id": "pm-fed-nov-hold",
       "headline": "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
       "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (95.0/100, nguồn OFFICIAL). Xác nhận lợi thế +330 bps (BUNDLE_ARB).",
       "verdict": "STRONG_BUY",
-      "impact_usdc": 79.66
-    },
-    {
-      "id": 1476,
-      "timestamp": "2026-10-29T06:47:35.947026+00:00",
-      "event_type": "AI_AUTO_EXIT",
-      "market_id": "pm-fed-nov-50bps",
-      "headline": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
-      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.990) đã hội tụ 89% về Fair Value ($0.992). Tự động chốt lời +$1.45 (+1.83%) để thu hồi vốn quay vòng.",
-      "verdict": "TAKE_PROFIT",
-      "impact_usdc": 1.45
-    },
-    {
-      "id": 1475,
-      "timestamp": "2026-10-29T06:47:35.947026+00:00",
-      "event_type": "AI_AUTO_EXIT",
-      "market_id": "pm-eth-etf-inflows-pos",
-      "headline": "Will US Spot Ethereum ETFs record positive net inflows this week?",
-      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.610) đã hội tụ 100% về Fair Value ($0.610). Tự động chốt lời +$0.30 (+2.00%) để thu hồi vốn quay vòng.",
-      "verdict": "TAKE_PROFIT",
-      "impact_usdc": 0.3
-    },
-    {
-      "id": 1474,
-      "timestamp": "2026-10-29T06:47:35.947026+00:00",
-      "event_type": "AI_AUTO_EXIT",
-      "market_id": "pm-fed-nov-hold",
-      "headline": "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
-      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.995) đã hội tụ 83% về Fair Value ($1.000). Tự động chốt lời +$2.25 (+2.84%) để thu hồi vốn quay vòng.",
-      "verdict": "TAKE_PROFIT",
-      "impact_usdc": 2.25
-    },
-    {
-      "id": 1473,
-      "timestamp": "2026-10-29T06:47:35.947026+00:00",
-      "event_type": "AI_AUTO_EXIT",
-      "market_id": "pm-us-gov-shutdown-week",
-      "headline": "Will the US Federal Government remain open through November 5?",
-      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.982) đã hội tụ 86% về Fair Value ($0.986). Tự động chốt lời +$2.00 (+2.52%) để thu hồi vốn quay vòng.",
-      "verdict": "TAKE_PROFIT",
-      "impact_usdc": 2.0
-    },
-    {
-      "id": 1472,
-      "timestamp": "2026-10-29T06:47:35.947026+00:00",
-      "event_type": "AI_AUTO_EXIT",
-      "market_id": "pm-nyc-temp-bracket",
-      "headline": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
-      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.719) đã hội tụ 100% về Fair Value ($0.719). Tự động chốt lời +$0.21 (+1.40%) để thu hồi vốn quay vòng.",
-      "verdict": "TAKE_PROFIT",
-      "impact_usdc": 0.21
-    },
-    {
-      "id": 1471,
-      "timestamp": "2026-10-29T06:47:35.947026+00:00",
-      "event_type": "AI_AUTO_EXIT",
-      "market_id": "pm-btc-above-55k-week",
-      "headline": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
-      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.969) đã hội tụ 86% về Fair Value ($0.973). Tự động chốt lời +$2.03 (+2.56%) để thu hồi vốn quay vòng.",
-      "verdict": "TAKE_PROFIT",
-      "impact_usdc": 2.03
-    },
-    {
-      "id": 1470,
-      "timestamp": "2026-10-29T06:46:35.924856+00:00",
-      "event_type": "AI_SIGNAL_AUDIT",
-      "market_id": "pm-nyc-temp-bracket",
-      "headline": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
-      "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn NATIONAL WEATHER SERVICE). Xác nhận lợi thế +100 bps (MAKER_SPREAD).",
-      "verdict": "STRONG_BUY",
-      "impact_usdc": 15.0
-    },
-    {
-      "id": 1469,
-      "timestamp": "2026-10-29T06:46:35.923936+00:00",
-      "event_type": "AI_SIGNAL_AUDIT",
-      "market_id": "pm-eth-etf-inflows-pos",
-      "headline": "Will US Spot Ethereum ETFs record positive net inflows this week?",
-      "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (95.0/100, nguồn FARSIDE). Xác nhận lợi thế +120 bps (MAKER_SPREAD).",
-      "verdict": "STRONG_BUY",
-      "impact_usdc": 15.0
-    },
-    {
-      "id": 1468,
-      "timestamp": "2026-10-29T06:46:35.922651+00:00",
-      "event_type": "AI_SIGNAL_AUDIT",
-      "market_id": "pm-illiquid-meme-trap",
-      "headline": "Will X account post a meme coin ticker before midnight?",
-      "reasoning": "[AI VETO] Phát hiện rủi ro tranh chấp UMA Oracle (Clarity 5.0/100). Cảnh báo: Luật phân xử quá ngắn (<40 ký tự), Thiếu nguồn dữ liệu đối chiếu chính thống (Oracle Source), Từ khóa rủi ro thao túng/mơ hồ: 'meme', Từ khóa rủi ro thao túng/mơ hồ: 'vague'.",
-      "verdict": "VETO_TRAP",
-      "impact_usdc": 0.0
-    },
-    {
-      "id": 1467,
-      "timestamp": "2026-10-29T06:46:35.921238+00:00",
-      "event_type": "AI_AUTO_EXIT",
-      "market_id": "pm-eth-etf-inflows-pos",
-      "headline": "Will US Spot Ethereum ETFs record positive net inflows this week?",
-      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.610) đã hội tụ 100% về Fair Value ($0.610). Tự động chốt lời +$0.30 (+2.00%) để thu hồi vốn quay vòng.",
-      "verdict": "TAKE_PROFIT",
-      "impact_usdc": 0.3
-    },
-    {
-      "id": 1466,
-      "timestamp": "2026-10-29T06:46:35.921238+00:00",
-      "event_type": "AI_AUTO_EXIT",
-      "market_id": "pm-nyc-temp-bracket",
-      "headline": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
-      "reasoning": "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.719) đã hội tụ 100% về Fair Value ($0.719). Tự động chốt lời +$0.21 (+1.40%) để thu hồi vốn quay vòng.",
-      "verdict": "TAKE_PROFIT",
-      "impact_usdc": 0.21
-    },
-    {
-      "id": 1465,
-      "timestamp": "2026-10-29T06:45:35.905696+00:00",
-      "event_type": "AI_SIGNAL_AUDIT",
-      "market_id": "pm-nyc-temp-bracket",
-      "headline": "Will NYC Central Park high temperature exceed 58°F tomorrow?",
-      "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn NATIONAL WEATHER SERVICE). Xác nhận lợi thế +100 bps (MAKER_SPREAD).",
-      "verdict": "STRONG_BUY",
-      "impact_usdc": 15.0
-    },
-    {
-      "id": 1464,
-      "timestamp": "2026-10-29T06:45:35.905016+00:00",
-      "event_type": "AI_SIGNAL_AUDIT",
-      "market_id": "pm-eth-etf-inflows-pos",
-      "headline": "Will US Spot Ethereum ETFs record positive net inflows this week?",
-      "reasoning": "[AI STRONG_BUY] Luật phân xử định lượng rõ ràng (95.0/100, nguồn FARSIDE). Xác nhận lợi thế +120 bps (MAKER_SPREAD).",
-      "verdict": "STRONG_BUY",
-      "impact_usdc": 15.0
+      "impact_usdc": 86.49
     }
   ],
   "scanned_markets_count": 8,

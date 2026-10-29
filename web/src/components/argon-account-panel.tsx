@@ -1,121 +1,162 @@
 "use client";
 
-import React from "react";
-import { ShieldAlert, Sparkles, Zap } from "lucide-react";
-import { useAutopilot } from "@/components/autopilot-provider";
-import type { AccountSlotInfo } from "@/types/autopilot";
-
-function AccountSlotCard({
-  slot,
-  isActive,
-  onSelect,
-  disabled,
-}: {
-  slot: AccountSlotInfo;
-  isActive: boolean;
-  onSelect: () => void;
-  disabled: boolean;
-}) {
-  return (
-    <div
-      className={
-        isActive
-          ? "p-4 rounded-xl border border-emerald-500/40 bg-emerald-500/5 flex items-center justify-between gap-4"
-          : "p-4 rounded-xl border border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4"
-      }
-    >
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-sm text-slate-100">{slot.label}</span>
-          <span
-            className={
-              isActive
-                ? "px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-300"
-                : slot.status === "COOLDOWN"
-                  ? "px-2 py-0.5 rounded text-xs font-semibold bg-rose-500/20 text-rose-300"
-                  : "px-2 py-0.5 rounded text-xs font-semibold bg-slate-800 text-slate-400"
-            }
-          >
-            {isActive ? "ACTIVE" : slot.status}
-          </span>
-        </div>
-        <p className="text-xs text-slate-400">
-          Model: <span className="text-slate-300 font-medium">{slot.model_tier}</span> •{" "}
-          {slot.configured ? "OAuth Token Đã Lưu" : "Chưa lưu (manage_accounts.py save)"}
-        </p>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="text-right font-mono text-xs">
-          <div className="text-slate-200 font-semibold">Calls OK: {slot.calls_succeeded}</div>
-          <div className="text-slate-400">Quota Hits: {slot.quota_hits}</div>
-        </div>
-        {!isActive ? (
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={onSelect}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition disabled:opacity-50 cursor-pointer"
-          >
-            Kích hoạt
-          </button>
-        ) : null}
-      </div>
-    </div>
-  );
-}
+import React, { useState } from "react";
+import { useAutopilot } from "./autopilot-provider";
 
 export function ArgonAccountPanel() {
   const { state, actions, meta } = useAutopilot();
-  const router = state.data.ai_summary?.account_router;
+  const { data, customApiUrl } = state;
+  const [urlDraft, setUrlDraft] = useState(customApiUrl);
+  const [savedNotice, setSavedNotice] = useState(false);
 
-  if (!router) {
-    return null;
-  }
+  const router = data.ai_summary?.account_router;
+  const activeSlot = router?.active_slot ?? "account_1";
+  const acc1 = router?.accounts?.account_1;
+  const acc2 = router?.accounts?.account_2;
 
-  const slot1 = router.accounts.account_1;
-  const slot2 = router.accounts.account_2;
+  const handleSaveApi = (e: React.FormEvent) => {
+    e.preventDefault();
+    actions.setCustomApiUrl(urlDraft);
+    setSavedNotice(true);
+    setTimeout(() => setSavedNotice(false), 2500);
+  };
 
   return (
-    <section className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-400" />
-            <h2 className="text-base font-semibold text-slate-100">
-              Bộ Định Tuyến 2 Tài Khoản Google Argon (Dual-Account Quota Failover)
-            </h2>
-            <span className="text-xs font-mono text-slate-400">
-              Tổng lần tự động đảo nick: {router.total_switches}
-            </span>
+    <section className="rounded-[8px] border border-[#EAEAEA] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] sm:p-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Left 7 cols: Dual Google Argon Failover Accounts */}
+        <div className="lg:col-span-7">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-[15px] font-semibold text-[#111111]">
+                2 Tài khoản Google Argon (Tự động đổi nick khi hết lượt)
+              </h2>
+              <p className="mt-0.5 text-[12.5px] text-[#787774]">
+                Khi nick đang dùng chạm giới hạn Quota, máy tự động chuyển sang nick còn lại để không bị ngắt quãng
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={meta.isPending}
+              onClick={() => actions.switchArgonAccount("failover")}
+              className="rounded-[6px] border border-[#EAEAEA] bg-[#FAF9F6] px-3 py-1.5 text-[12px] font-medium text-[#111111] transition-colors hover:bg-[#F0EFEA] disabled:opacity-50 cursor-pointer"
+            >
+              Thử đổi nick dự phòng
+            </button>
           </div>
-          <p className="text-xs text-slate-400">{router.last_switch_reason}</p>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* Slot 1 */}
+            <div
+              className={`rounded-[6px] border p-3.5 transition-colors ${
+                activeSlot === "account_1"
+                  ? "border-[#111111] bg-[#FAF9F6]"
+                  : "border-[#EAEAEA] bg-white"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-semibold text-[#111111]">
+                  Nick Google #1 (Chính)
+                </span>
+                <span
+                  className={`rounded-[4px] px-2 py-0.5 text-[11px] font-medium ${
+                    activeSlot === "account_1"
+                      ? "bg-[#EDF3EC] text-[#346538]"
+                      : "bg-[#F4F3EF] text-[#787774]"
+                  }`}
+                >
+                  {activeSlot === "account_1" ? "Đang chạy" : "Đang chờ"}
+                </span>
+              </div>
+              <p className="mt-1 text-[12px] text-[#787774] tabular-nums">
+                Đã phân tích thành công: {acc1?.calls_succeeded ?? 0} lần • Hết lượt: {acc1?.quota_hits ?? 0} lần
+              </p>
+              {activeSlot !== "account_1" && (
+                <button
+                  type="button"
+                  disabled={meta.isPending}
+                  onClick={() => actions.switchArgonAccount("account_1")}
+                  className="mt-2.5 text-[12px] font-medium text-[#1F6C9F] hover:underline cursor-pointer"
+                >
+                  Chuyển sang dùng Nick #1
+                </button>
+              )}
+            </div>
+
+            {/* Slot 2 */}
+            <div
+              className={`rounded-[6px] border p-3.5 transition-colors ${
+                activeSlot === "account_2"
+                  ? "border-[#111111] bg-[#FAF9F6]"
+                  : "border-[#EAEAEA] bg-white"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-semibold text-[#111111]">
+                  Nick Google #2 (Dự phòng)
+                </span>
+                <span
+                  className={`rounded-[4px] px-2 py-0.5 text-[11px] font-medium ${
+                    activeSlot === "account_2"
+                      ? "bg-[#EDF3EC] text-[#346538]"
+                      : "bg-[#F4F3EF] text-[#787774]"
+                  }`}
+                >
+                  {activeSlot === "account_2" ? "Đang chạy" : "Sẵn sàng trực"}
+                </span>
+              </div>
+              <p className="mt-1 text-[12px] text-[#787774] tabular-nums">
+                Đã phân tích thành công: {acc2?.calls_succeeded ?? 0} lần • Hết lượt: {acc2?.quota_hits ?? 0} lần
+              </p>
+              {activeSlot !== "account_2" && (
+                <button
+                  type="button"
+                  disabled={meta.isPending}
+                  onClick={() => actions.switchArgonAccount("account_2")}
+                  className="mt-2.5 text-[12px] font-medium text-[#1F6C9F] hover:underline cursor-pointer"
+                >
+                  Chuyển sang dùng Nick #2
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
-        <button
-          type="button"
-          disabled={meta.isPending}
-          onClick={() => actions.switchArgonAccount("failover")}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition disabled:opacity-50 cursor-pointer"
-        >
-          <ShieldAlert className="w-3.5 h-3.5" />
-          <span>Mô phỏng Hết Quota (Test Auto-Switch)</span>
-        </button>
-      </div>
+        {/* Right 5 cols: Backend Server Connection */}
+        <div className="border-t border-[#EAEAEA] pt-5 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+          <h2 className="text-[15px] font-semibold text-[#111111]">
+            Nguồn dữ liệu máy chủ
+          </h2>
+          <p className="mt-0.5 text-[12.5px] text-[#787774]">
+            Mặc định trang web tự đồng bộ trực tiếp không cần cài đặt. Nếu bạn mở trên Vercel và muốn nối về máy tính cá nhân, nhập địa chỉ vào ô dưới:
+          </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <AccountSlotCard
-          slot={slot1}
-          isActive={router.active_slot === "account_1"}
-          disabled={meta.isPending}
-          onSelect={() => actions.switchArgonAccount("account_1")}
-        />
-        <AccountSlotCard
-          slot={slot2}
-          isActive={router.active_slot === "account_2"}
-          disabled={meta.isPending}
-          onSelect={() => actions.switchArgonAccount("account_2")}
-        />
+          <form onSubmit={handleSaveApi} className="mt-3.5 flex gap-2">
+            <input
+              type="text"
+              value={urlDraft}
+              onChange={(e) => setUrlDraft(e.target.value)}
+              placeholder="Mặc định: Tự động (Hoặc nhập http://localhost:8080)"
+              className="flex-1 rounded-[6px] border border-[#EAEAEA] bg-[#FAF9F6] px-3 py-2 text-[12.5px] text-[#111111] placeholder:text-[#787774] focus:border-[#111111] focus:bg-white focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="rounded-[6px] border border-[#EAEAEA] bg-white px-3.5 py-2 text-[12.5px] font-medium text-[#111111] hover:bg-[#FAF9F6] cursor-pointer"
+            >
+              {savedNotice ? "Đã lưu" : "Lưu"}
+            </button>
+          </form>
+
+          <div className="mt-2.5 flex items-center justify-between text-[11.5px] text-[#787774]">
+            <span>
+              Chế độ hiện tại:{" "}
+              <strong className="font-medium text-[#111111]">
+                {customApiUrl ? `Máy chủ riêng (${customApiUrl})` : "Tự động đồng bộ (Mặc định)"}
+              </strong>
+            </span>
+            <span>Số lần tự đổi nick: {router?.total_switches ?? 0}</span>
+          </div>
+        </div>
       </div>
     </section>
   );

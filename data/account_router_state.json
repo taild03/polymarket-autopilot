@@ -1,0 +1,30 @@
+{
+  "active_slot": "account_1",
+  "total_switches": 2,
+  "last_switch_reason": "Reset after unit test",
+  "last_switch_at": "2026-10-29T04:39:54.721240+00:00",
+  "accounts": {
+    "account_1": {
+      "slot_id": "account_1",
+      "label": "Google Argon #1 (Primary)",
+      "model_tier": "Gemini 4 Argon (High)",
+      "configured": true,
+      "status": "ACTIVE",
+      "calls_succeeded": 5,
+      "quota_hits": 1,
+      "cooldown_until_iso": "",
+      "last_used_iso": "2026-10-29T04:39:54.719678+00:00"
+    },
+    "account_2": {
+      "slot_id": "account_2",
+      "label": "Google Argon #2 (Backup Failover)",
+      "model_tier": "Gemini 4 Argon (High)",
+      "configured": false,
+      "status": "READY_TO_LINK",
+      "calls_succeeded": 0,
+      "quota_hits": 0,
+      "cooldown_until_iso": "",
+      "last_used_iso": ""
+    }
+  }
+}

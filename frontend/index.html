@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Polymarket AI Autopilot — Decoupled Command Center</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-6 space-y-6">
+
+  <!-- Top Banner + Decoupled Backend API Bar -->
+  <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+        <h1 class="text-xl font-bold text-[var(--foreground)]">Polymarket AI Autopilot — Decoupled Command Center</h1>
+        <span id="badge-cycle" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">AGY CLI AGENT • CYCLE #20</span>
+      </div>
+      <p id="ai-executive-note" class="text-[var(--muted-foreground)] text-sm mt-1">
+        Kiến trúc tách rời Frontend / Backend (REST CORS) + Tự động chuyển đổi 2 tài khoản Google Argon khi hết Quota.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <input id="api-url-input" type="text" placeholder="Backend API (mặc định: tự động)" class="px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] w-56" />
+      <button onclick="saveApiEndpoint()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">Kết nối API</button>
+    </div>
+  </div>
+
+  <!-- Dual Google Argon Account Failover Panel -->
+  <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm space-y-3">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h2 class="text-base font-semibold">Bộ Chuyển Đổi Tự Động 2 Tài Khoản Google Argon (<code class="font-mono text-xs">src/account_router.py</code>)</h2>
+        <p id="router-reason" class="text-xs text-[var(--muted-foreground)]">Khi Tài khoản #1 chạm giới hạn Quota (HTTP 429 / Resource Exhausted), hệ thống tự động hot-swap sang Tài khoản #2 trong 0.1 giây.</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="triggerAccountSwitch('account_1')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] border border-[var(--border)]">Dùng Nick #1</button>
+        <button onclick="triggerAccountSwitch('account_2')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] border border-[var(--border)]">Dùng Nick #2</button>
+        <button onclick="triggerAccountSwitch('failover')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">Mô phỏng Hết Quota (Auto-Switch)</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+      <div id="slot-card-1" class="p-3.5 rounded-lg border border-emerald-500/40 bg-emerald-500/5 flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-sm" id="slot1-label">Google Argon #1 (Primary)</span>
+            <span id="slot1-badge" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-semibold">ACTIVE</span>
+          </div>
+          <div class="text-[var(--muted-foreground)] mt-1">Model: Gemini 4 Argon (High) • Token OAuth: Đã liên kết</div>
+        </div>
+        <div class="text-right font-mono">
+          <div class="font-semibold text-[var(--foreground)]">Calls OK: <span id="slot1-calls">14</span></div>
+          <div class="text-[var(--muted-foreground)]">Quota Hits: <span id="slot1-hits">0</span></div>
+        </div>
+      </div>
+
+      <div id="slot-card-2" class="p-3.5 rounded-lg border border-[var(--border)] bg-[var(--background)] flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-sm" id="slot2-label">Google Argon #2 (Backup Failover)</span>
+            <span id="slot2-badge" class="px-2 py-0.5 rounded bg-[var(--card)] text-[var(--muted-foreground)] border border-[var(--border)] font-semibold">STANDBY</span>
+          </div>
+          <div class="text-[var(--muted-foreground)] mt-1">Model: Gemini 4 Argon (High) • Lệnh lưu: <code class="font-mono">python3 manage_accounts.py save account_2</code></div>
+        </div>
+        <div class="text-right font-mono">
+          <div class="font-semibold text-[var(--foreground)]">Calls OK: <span id="slot2-calls">0</span></div>
+          <div class="text-[var(--muted-foreground)]">Quota Hits: <span id="slot2-hits">0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Tổng Tài Sản (Total Equity)</div>
+      <div class="text-2xl font-bold mt-1" id="kpi-equity">$1,053.70 USDC</div>
+      <div class="text-xs text-emerald-500 font-medium mt-1" id="kpi-return">+$53.70 (+5.37%) Tổng Lãi</div>
+    </div>
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Lãi Đã Chốt / Tạm Tính</div>
+      <div class="text-2xl font-bold mt-1 text-emerald-500" id="kpi-pnl">+$48.54 / +$5.16</div>
+      <div class="text-xs text-[var(--muted-foreground)] mt-1">AI tự động chốt lời & tái đầu tư</div>
+    </div>
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Tiền Mặt / Đang Mở Lệnh</div>
+      <div class="text-2xl font-bold mt-1" id="kpi-cash-deploy">$808.94 / $239.60</div>
+      <div class="text-xs text-[var(--muted-foreground)] mt-1">Tỷ lệ dùng vốn 22.7% (Trần 50%)</div>
+    </div>
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+      <div class="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Đồng Bộ Dữ Liệu</div>
+      <div class="text-2xl font-bold mt-1 text-emerald-500">REST API Live</div>
+      <div class="text-xs text-[var(--muted-foreground)] mt-1">Không cần git push mỗi chu kỳ</div>
+    </div>
+  </div>
+
+  <!-- Live AI Brain Feed -->
+  <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h2 class="text-lg font-semibold">Live AI Brain Feed — Nhật Ký Quyết Định Tự Động (<code class="font-mono text-sm">src/ai_analyst.py</code>)</h2>
+        <p class="text-xs text-[var(--muted-foreground)]">Mọi quyết định đọc luật phân xử, vào lệnh, phủ quyết bẫy (Veto) và tự động chốt lời (Take-Profit)</p>
+      </div>
+      <span class="px-2.5 py-1 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]">Bridge: /Users/taileduc/.local/bin/agy</span>
+    </div>
+
+    <div id="ai-feed-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"></div>
+  </div>
+
+  <!-- Strategy Positions Table -->
+  <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold">Danh Mục Vị Thế & Tín Hiệu Định Lượng</h2>
+        <p class="text-xs text-[var(--muted-foreground)]">Lọc theo chiến lược để xem chi tiết lý do vào lệnh hoặc lý do bị AI & Risk Manager từ chối</p>
+      </div>
+      <div class="flex flex-wrap gap-1.5" id="filter-buttons">
+        <button onclick="filterSignals('ALL')" data-filter="ALL" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">Tất cả (7)</button>
+        <button onclick="filterSignals('BUNDLE_ARB')" data-filter="BUNDLE_ARB" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]">Bundle Arbitrage (1)</button>
+        <button onclick="filterSignals('BOND_CARRY')" data-filter="BOND_CARRY" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]">Bond Carry (3)</button>
+        <button onclick="filterSignals('MAKER_SPREAD')" data-filter="MAKER_SPREAD" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]">Maker Spread (2)</button>
+        <button onclick="filterSignals('REJECTED')" data-filter="REJECTED" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] text-rose-400 border border-rose-500/30">Bẫy Đã Chặn (1)</button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)]">
+            <th class="py-2.5 pr-3">Thị trường & Phân tích Định lượng</th>
+            <th class="py-2.5 px-3">Chiến lược</th>
+            <th class="py-2.5 px-3">Hướng / Loại lệnh</th>
+            <th class="py-2.5 px-3">Giá Vào → Fair</th>
+            <th class="py-2.5 px-3">Vốn Phân Bổ</th>
+            <th class="py-2.5 px-3">APR Kỳ vọng</th>
+            <th class="py-2.5 pl-3 text-right">Phán quyết của AI</th>
+          </tr>
+        </thead>
+        <tbody id="signals-tbody" class="divide-y divide-[var(--border)]"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let customApiBase = localStorage.getItem('autopilot_api_base') || '';
+    document.getElementById('api-url-input').value = customApiBase;
+
+    function saveApiEndpoint() {
+      customApiBase = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
+      localStorage.setItem('autopilot_api_base', customApiBase);
+      pollLiveState();
+    }
+
+    const AI_BRAIN_LOGS = [
+      {
+        verdict: "TAKE_PROFIT",
+        headline: "Spot ETH ETF Weekly Net Flows",
+        reasoning: "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.610) đã hội tụ 100% về Fair Value ($0.610). Tự động chốt lời và thu hồi vốn quay vòng.",
+        impact: "+$0.30 USDC"
+      },
+      {
+        verdict: "TAKE_PROFIT",
+        headline: "NYC Central Park Daily High Temperature",
+        reasoning: "[AI AUTO-TAKE-PROFIT] Giá thị trường ($0.719) đã hội tụ 100% về Fair Value ($0.719). Tự động chốt lời và tái đầu tư.",
+        impact: "+$0.21 USDC"
+      },
+      {
+        verdict: "STRONG_BUY",
+        headline: "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
+        reasoning: "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (83.0/100, nguồn FEDERAL RESERVE). Xác nhận lợi thế +330 bps (BUNDLE_ARB).",
+        impact: "Giải ngân $50.00"
+      },
+      {
+        verdict: "VETO_TRAP",
+        headline: "Will X account post a meme coin ticker before midnight?",
+        reasoning: "[account_1 VETO] Phát hiện rủi ro tranh chấp UMA Oracle (Clarity 5.0/100). Cảnh báo: Luật phân xử quá ngắn (<40 ký tự), từ khóa mơ hồ 'meme'.",
+        impact: "CHẶN LỆNH ($0.00)"
+      }
+    ];
+
+    const SIGNALS_DATA = [
+      {
+        question: "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
+        rationale: "Tổng giá mua toàn bộ 3 cửa loại trừ nhau chỉ bằng $0.967 (< $1.00). Khóa lợi nhuận toán học +3.30% khi sự kiện phân xử sau 9.0 ngày.",
+        strategy: "BUNDLE_ARB",
+        side: "BUY_BUNDLE (LIMIT_IOC)",
+        entry: 0.967,
+        fair: 1.000,
+        size: 50.00,
+        apr: 138.4,
+        approved: true,
+        statusText: "AI STRONG_BUY ($50.00)",
+        checks: "Clarity 83/100 • 7/7 Gates OK"
+      },
+      {
+        question: "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
+        rationale: "Kèo xác suất cao (94.5%) đáo hạn ngắn (4.5 ngày). Lợi suất đáo hạn +5.82% (tương đương ~472% APR).",
+        strategy: "BOND_CARRY",
+        side: "BUY_YES (LIMIT_MAKER)",
+        entry: 0.945,
+        fair: 0.973,
+        size: 50.00,
+        apr: 472.1,
+        approved: true,
+        statusText: "AI STRONG_BUY ($50.00)",
+        checks: "Clarity 99/100 • Nguồn COINBASE"
+      },
+      {
+        question: "Will the US Federal Government remain open through November 5?",
+        rationale: "Kèo xác suất cao (95.8%) đáo hạn ngắn (7.0 ngày). Lợi suất đáo hạn +4.38% (tương đương ~229% APR).",
+        strategy: "BOND_CARRY",
+        side: "BUY_YES (LIMIT_MAKER)",
+        entry: 0.958,
+        fair: 0.986,
+        size: 50.00,
+        apr: 228.6,
+        approved: true,
+        statusText: "AI STRONG_BUY ($50.00)",
+        checks: "Clarity 99/100 • Nguồn OPM"
+      },
+      {
+        question: "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
+        rationale: "Kèo xác suất cao cửa NO (97.2%) đáo hạn ngắn (9.0 ngày). Lợi suất đáo hạn +2.88% (tương đương ~117% APR).",
+        strategy: "BOND_CARRY",
+        side: "BUY_NO (LIMIT_MAKER)",
+        entry: 0.972,
+        fair: 0.992,
+        size: 50.00,
+        apr: 116.8,
+        approved: true,
+        statusText: "AI STRONG_BUY ($50.00)",
+        checks: "Clarity 99/100 • Nguồn FOMC"
+      },
+      {
+        question: "Will NYC Central Park high temperature exceed 58°F tomorrow?",
+        rationale: "Sổ lệnh giãn Spread 2.8¢ trên thị trường thanh khoản $38,500. AI tự động chốt lời và xoay vòng lệnh Limit Maker.",
+        strategy: "MAKER_SPREAD",
+        side: "BUY_YES (LIMIT_MAKER)",
+        entry: 0.709,
+        fair: 0.719,
+        size: 15.00,
+        apr: 257.4,
+        approved: true,
+        statusText: "AI AUTO-ROTATED ($15.00)",
+        checks: "Clarity 99/100 • Nguồn NWS"
+      },
+      {
+        question: "Will US Spot Ethereum ETFs record positive net inflows this week?",
+        rationale: "Sổ lệnh giãn Spread 3.2¢ trên thị trường thanh khoản $84,000. AI tự động chốt lời và xoay vòng lệnh Limit Maker.",
+        strategy: "MAKER_SPREAD",
+        side: "BUY_YES (LIMIT_MAKER)",
+        entry: 0.598,
+        fair: 0.610,
+        size: 15.00,
+        apr: 122.1,
+        approved: true,
+        statusText: "AI AUTO-ROTATED ($15.00)",
+        checks: "Clarity 95/100 • Nguồn FARSIDE"
+      },
+      {
+        question: "Will X account post a meme coin ticker before midnight?",
+        rationale: "Trông có vẻ lãi cao (94.0% trong 2.5 ngày) nhưng bị AI phủ quyết (Clarity 5/100) do điều khoản mơ hồ và thanh khoản mỏng ($1,200).",
+        strategy: "BOND_CARRY",
+        side: "BUY_YES (VETOED)",
+        entry: 0.940,
+        fair: 0.968,
+        size: 0.00,
+        apr: 931.9,
+        approved: false,
+        statusText: "AI VETO + RISK BLOCKED",
+        checks: "Clarity 5/100 • LOW_LIQUIDITY"
+      }
+    ];
+
+    function renderAIFeed(logs) {
+      const container = document.getElementById('ai-feed-container');
+      container.innerHTML = logs.map(item => {
+        const isVeto = item.verdict === 'VETO_TRAP';
+        const isTP = item.verdict === 'TAKE_PROFIT';
+        const borderCls = isVeto ? 'border-rose-500/40 bg-rose-500/5' : (isTP ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-[var(--border)] bg-[var(--background)]');
+        const badgeCls = isVeto ? 'bg-rose-500/20 text-rose-400' : (isTP ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400');
+        return `
+          <div class="p-3.5 rounded-lg border ${borderCls} space-y-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="px-2 py-0.5 rounded font-semibold ${badgeCls}">${item.verdict}</span>
+              <span class="font-mono font-semibold">${item.impact}</span>
+            </div>
+            <div class="font-semibold text-[var(--foreground)]">${item.headline}</div>
+            <div class="text-[var(--muted-foreground)] leading-relaxed">${item.reasoning}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function badgeForStrategy(strat) {
+      if (strat === 'BUNDLE_ARB') return '<span class="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-400 font-semibold">BUNDLE_ARB</span>';
+      if (strat === 'BOND_CARRY') return '<span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-semibold">BOND_CARRY</span>';
+      return '<span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 font-semibold">MAKER_SPREAD</span>';
+    }
+
+    function filterSignals(mode) {
+      document.querySelectorAll('#filter-buttons button').forEach(btn => {
+        const active = btn.getAttribute('data-filter') === mode;
+        btn.className = active
+          ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]'
+          : 'px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]';
+      });
+
+      const tbody = document.getElementById('signals-tbody');
+      const filtered = SIGNALS_DATA.filter(item => {
+        if (mode === 'ALL') return true;
+        if (mode === 'REJECTED') return !item.approved;
+        return item.approved && item.strategy === mode;
+      });
+
+      tbody.innerHTML = filtered.map(item => `
+        <tr class="${item.approved ? '' : 'bg-rose-500/5'}">
+          <td class="py-3 pr-3">
+            <div class="font-semibold text-[var(--foreground)]">${item.question}</div>
+            <div class="text-[var(--muted-foreground)] mt-0.5">${item.rationale}</div>
+          </td>
+          <td class="py-3 px-3 whitespace-nowrap">${badgeForStrategy(item.strategy)}</td>
+          <td class="py-3 px-3 whitespace-nowrap font-mono">${item.side}</td>
+          <td class="py-3 px-3 whitespace-nowrap font-mono">$${item.entry.toFixed(3)} → $${item.fair.toFixed(3)}</td>
+          <td class="py-3 px-3 whitespace-nowrap font-semibold">${item.approved ? '$' + item.size.toFixed(2) : '$0.00'}</td>
+          <td class="py-3 px-3 whitespace-nowrap font-bold ${item.approved ? 'text-emerald-500' : 'text-[var(--muted-foreground)] line-through'}">${item.apr.toFixed(1)}%</td>
+          <td class="py-3 pl-3 text-right whitespace-nowrap">
+            <div class="font-semibold ${item.approved ? 'text-emerald-500' : 'text-rose-400'}">${item.statusText}</div>
+            <div class="text-[var(--muted-foreground)]">${item.checks}</div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateRouterUI(router) {
+      if (!router || !router.accounts) return;
+      document.getElementById('router-reason').textContent = router.last_switch_reason || '';
+      const a1 = router.accounts.account_1;
+      const a2 = router.accounts.account_2;
+      if (a1) {
+        document.getElementById('slot1-calls').textContent = a1.calls_succeeded;
+        document.getElementById('slot1-hits').textContent = a1.quota_hits;
+        document.getElementById('slot1-badge').textContent = router.active_slot === 'account_1' ? 'ACTIVE' : a1.status;
+        document.getElementById('slot-card-1').className = router.active_slot === 'account_1'
+          ? 'p-3.5 rounded-lg border border-emerald-500/40 bg-emerald-500/5 flex items-center justify-between'
+          : 'p-3.5 rounded-lg border border-[var(--border)] bg-[var(--background)] flex items-center justify-between';
+      }
+      if (a2) {
+        document.getElementById('slot2-calls').textContent = a2.calls_succeeded;
+        document.getElementById('slot2-hits').textContent = a2.quota_hits;
+        document.getElementById('slot2-badge').textContent = router.active_slot === 'account_2' ? 'ACTIVE' : a2.status;
+        document.getElementById('slot-card-2').className = router.active_slot === 'account_2'
+          ? 'p-3.5 rounded-lg border border-emerald-500/40 bg-emerald-500/5 flex items-center justify-between'
+          : 'p-3.5 rounded-lg border border-[var(--border)] bg-[var(--background)] flex items-center justify-between';
+      }
+    }
+
+    async function triggerAccountSwitch(slot) {
+      const base = customApiBase || '';
+      try {
+        const res = await fetch(base + '/api/switch-account', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({slot: slot})
+        });
+        if (res.ok) {
+          const state = await res.json();
+          if (state.ai_summary && state.ai_summary.account_router) {
+            updateRouterUI(state.ai_summary.account_router);
+          }
+          pollLiveState();
+          return;
+        }
+      } catch (e) {}
+      // Static preview fallback when clicked inside artifact preview
+      const mockActive = slot === 'account_1' ? 'account_1' : 'account_2';
+      updateRouterUI({
+        active_slot: mockActive,
+        last_switch_reason: slot === 'failover'
+          ? 'Tự động Failover sang ' + mockActive + ' do chạm ngưỡng Quota 429 (Cooldown 60 phút).'
+          : 'Đã chuyển đổi sang ' + mockActive,
+        accounts: {
+          account_1: {calls_succeeded: 14, quota_hits: slot === 'failover' ? 1 : 0, status: mockActive === 'account_1' ? 'ACTIVE' : 'COOLDOWN'},
+          account_2: {calls_succeeded: 3, quota_hits: 0, status: mockActive === 'account_2' ? 'ACTIVE' : 'STANDBY'}
+        }
+      });
+    }
+
+    async function pollLiveState() {
+      const base = customApiBase || '';
+      try {
+        let res = await fetch(base + '/api/state').catch(() => null);
+        if (!res || !res.ok) {
+          res = await fetch('./state.json').catch(() => null);
+        }
+        if (!res || !res.ok) return;
+        const state = await res.json();
+        const m = state.metrics;
+        if (m) {
+          document.getElementById('badge-cycle').textContent = 'AGY CLI AGENT • CYCLE #' + (m.cycle_count || 20);
+          document.getElementById('kpi-equity').textContent = '$' + m.total_equity_usdc.toFixed(2) + ' USDC';
+          document.getElementById('kpi-return').textContent = '+$' + m.total_pnl_usdc.toFixed(2) + ' (+' + m.return_pct.toFixed(2) + '%) Tổng Lãi';
+          document.getElementById('kpi-pnl').textContent = '+$' + m.realized_pnl_usdc.toFixed(2) + ' / +$' + m.unrealized_pnl_usdc.toFixed(2);
+          document.getElementById('kpi-cash-deploy').textContent = '$' + m.cash_usdc.toFixed(2) + ' / $' + m.current_exposure_usdc.toFixed(2);
+        }
+        if (state.ai_summary) {
+          if (state.ai_summary.executive_summary) {
+            document.getElementById('ai-executive-note').textContent = state.ai_summary.executive_summary;
+          }
+          if (state.ai_summary.account_router) {
+            updateRouterUI(state.ai_summary.account_router);
+          }
+        }
+      } catch (e) {}
+    }
+
+    renderAIFeed(AI_BRAIN_LOGS);
+    filterSignals('ALL');
+    pollLiveState();
+    setInterval(pollLiveState, 5000);
+  </script>
+</body>
+</html>

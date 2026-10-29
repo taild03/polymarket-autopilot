@@ -2,6 +2,7 @@
 Unit test suite for Polymarket Autopilot (AI Analyst, Strategy Engine, Risk Manager, Kill Switch).
 """
 import unittest
+from src.account_router import ArgonAccountRouter
 from src.ai_analyst import AutonomousAIAnalyst
 from src.config import DEFAULT_CONFIG
 from src.polymarket_client import PolymarketClient
@@ -97,6 +98,17 @@ class TestPolymarketAutopilot(unittest.TestCase):
             if decision.approved:
                 self.assertLessEqual(decision.recommended_size_usdc, 50.0)
                 self.assertGreaterEqual(decision.recommended_size_usdc, 15.0)
+
+
+    def test_dual_argon_account_router_detects_quota_and_switches(self) -> None:
+        router = ArgonAccountRouter()
+        self.assertTrue(router.is_quota_error("Error 429: RESOURCE_EXHAUSTED quota exceeded"))
+        self.assertFalse(router.is_quota_error("200 OK"))
+        initial_slot = router.state["active_slot"]
+        new_slot = router.handle_quota_exhausted("429 Quota Exceeded")
+        self.assertNotEqual(initial_slot, new_slot)
+        # Switch back to account_1 after test
+        router.activate_slot("account_1", reason="Reset after unit test")
 
 
 if __name__ == "__main__":

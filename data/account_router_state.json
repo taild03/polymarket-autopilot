@@ -10,10 +10,10 @@
       "model_tier": "Gemini 4 Argon (High)",
       "configured": true,
       "status": "ACTIVE",
-      "calls_succeeded": 5,
+      "calls_succeeded": 12,
       "quota_hits": 1,
       "cooldown_until_iso": "",
-      "last_used_iso": "2026-10-29T04:39:54.719678+00:00"
+      "last_used_iso": "2026-10-29T05:29:46.239315+00:00"
     },
     "account_2": {
       "slot_id": "account_2",

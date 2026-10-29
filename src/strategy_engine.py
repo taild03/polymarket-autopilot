@@ -1,12 +1,12 @@
 """
 Strategy Engine for Polymarket Autopilot.
-Implements three quantitative strategies:
-1. BUNDLE_ARB: Multi-outcome mutually exclusive Dutch-book / rebalancing arbitrage.
-2. BOND_CARRY: High-probability near-resolution yield capture (annualized APR optimization).
-3. MAKER_SPREAD: Orderbook spread capture via passive limit orders on high-volume markets.
+Implements three quantitative strategies without fake mid-price or +2.8c assumptions:
+1. BUNDLE_ARB: Multi-outcome mutually exclusive Dutch-book arbitrage using executable ASK prices + fee buffer.
+2. BOND_CARRY: High-probability near-resolution yield capture (94c - 99c) with UMA tail-risk haircut.
+3. MAKER_SPREAD: Passive limit order spread capture aligned to valid 1-cent tick sizes with adverse-selection haircut.
 """
 from collections import defaultdict
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Any, Dict, List
 
 from .config import DEFAULT_CONFIG, TradingConfig
@@ -22,10 +22,10 @@ class TradeSignal:
     strategy: str               # BUNDLE_ARB | BOND_CARRY | MAKER_SPREAD
     side: str                   # BUY_YES | BUY_NO | BUY_BUNDLE
     order_type: str             # LIMIT_MAKER | LIMIT_IOC
-    entry_price: float          # Target execution price ($0.01 - $0.99)
-    fair_value: float           # Estimated true probability / settlement value
-    edge_bps: float             # Expected edge in basis points (100 bps = 1.0%)
-    expected_apr_pct: float     # Annualized return percentage
+    entry_price: float          # Executable entry price ($0.01 - $0.99)
+    fair_value: float           # Calibrated settlement expectation
+    edge_bps: float             # Net expected edge in basis points after fees/haircut
+    expected_apr_pct: float     # Annualized return percentage (non-compounded simple APR)
     confidence_score: float     # 0.0 to 1.0
     liquidity_usd: float
     volume_24h_usd: float
@@ -33,6 +33,8 @@ class TradeSignal:
     days_to_expiry: float
     resolution_rules_len: int
     rationale: str
+
+    leg_market_ids: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -47,23 +49,22 @@ class StrategyEngine:
     def evaluate_markets(self, contracts: List[MarketContract]) -> List[TradeSignal]:
         signals: List[TradeSignal] = []
 
-        # 1. Check Multi-Outcome Event Bundle Arbitrage
+        # 1. Multi-Outcome Event Bundle Arbitrage (strictly on executable best_ask)
         signals.extend(self._scan_bundle_arbitrage(contracts))
 
-        # 2. Check High-Probability Near-Resolution Carry (Bond Carry)
+        # 2. High-Probability Near-Resolution Carry (Bond Carry)
         signals.extend(self._scan_bond_carry(contracts))
 
-        # 3. Check Orderbook Maker Spread Capture
+        # 3. Orderbook Maker Spread Capture (tick-aligned)
         signals.extend(self._scan_maker_spread(contracts))
 
-        # Sort signals by expected APR and edge_bps descending
         signals.sort(key=lambda s: (s.edge_bps, s.expected_apr_pct), reverse=True)
         return signals
 
     def _scan_bundle_arbitrage(self, contracts: List[MarketContract]) -> List[TradeSignal]:
         by_event: Dict[str, List[MarketContract]] = defaultdict(list)
         for c in contracts:
-            if c.neg_risk and c.outcomes_count_in_event >= 2:
+            if c.neg_risk and c.outcomes_count_in_event >= 2 and not c.closed:
                 by_event[c.event_id].append(c)
 
         signals: List[TradeSignal] = []
@@ -71,31 +72,36 @@ class StrategyEngine:
             if len(group) < 2 or len(group) != group[0].outcomes_count_in_event:
                 continue
 
-            sum_yes_ask = sum(m.best_ask for m in group)
-            sum_yes_mid = sum(m.yes_price for m in group)
-            effective_sum = min(sum_yes_ask, sum_yes_mid)
+            # Strictly use executable best_ask (never mid price) plus per-leg fee/slippage buffer
+            if any(m.best_ask <= 0.001 or m.best_ask >= 0.999 for m in group):
+                continue
 
-            if 0.80 < effective_sum <= self.config.bundle_arb_max_sum:
-                net_edge = 1.0 - effective_sum
+            sum_yes_ask = sum(m.best_ask for m in group)
+            fee_buffer = len(group) * (self.config.taker_fee_bps / 10000.0)
+            executable_bundle_cost = round(sum_yes_ask + fee_buffer, 4)
+
+            if 0.80 < executable_bundle_cost <= self.config.bundle_max_sum_cost:
+                net_edge = round(1.0 - executable_bundle_cost, 4)
                 edge_bps = round(net_edge * 10000, 1)
                 min_liq = min(m.liquidity_usd for m in group)
                 total_vol = sum(m.volume_24h_usd for m in group)
                 avg_spread = sum(m.spread for m in group) / len(group)
                 days = max(0.5, min(m.days_to_expiry for m in group))
-                apr = round((net_edge / effective_sum) * (365.0 / days) * 100.0, 1)
+                apr = round((net_edge / executable_bundle_cost) * (365.0 / days) * 100.0, 1)
                 min_rules_len = min(len(m.resolution_rules) for m in group)
 
                 anchor = group[0]
                 signals.append(
                     TradeSignal(
                         signal_id=f"sig-arb-{event_id}",
-                        market_id=anchor.market_id,
+                        market_id=f"bundle-{event_id}",
+                        leg_market_ids=[m.market_id for m in group],
                         event_title=anchor.event_title,
                         question=f"[Giỏ {len(group)} cửa] {anchor.event_title}",
                         strategy="BUNDLE_ARB",
                         side="BUY_BUNDLE",
                         order_type="LIMIT_IOC",
-                        entry_price=round(effective_sum, 4),
+                        entry_price=executable_bundle_cost,
                         fair_value=1.0000,
                         edge_bps=edge_bps,
                         expected_apr_pct=apr,
@@ -106,8 +112,8 @@ class StrategyEngine:
                         days_to_expiry=days,
                         resolution_rules_len=min_rules_len,
                         rationale=(
-                            f"Tổng giá mua toàn bộ {len(group)} cửa loại trừ nhau chỉ bằng "
-                            f"${effective_sum:.3f} (< $1.00). Khóa lợi nhuận toán học +{edge_bps / 100:.2f}% "
+                            f"Tổng giá Ask thực thi của toàn bộ {len(group)} cửa cộng phí là "
+                            f"${executable_bundle_cost:.3f} (< $1.00). Chênh lệch ròng +{edge_bps / 100:.2f}% "
                             f"khi sự kiện phân xử sau {days:.1f} ngày."
                         ),
                     )
@@ -117,31 +123,42 @@ class StrategyEngine:
     def _scan_bond_carry(self, contracts: List[MarketContract]) -> List[TradeSignal]:
         signals: List[TradeSignal] = []
         for c in contracts:
-            if c.days_to_expiry > self.config.bond_carry_max_days or c.days_to_expiry <= 0.1:
+            if c.closed or c.days_to_expiry > self.config.bond_max_days_to_expiry or c.days_to_expiry <= 0.1:
                 continue
 
-            # Determine if either YES or NO is in the high-probability carry zone (88c - 97.5c)
             side = ""
-            price = 0.0
-            if self.config.bond_carry_min_prob <= c.yes_price <= self.config.bond_carry_max_prob:
+            exec_ask = 0.0
+            no_exec_ask = round(1.0 - c.best_bid, 4)
+
+            if self.config.bond_min_prob <= c.best_ask <= self.config.bond_max_prob:
                 side = "BUY_YES"
-                price = c.best_ask if c.best_ask <= self.config.bond_carry_max_prob else c.yes_price
-            elif self.config.bond_carry_min_prob <= c.no_price <= self.config.bond_carry_max_prob:
+                exec_ask = c.best_ask
+            elif self.config.bond_min_prob <= no_exec_ask <= self.config.bond_max_prob:
                 side = "BUY_NO"
-                price = round(1.0 - c.best_bid, 4) if (1.0 - c.best_bid) <= self.config.bond_carry_max_prob else c.no_price
+                exec_ask = no_exec_ask
 
-            if not side or price <= 0.0 or price >= 0.99:
+            if not side or exec_ask <= 0.0 or exec_ask >= 0.993:
                 continue
 
-            # Estimate conservative true probability boost for liquid near-expiry contracts
-            est_win_prob = min(0.992, price + 0.028)
-            expected_val = est_win_prob - price
-            if expected_val <= 0.008:
+            # Empirical tail-risk & UMA dispute haircut based on market depth and rule clarity
+            if c.liquidity_usd >= 100000.0 and len(c.resolution_rules) >= 120:
+                tail_haircut = 0.012
+            elif c.liquidity_usd >= 25000.0 and len(c.resolution_rules) >= 80:
+                tail_haircut = 0.018
+            else:
+                tail_haircut = 0.030
+
+            calibrated_settlement = round(1.0 - tail_haircut, 4)
+            fee_cost = self.config.taker_fee_bps / 10000.0
+            net_expected_edge = round(calibrated_settlement - exec_ask - fee_cost, 4)
+            if net_expected_edge <= 0.005:
                 continue
 
-            edge_bps = round(expected_val * 10000, 1)
-            gross_yield = (1.0 - price) / price
-            apr = round(gross_yield * (365.0 / max(1.0, c.days_to_expiry)) * 100.0, 1)
+            edge_bps = round(net_expected_edge * 10000, 1)
+            net_yield = net_expected_edge / exec_ask
+            apr = round(net_yield * (365.0 / max(1.0, c.days_to_expiry)) * 100.0, 1)
+            if apr < self.config.bond_min_annualized_yield * 100.0:
+                continue
 
             signals.append(
                 TradeSignal(
@@ -151,9 +168,9 @@ class StrategyEngine:
                     question=c.question,
                     strategy="BOND_CARRY",
                     side=side,
-                    order_type="LIMIT_MAKER",
-                    entry_price=round(price, 4),
-                    fair_value=round(est_win_prob, 4),
+                    order_type="LIMIT_IOC",
+                    entry_price=round(exec_ask + fee_cost, 4),
+                    fair_value=calibrated_settlement,
                     edge_bps=edge_bps,
                     expected_apr_pct=apr,
                     confidence_score=0.88,
@@ -163,8 +180,8 @@ class StrategyEngine:
                     days_to_expiry=c.days_to_expiry,
                     resolution_rules_len=len(c.resolution_rules),
                     rationale=(
-                        f"Kèo xác suất cao ({price * 100:.1f}%) đáo hạn ngắn ({c.days_to_expiry:.1f} ngày). "
-                        f"Lợi suất đáo hạn +{(1.0 - price) / price * 100:.2f}% (tương đương ~{apr:.0f}% APR)."
+                        f"Kèo xác suất cao (giá Ask {exec_ask * 100:.1f}¢) đáo hạn sau {c.days_to_expiry:.1f} ngày. "
+                        f"Sau khi trừ dự phòng rủi ro đuôi UMA ({tail_haircut * 100:.1f}¢), kỳ vọng lãi ròng +{net_expected_edge * 100:.2f}%."
                     ),
                 )
             )
@@ -172,22 +189,27 @@ class StrategyEngine:
 
     def _scan_maker_spread(self, contracts: List[MarketContract]) -> List[TradeSignal]:
         signals: List[TradeSignal] = []
+        tick = self.config.tick_size
         for c in contracts:
-            # Look for mid-probability active markets where spread >= 2.0c
-            if not (0.25 <= c.yes_price <= 0.80):
+            if c.closed or c.days_to_expiry <= 0 or not (0.25 <= c.yes_price <= 0.80):
                 continue
-            if c.spread < self.config.maker_min_spread:
+            if not (self.config.maker_min_spread <= c.spread <= self.config.maker_max_spread):
                 continue
 
-            # Place passive bid slightly above current best_bid to capture half-spread
-            maker_bid = round(c.best_bid + 0.004, 4)
+            # Round passive bid strictly to 1-cent tick size (0.01)
+            snapped_bid = round(round(c.best_bid / tick) * tick, 2)
+            maker_bid = round(snapped_bid + tick, 2)
+            if maker_bid >= c.best_ask - 0.005:
+                continue
+
             fair_mid = round((c.best_bid + c.best_ask) / 2.0, 4)
-            edge = fair_mid - maker_bid
-            if edge <= 0.006:
+            adverse_selection_haircut = 0.002
+            net_edge = round(fair_mid - maker_bid - adverse_selection_haircut, 4)
+            if net_edge < 0.0025:
                 continue
 
-            edge_bps = round(edge * 10000, 1)
-            apr = round((edge / maker_bid) * (365.0 / max(1.0, min(c.days_to_expiry, 14.0))) * 100.0, 1)
+            edge_bps = round(net_edge * 10000, 1)
+            apr = round((net_edge / maker_bid) * (365.0 / max(1.0, min(c.days_to_expiry, 14.0))) * 100.0, 1)
 
             signals.append(
                 TradeSignal(
@@ -199,7 +221,7 @@ class StrategyEngine:
                     side="BUY_YES",
                     order_type="LIMIT_MAKER",
                     entry_price=maker_bid,
-                    fair_value=fair_mid,
+                    fair_value=round(fair_mid - adverse_selection_haircut, 4),
                     edge_bps=edge_bps,
                     expected_apr_pct=apr,
                     confidence_score=0.82,
@@ -210,7 +232,7 @@ class StrategyEngine:
                     resolution_rules_len=len(c.resolution_rules),
                     rationale=(
                         f"Sổ lệnh giãn Spread {c.spread * 100:.1f}¢ trên thị trường thanh khoản ${c.liquidity_usd:,.0f}. "
-                        f"Đặt lệnh Limit Maker tại ${maker_bid:.3f} (Fair Mid ${fair_mid:.3f}), hưởng lợi thế +{edge_bps:.0f} bps."
+                        f"Đặt lệnh chờ mua đúng bước giá ${maker_bid:.2f} (dưới giá Mid ${fair_mid:.3f})."
                     ),
                 )
             )

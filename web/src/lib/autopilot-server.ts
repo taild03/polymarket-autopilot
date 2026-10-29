@@ -18,10 +18,96 @@ const MANAGE_ACCOUNTS_SCRIPT = path.join(PROJECT_ROOT, "manage_accounts.py");
 let serverlessStateCache: AutopilotState = fallbackSnapshot as unknown as AutopilotState;
 
 /**
- * Per-request deduplicated loader using React.cache() (`server-cache-react`)
- * and `Promise.all()` (`async-parallel`). Works both with local Python SQLite
- * and on Vercel Serverless runtime.
+ * Fetches live active markets from Polymarket Gamma API when running in a serverless
+ * environment (e.g. Vercel) and marks open positions honestly to live bestBid prices.
+ * Never fabricates synthetic profits.
  */
+async function syncWithLiveGammaApiOnServerless(state: AutopilotState): Promise<AutopilotState> {
+  try {
+    const res = await fetch(
+      "https://gamma-api.polymarket.com/events?active=true&closed=false&limit=35",
+      { cache: "no-store", signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) {
+      return { ...state, data_source: "STALE_SNAPSHOT" };
+    }
+    const events = (await res.json()) as Array<{
+      id?: string;
+      title?: string;
+      markets?: Array<{
+        id?: string;
+        question?: string;
+        bestBid?: number | string;
+        bestAsk?: number | string;
+        outcomePrices?: string | number[];
+      }>;
+    }>;
+
+    const livePriceMap = new Map<string, { bestBid: number; bestAsk: number }>();
+    let scannedCount = 0;
+
+    for (const ev of events) {
+      for (const m of ev.markets ?? []) {
+        if (!m.id) continue;
+        scannedCount += 1;
+        const rawBid = Number(m.bestBid ?? 0);
+        const rawAsk = Number(m.bestAsk ?? 0);
+        if (Number.isFinite(rawBid) && Number.isFinite(rawAsk) && rawBid >= 0 && rawAsk <= 1 && rawBid < rawAsk) {
+          livePriceMap.set(String(m.id), {
+            bestBid: rawBid,
+            bestAsk: rawAsk,
+          });
+        }
+      }
+    }
+
+    const updatedPositions = state.open_positions.map((pos) => {
+      const live = livePriceMap.get(pos.market_id);
+      if (!live || pos.side === "BUY_BUNDLE") return pos;
+      const newMark =
+        pos.side === "BUY_NO"
+          ? Number(Math.max(0, 1 - live.bestAsk).toFixed(4))
+          : Number(live.bestBid.toFixed(4));
+      const mktVal = Number((pos.shares_qty * newMark).toFixed(2));
+      const unrealized = Number((mktVal - pos.cost_basis_usdc).toFixed(2));
+      return {
+        ...pos,
+        mark_price: newMark,
+        market_value_usdc: mktVal,
+        unrealized_pnl_usdc: unrealized,
+      };
+    });
+
+    const openMarketVal = Number(
+      updatedPositions.reduce((acc, p) => acc + p.market_value_usdc, 0).toFixed(2)
+    );
+    const unrealizedPnl = Number(
+      updatedPositions.reduce((acc, p) => acc + p.unrealized_pnl_usdc, 0).toFixed(2)
+    );
+    const totalEquity = Number((state.metrics.cash_usdc + openMarketVal + (state.metrics.reserved_cash_usdc ?? 0)).toFixed(2));
+    const totalPnl = Number((state.metrics.realized_pnl_usdc + unrealizedPnl).toFixed(2));
+    const initialCap = state.metrics.initial_capital_usdc || 1000;
+
+    return {
+      ...state,
+      generated_at: new Date().toISOString(),
+      data_source: "GAMMA_QUOTE_REFRESH_ONLY",
+      scanned_markets_count: scannedCount > 0 ? scannedCount : state.scanned_markets_count,
+      open_positions: updatedPositions,
+      metrics: {
+        ...state.metrics,
+        open_market_value_usdc: openMarketVal,
+        unrealized_pnl_usdc: unrealizedPnl,
+        total_pnl_usdc: totalPnl,
+        total_equity_usdc: totalEquity,
+        return_pct: Number(((totalPnl / initialCap) * 100).toFixed(2)),
+      },
+    };
+  } catch {
+    return { ...state, data_source: "STALE_SNAPSHOT" };
+  }
+}
+
 export const getAutopilotServerState = cache(async (): Promise<AutopilotState> => {
   const [rawPortfolio, rawRouter] = await Promise.all([
     fs.readFile(STATE_FILE, "utf-8").catch(() => null),
@@ -29,6 +115,7 @@ export const getAutopilotServerState = cache(async (): Promise<AutopilotState> =
   ]);
 
   if (!rawPortfolio) {
+    serverlessStateCache = await syncWithLiveGammaApiOnServerless(serverlessStateCache);
     return serverlessStateCache;
   }
 
@@ -65,27 +152,8 @@ export async function triggerPythonCycle(): Promise<AutopilotState> {
     serverlessStateCache = parsed;
     return parsed;
   } catch {
-    // Serverless simulation fallback when deployed on Vercel without local Python runtime
-    const nextCycle = (serverlessStateCache.metrics.cycle_count ?? 143) + 1;
-    const profitDelta = 1.85;
-    const nextRealized = Number((serverlessStateCache.metrics.realized_pnl_usdc + profitDelta).toFixed(2));
-    const nextCash = Number((serverlessStateCache.metrics.cash_usdc + profitDelta).toFixed(2));
-    const nextTotalPnl = Number((nextRealized + serverlessStateCache.metrics.unrealized_pnl_usdc).toFixed(2));
-    const nextEquity = Number((1000 + nextTotalPnl).toFixed(2));
-
-    serverlessStateCache = {
-      ...serverlessStateCache,
-      generated_at: new Date().toISOString(),
-      metrics: {
-        ...serverlessStateCache.metrics,
-        cycle_count: nextCycle,
-        cash_usdc: nextCash,
-        realized_pnl_usdc: nextRealized,
-        total_pnl_usdc: nextTotalPnl,
-        total_equity_usdc: nextEquity,
-        return_pct: Number(((nextTotalPnl / 1000) * 100).toFixed(2)),
-      },
-    };
+    // On Vercel Serverless without local Python runtime, sync open positions with live Polymarket Gamma API
+    serverlessStateCache = await syncWithLiveGammaApiOnServerless(serverlessStateCache);
     return serverlessStateCache;
   }
 }
@@ -102,30 +170,6 @@ export async function switchArgonAccountServer(
     await execFileAsync("python3", args, { cwd: PROJECT_ROOT, timeout: 15000 });
     return await triggerPythonCycle();
   } catch {
-    const currentRouter = serverlessStateCache.ai_summary?.account_router;
-    if (currentRouter) {
-      const nextSlot =
-        mode === "failover"
-          ? currentRouter.active_slot === "account_1"
-            ? "account_2"
-            : "account_1"
-          : mode;
-      serverlessStateCache = {
-        ...serverlessStateCache,
-        ai_summary: {
-          ...serverlessStateCache.ai_summary,
-          account_router: {
-            ...currentRouter,
-            active_slot: nextSlot,
-            total_switches: currentRouter.total_switches + 1,
-            last_switch_reason:
-              mode === "failover"
-                ? `Tự động Failover sang ${nextSlot} do chạm giới hạn Quota 429 (Cooldown 60 phút)`
-                : `Chuyển đổi chủ động sang ${nextSlot}`,
-          },
-        },
-      };
-    }
-    return serverlessStateCache;
+    throw new Error("Account switching requires the connected Python backend.");
   }
 }

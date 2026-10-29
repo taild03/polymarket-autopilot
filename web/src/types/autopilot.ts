@@ -36,6 +36,8 @@ export interface PortfolioMetrics {
   return_pct: number;
   open_positions_count: number;
   closed_positions_count: number;
+  reserved_cash_usdc?: number;
+  pending_orders_count?: number;
 }
 
 export interface OpenPosition {
@@ -127,6 +129,7 @@ export interface AutopilotState {
   };
   metrics: PortfolioMetrics;
   open_positions: OpenPosition[];
+  pending_orders?: OpenPosition[];
   closed_positions: OpenPosition[];
   latest_signals: TradeSignalItem[];
   latest_decisions: RiskDecisionItem[];

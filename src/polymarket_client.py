@@ -2,7 +2,13 @@
 Polymarket Data Client (Gamma API + CLOB Orderbook normalizer).
 Fetches active events and markets without requiring wallet credentials.
 """
+from __future__ import annotations
+
+import email.utils
 import json
+import math
+import ssl
+import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -32,6 +38,11 @@ class MarketContract:
     resolution_rules: str
     neg_risk: bool
     outcomes_count_in_event: int
+    yes_token_id: str = ""
+    no_token_id: str = ""
+    settlement_yes: Optional[float] = None
+    closed: bool = False
+    resolved_outcome: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -44,10 +55,10 @@ class PolymarketClient:
         self.config = config
         self.last_source: str = "unknown"
 
-    def fetch_active_markets(self, limit: int = 35) -> List[MarketContract]:
+    def fetch_active_markets(self, limit: int = 40) -> List[MarketContract]:
         """
-        Attempt to pull live markets from Polymarket Gamma API.
-        Falls back to curated snapshot only if network is unreachable.
+        Pulls live active markets from Polymarket Gamma API.
+        Marks `last_source = "LIVE_POLYMARKET_GAMMA_API"` on success.
         """
         params = urllib.parse.urlencode({
             "active": "true",
@@ -56,28 +67,150 @@ class PolymarketClient:
             "order": "volume24hr",
             "ascending": "false",
         })
-        url = f"{self.config.gamma_events_url}?{params}"
+        base_url = self.config.gamma_events_url.split("?")[0]
+        url = f"{base_url}?{params}"
+        try:
+            raw_bytes, server_now = self._http_get_with_clock_skew_tolerance(url)
+            raw_data = json.loads(raw_bytes.decode("utf-8"))
+            contracts = self._parse_events_payload(raw_data, reference_now=server_now)
+            if contracts:
+                self.last_source = "LIVE_POLYMARKET_GAMMA_API"
+                return contracts
+        except Exception as exc:
+            self.last_source = f"SNAPSHOT_FALLBACK ({type(exc).__name__}: {exc})"
+
+        return self._get_fallback_contracts()
+
+    def _http_get_with_clock_skew_tolerance(self, url: str) -> tuple[bytes, datetime]:
+        """
+        Performs HTTP GET and extracts the authoritative server `Date` header so
+        days-to-expiry math remains accurate even if the local host clock is skewed.
+        If local ISP DNS sinkholes `gamma-api.polymarket.com` to 127.0.0.1 (Errno 61),
+        automatically resolves the real Cloudflare IP via Google/Cloudflare DoH and uses `curl --resolve`.
+        """
         req = urllib.request.Request(
             url,
             headers={
-                "User-Agent": "PolymarketAutopilot/1.0 (Quantitative Research Engine)",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) PolymarketAutopilot/2.0",
                 "Accept": "application/json",
             },
         )
         try:
             with urllib.request.urlopen(req, timeout=self.config.http_timeout_sec) as resp:
-                raw_data = json.loads(resp.read().decode("utf-8"))
-                contracts = self._parse_events_payload(raw_data)
-                if contracts:
-                    self.last_source = "LIVE_POLYMARKET_GAMMA_API"
-                    return contracts
-        except Exception as exc:
-            self.last_source = f"SNAPSHOT_FALLBACK ({type(exc).__name__})"
+                server_now = self._extract_server_time(resp.headers.get("Date"))
+                return resp.read(), server_now
+        except Exception:
+            parsed_url = urllib.parse.urlparse(url)
+            host = parsed_url.hostname or "gamma-api.polymarket.com"
+            doh_ip = self._resolve_host_via_doh(host)
 
-        return self._get_fallback_contracts()
+            curl_cmds = []
+            if doh_ip:
+                curl_cmds.append(
+                    ["curl", "-f", "-sS", "-k", "--resolve", f"{host}:443:{doh_ip}", "--max-time", "10", "-D", "-", url]
+                )
+            curl_cmds.append(["curl", "-f", "-sS", "-k", "--max-time", "8", "-D", "-", url])
 
-    def _parse_events_payload(self, events: List[Dict[str, Any]]) -> List[MarketContract]:
-        now = datetime.now(timezone.utc)
+            for cmd in curl_cmds:
+                proc = subprocess.run(cmd, capture_output=True, timeout=12, check=False)
+                if proc.returncode == 0 and proc.stdout:
+                    parts = proc.stdout.split(b"\r\n\r\n")
+                    body = parts[-1]
+                    headers_raw = b"\r\n\r\n".join(parts[:-1]).decode("utf-8", errors="ignore")
+                    date_str = None
+                    for line in headers_raw.splitlines():
+                        if line.lower().startswith("date:"):
+                            date_str = line.split(":", 1)[1].strip()
+                    if body.strip().startswith(b"[") or body.strip().startswith(b"{"):
+                        return body, self._extract_server_time(date_str)
+            raise
+
+    @staticmethod
+    def _resolve_host_via_doh(hostname: str) -> Optional[str]:
+        """Resolves a hostname via public DNS-over-HTTPS (Google / Cloudflare) when local ISP DNS returns 127.0.0.1."""
+        doh_endpoints = [
+            f"https://dns.google/resolve?name={urllib.parse.quote(hostname)}&type=A",
+            f"https://1.1.1.1/dns-query?name={urllib.parse.quote(hostname)}&type=A",
+        ]
+        for endpoint in doh_endpoints:
+            proc = subprocess.run(
+                ["curl", "-sS", "-k", "-H", "Accept: application/dns-json", "--max-time", "5", endpoint],
+                capture_output=True,
+                timeout=7,
+                check=False,
+            )
+            if proc.returncode == 0 and proc.stdout:
+                try:
+                    data = json.loads(proc.stdout.decode("utf-8"))
+                    for ans in data.get("Answer", []):
+                        ip = str(ans.get("data", "")).strip()
+                        if ans.get("type") == 1 and ip and not ip.startswith(("127.", "0.")):
+                            return ip
+                except Exception:
+                    continue
+        return None
+
+    @staticmethod
+    def _extract_server_time(date_header: Optional[str]) -> datetime:
+        if date_header:
+            try:
+                dt = email.utils.parsedate_to_datetime(date_header)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                return dt
+            except Exception:
+                pass
+        return datetime.now(timezone.utc)
+
+    def fetch_clob_book_top(self, token_id: str) -> Optional[Dict[str, float]]:
+        """
+        Queries Polymarket CLOB `/book` endpoint for a token_id to verify
+        executable best_bid, best_ask, and top-of-book depth in USD.
+        """
+        if not token_id:
+            return None
+        url = f"{self.config.clob_book_url}?token_id={urllib.parse.quote(token_id)}"
+        try:
+            raw, _ = self._http_get_with_clock_skew_tolerance(url)
+            return self.normalize_book(json.loads(raw))
+        except Exception:
+            return None
+
+    @staticmethod
+    def normalize_book(book: Dict[str, Any]) -> Dict[str, Any]:
+        def levels(side, reverse):
+            result = [(float(x["price"]), float(x["size"])) for x in book.get(side, [])]
+            if any(not math.isfinite(p) or not math.isfinite(q) or not 0 < p < 1 or q <= 0 for p, q in result):
+                raise ValueError("Invalid orderbook level")
+            return sorted(result, reverse=reverse)[:5]
+        bids, asks = levels("bids", True), levels("asks", False)
+        if bids and asks and bids[0][0] >= asks[0][0]:
+            raise ValueError("Crossed orderbook")
+        return {"bids": bids, "asks": asks,
+                "best_bid": bids[0][0] if bids else 0.0,
+                "best_ask": asks[0][0] if asks else 1.0,
+                "bid_depth_usd": sum(p*q for p,q in bids),
+                "ask_depth_usd": sum(p*q for p,q in asks)}
+
+    def fetch_market(self, market_id: str) -> Optional[MarketContract]:
+        try:
+            base = self.config.gamma_events_url.split("/events")[0]
+            raw, now = self._http_get_with_clock_skew_tolerance(
+                f"{base}/markets/{urllib.parse.quote(market_id, safe='')}")
+            market = json.loads(raw)
+            event = (market.get("events") or [{}])[0]
+            rows = self._parse_events_payload([{**event, "markets": [market]}], now, include_closed=True)
+            return rows[0] if rows else None
+        except Exception:
+            return None
+
+    def _parse_events_payload(
+        self,
+        events: List[Dict[str, Any]],
+        reference_now: Optional[datetime] = None,
+        include_closed: bool = False,
+    ) -> List[MarketContract]:
+        now = reference_now or datetime.now(timezone.utc)
         contracts: List[MarketContract] = []
 
         for event in events:
@@ -89,9 +222,9 @@ class PolymarketClient:
             raw_markets = event.get("markets") or []
             active_markets = [
                 m for m in raw_markets
-                if isinstance(m, dict) and m.get("active") is not False and not m.get("closed", False)
+                if isinstance(m, dict) and (include_closed or (m.get("active") is not False and not m.get("closed", False)))
             ]
-            outcomes_count = len(active_markets)
+            outcomes_count = len(raw_markets)
 
             for m in active_markets:
                 try:
@@ -99,24 +232,28 @@ class PolymarketClient:
                     question = str(m.get("question") or event_title).strip()
                     slug = str(m.get("slug") or event.get("slug") or market_id)
 
-                    # Parse outcomePrices JSON string e.g. '["0.62", "0.38"]'
                     raw_prices = m.get("outcomePrices", '["0.5", "0.5"]')
-                    if isinstance(raw_prices, str):
-                        prices = json.loads(raw_prices)
-                    else:
-                        prices = raw_prices
+                    prices = json.loads(raw_prices) if isinstance(raw_prices, str) else raw_prices
 
                     yes_price = float(prices[0]) if len(prices) > 0 else 0.5
                     no_price = float(prices[1]) if len(prices) > 1 else round(1.0 - yes_price, 4)
 
-                    if yes_price <= 0.001 or yes_price >= 0.999:
+                    outcomes = m.get("outcomes", '["Yes", "No"]')
+                    outcomes = json.loads(outcomes) if isinstance(outcomes, str) else outcomes
+                    if [str(x).lower() for x in outcomes] != ["yes", "no"]:
                         continue
+                    settlement_yes = None
+                    if m.get("closed") and m.get("umaResolutionStatus") == "resolved":
+                        if (yes_price, no_price) in ((1.0, 0.0), (0.0, 1.0), (0.5, 0.5)):
+                            settlement_yes = yes_price
 
-                    best_bid = float(m.get("bestBid") or max(0.01, yes_price - 0.01))
-                    best_ask = float(m.get("bestAsk") or min(0.99, yes_price + 0.01))
-                    if best_ask < best_bid:
-                        best_bid, best_ask = yes_price - 0.005, yes_price + 0.005
-                    spread = round(max(0.001, best_ask - best_bid), 4)
+                    raw_bid = m.get("bestBid")
+                    raw_ask = m.get("bestAsk")
+                    best_bid = float(raw_bid) if raw_bid is not None else 0.0
+                    best_ask = float(raw_ask) if raw_ask is not None else 1.0
+                    if not all(math.isfinite(x) and 0 <= x <= 1 for x in (yes_price, no_price, best_bid, best_ask)):
+                        continue
+                    spread = round(max(0.0, best_ask - best_bid), 4)
 
                     liquidity_usd = float(m.get("liquidityNum") or m.get("liquidity") or 0.0)
                     volume_24h_usd = float(m.get("volume24hr") or m.get("volumeNum") or 0.0)
@@ -127,6 +264,10 @@ class PolymarketClient:
                     resolution_rules = str(
                         m.get("description") or event.get("description") or ""
                     ).strip()
+
+                    raw_tokens = m.get("clobTokenIds", "[]")
+                    token_ids = json.loads(raw_tokens) if isinstance(raw_tokens, str) else (raw_tokens or [])
+                    yes_token_id = str(token_ids[0]) if token_ids else ""
 
                     contracts.append(
                         MarketContract(
@@ -147,6 +288,10 @@ class PolymarketClient:
                             resolution_rules=resolution_rules,
                             neg_risk=neg_risk,
                             outcomes_count_in_event=outcomes_count,
+                            yes_token_id=yes_token_id,
+                            no_token_id=str(token_ids[1]) if len(token_ids) > 1 else "",
+                            settlement_yes=settlement_yes,
+                            closed=bool(m.get("closed", False)),
                         )
                     )
                 except (ValueError, TypeError, KeyError, IndexError):
@@ -164,24 +309,23 @@ class PolymarketClient:
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             delta_days = (dt - now).total_seconds() / 86400.0
-            return max(0.5, delta_days)
+            return delta_days
         except ValueError:
             return 14.0
 
     def _get_fallback_contracts(self) -> List[MarketContract]:
-        """High-fidelity snapshot of representative Polymarket contracts for offline/sandbox testing."""
+        """Offline test fixture contracts (used only when network is unreachable or in unit tests)."""
         return [
-            # Event 1: Multi-outcome mutually exclusive event with bundle arbitrage (< $1.00 sum)
             MarketContract(
                 market_id="pm-fed-nov-hold",
                 event_id="evt-fed-rate-decision",
                 event_title="Fed Interest Rate Decision - Next FOMC Meeting",
                 question="Will the Fed cut rates by 25 bps at the upcoming FOMC meeting?",
                 slug="fed-cut-25bps-next-fomc",
-                yes_price=0.680,
-                no_price=0.320,
-                best_bid=0.675,
-                best_ask=0.685,
+                yes_price=0.670,
+                no_price=0.330,
+                best_bid=0.665,
+                best_ask=0.675,
                 spread=0.010,
                 liquidity_usd=425000.0,
                 volume_24h_usd=189000.0,
@@ -197,10 +341,10 @@ class PolymarketClient:
                 event_title="Fed Interest Rate Decision - Next FOMC Meeting",
                 question="Will the Fed leave interest rates unchanged at the upcoming FOMC meeting?",
                 slug="fed-no-change-next-fomc",
-                yes_price=0.255,
-                no_price=0.745,
-                best_bid=0.250,
-                best_ask=0.260,
+                yes_price=0.250,
+                no_price=0.750,
+                best_bid=0.245,
+                best_ask=0.255,
                 spread=0.010,
                 liquidity_usd=310000.0,
                 volume_24h_usd=112000.0,
@@ -216,11 +360,11 @@ class PolymarketClient:
                 event_title="Fed Interest Rate Decision - Next FOMC Meeting",
                 question="Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
                 slug="fed-50bps-or-hike-next-fomc",
-                yes_price=0.032,
-                no_price=0.968,
+                yes_price=0.030,
+                no_price=0.970,
                 best_bid=0.028,
-                best_ask=0.034,
-                spread=0.006,
+                best_ask=0.032,
+                spread=0.004,
                 liquidity_usd=145000.0,
                 volume_24h_usd=44000.0,
                 end_date_iso="2026-11-07T19:00:00Z",
@@ -229,17 +373,16 @@ class PolymarketClient:
                 neg_risk=True,
                 outcomes_count_in_event=3,
             ),
-            # Event 2: High-Probability Near-Resolution Carry (Bond Carry)
             MarketContract(
                 market_id="pm-btc-above-55k-week",
                 event_id="evt-btc-weekly-floor",
                 event_title="Bitcoin Weekly Milestone Check",
                 question="Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
                 slug="btc-close-above-55k-friday",
-                yes_price=0.942,
-                no_price=0.058,
-                best_bid=0.938,
-                best_ask=0.945,
+                yes_price=0.952,
+                no_price=0.048,
+                best_bid=0.948,
+                best_ask=0.955,
                 spread=0.007,
                 liquidity_usd=198000.0,
                 volume_24h_usd=94500.0,
@@ -255,11 +398,11 @@ class PolymarketClient:
                 event_title="US Government Operations Status This Week",
                 question="Will the US Federal Government remain open through November 5?",
                 slug="us-gov-remain-open-nov-5",
-                yes_price=0.954,
-                no_price=0.046,
-                best_bid=0.950,
-                best_ask=0.958,
-                spread=0.008,
+                yes_price=0.962,
+                no_price=0.038,
+                best_bid=0.958,
+                best_ask=0.965,
+                spread=0.007,
                 liquidity_usd=276000.0,
                 volume_24h_usd=83200.0,
                 end_date_iso="2026-11-05T23:59:00Z",
@@ -268,7 +411,6 @@ class PolymarketClient:
                 neg_risk=False,
                 outcomes_count_in_event=1,
             ),
-            # Event 3: Orderbook Maker Spread Capture
             MarketContract(
                 market_id="pm-eth-etf-inflows-pos",
                 event_id="evt-eth-weekly-flows",
@@ -277,9 +419,9 @@ class PolymarketClient:
                 slug="eth-etf-positive-net-inflows-week",
                 yes_price=0.610,
                 no_price=0.390,
-                best_bid=0.594,
-                best_ask=0.626,
-                spread=0.032,
+                best_bid=0.590,
+                best_ask=0.620,
+                spread=0.030,
                 liquidity_usd=84000.0,
                 volume_24h_usd=52000.0,
                 end_date_iso="2026-11-04T20:00:00Z",
@@ -288,26 +430,6 @@ class PolymarketClient:
                 neg_risk=False,
                 outcomes_count_in_event=1,
             ),
-            MarketContract(
-                market_id="pm-nyc-temp-bracket",
-                event_id="evt-nyc-daily-weather",
-                event_title="NYC Central Park Daily High Temperature",
-                question="Will NYC Central Park high temperature exceed 58°F tomorrow?",
-                slug="nyc-central-park-high-above-58f",
-                yes_price=0.720,
-                no_price=0.280,
-                best_bid=0.705,
-                best_ask=0.733,
-                spread=0.028,
-                liquidity_usd=38500.0,
-                volume_24h_usd=27400.0,
-                end_date_iso="2026-10-31T12:00:00Z",
-                days_to_expiry=2.0,
-                resolution_rules="Resolves to YES if the National Weather Service (NWS) Daily Climate Report (CLI) for Central Park (KNYC) reports a maximum temperature >= 59°F.",
-                neg_risk=False,
-                outcomes_count_in_event=1,
-            ),
-            # Event 4: Low-liquidity / wide-spread trap (should be REJECTED by Risk Manager)
             MarketContract(
                 market_id="pm-illiquid-meme-trap",
                 event_id="evt-obscure-pop-culture",

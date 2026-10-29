@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
 Decoupled Backend API Server & 24/7 Autonomous AI Daemon (`server.py`).
-Binds to 0.0.0.0:8080 with CORS enabled so any Frontend (Local, Mobile LAN,
-Cloudflare Tunnel, Tailscale, or GitHub Pages) can poll live data directly
-WITHOUT needing to `git push` on every market tick.
+Binds to 127.0.0.1:8080 by default (configurable via --host) with CORS enabled
+so the local Next.js Frontend or tunnel can poll live data directly.
 """
+from __future__ import annotations
+
 import argparse
 import json
+import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -20,12 +22,12 @@ FALLBACK_HTML_PATH = BASE_DIR / "dashboard.html"
 
 
 def autonomous_background_worker(interval_sec: int) -> None:
-    """Runs continuously in the background to make the system 100% hands-free."""
+    """Runs continuously in the background to keep market state and positions up to date."""
     while True:
         try:
             run_cycle(verbose=False)
-        except Exception:
-            pass
+        except Exception as exc:
+            sys.stderr.write(f"[AUTOPILOT WORKER ERROR] {exc}\n")
         time.sleep(max(10, interval_sec))
 
 
@@ -96,6 +98,7 @@ class AutopilotRequestHandler(BaseHTTPRequestHandler):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Polymarket Decoupled Backend API & Daemon")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Bind host (default: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=8080, help="HTTP port (default: 8080)")
     parser.add_argument("--interval", type=int, default=30, help="Autonomous AI cycle interval in seconds")
     args = parser.parse_args()
@@ -109,8 +112,8 @@ def main() -> None:
     )
     worker.start()
 
-    server = HTTPServer(("0.0.0.0", args.port), AutopilotRequestHandler)
-    print(f"[BACKEND API LIVE] Listening on http://0.0.0.0:{args.port} (CORS enabled for remote Frontend)")
+    server = HTTPServer((args.host, args.port), AutopilotRequestHandler)
+    print(f"[BACKEND API LIVE] Listening on http://{args.host}:{args.port} (CORS enabled)")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

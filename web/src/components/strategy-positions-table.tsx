@@ -8,12 +8,12 @@ function getStrategyMeta(strategy: StrategyType) {
   switch (strategy) {
     case "BUNDLE_ARB":
       return {
-        label: "GOM TRỌN GIỎ (CHẮC THẮNG)",
+        label: "GOM TRỌN GIỎ",
         badgeClass: "bg-[#D8E6FF] text-[#111111]",
       };
     case "BOND_CARRY":
       return {
-        label: "KÈO RÕ KẾT QUẢ 95%+",
+        label: "KÈO XÁC SUẤT CAO",
         badgeClass: "bg-[#B8F397] text-[#111111]",
       };
     case "MAKER_SPREAD":
@@ -25,9 +25,9 @@ function getStrategyMeta(strategy: StrategyType) {
 }
 
 function getSideVietnamese(side: string): string {
-  if (side === "YES_NO_BUNDLE") return "MUA CẢ 2 CỬA CÓ + KHÔNG";
-  if (side === "YES") return "CHỌN CỬA CÓ (YES)";
-  if (side === "NO") return "CHỌN CỬA KHÔNG (NO)";
+  if (side === "BUY_BUNDLE") return "MUA GIỎ CÁC CỬA YES";
+  if (side === "BUY_YES") return "CHỌN CỬA CÓ (YES)";
+  if (side === "BUY_NO") return "CHỌN CỬA KHÔNG (NO)";
   return side;
 }
 
@@ -36,13 +36,7 @@ function buildPlainVietnameseExplanation(pos: OpenPosition): string {
   const fairCents = (pos.fair_value * 100).toFixed(1);
   const days = Math.max(1, Math.round(pos.days_to_expiry));
 
-  if (pos.strategy === "BUNDLE_ARB") {
-    return `Tổng giá mua trọn bộ các cửa chỉ tốn ${entryCents} xu (rẻ hơn mức trả thưởng 100 xu). Bất kể kết quả sự kiện ra sao, khi đóng sổ cũng thu về đủ 100 xu.`;
-  }
-  if (pos.strategy === "BOND_CARRY") {
-    return `Kèo này đã ngã ngũ tới ${fairCents}% ngoài thực tế. Máy mua ở giá ${entryCents} xu và giữ ${days} ngày tới lúc kết thúc để nhận 100 xu.`;
-  }
-  return `Máy đặt giá chờ mua rẻ ở mức ${entryCents} xu (trong khi giá thị trường là ${fairCents} xu) để ăn ngay chênh lệch khi khớp lệnh.`;
+  return pos.rationale || `Giá vào ${entryCents} xu; ước tính ${fairCents} xu; còn khoảng ${days} ngày. Kết quả phụ thuộc thị trường và phân xử.`;
 }
 
 function translateRejectReason(reason: string): string {
@@ -84,7 +78,7 @@ export function StrategyPositionsTable() {
     },
     {
       id: "BOND_CARRY",
-      label: "THẮNG 95%+",
+      label: "XÁC SUẤT CAO",
       count: openPositions.filter((p) => p.strategy === "BOND_CARRY").length,
     },
     {
@@ -151,6 +145,16 @@ export function StrategyPositionsTable() {
         </div>
       </div>
 
+      {(data.pending_orders ?? []).length > 0 && (
+        <section className="mt-5 rounded-xl border-2 border-[#111111] bg-[#FFD166] p-4" aria-label="Lệnh chờ khớp">
+          <h3 className="font-bold">LỆNH CHỜ KHỚP — TIỀN ĐÃ GIỮ CHỖ</h3>
+          {(data.pending_orders ?? []).map((order) => (
+            <p key={order.position_id} className="mt-2">
+              {order.question} · Giá chờ {(order.entry_price * 100).toFixed(1)}¢ · Giữ chỗ ${order.cost_basis_usdc.toFixed(2)}
+            </p>
+          ))}
+        </section>
+      )}
       {/* Main Content */}
       {filterMode === "REJECTED" ? (
         <div className="mt-5 space-y-4">
@@ -249,7 +253,7 @@ export function StrategyPositionsTable() {
                   {/* Plain Vietnamese Explanation */}
                   <div className="mt-3.5 rounded-[12px] border-2 border-[#111111] bg-[#F4F0EA] p-3.5 text-[15px] font-semibold leading-relaxed text-[#111111]">
                     <span className="font-extrabold uppercase underline decoration-2">
-                      Lý do thắng:{" "}
+                      Cơ sở chiến lược:{" "}
                     </span>
                     {buildPlainVietnameseExplanation(pos)}
                   </div>

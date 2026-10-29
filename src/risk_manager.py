@@ -1,6 +1,8 @@
 """
 Hard-coded Risk Manager & Position Sizer for Polymarket Autopilot.
-Enforces strict capital preservation rules before any paper or live order is placed.
+Enforces strict capital preservation rules and exact Binary Kelly sizing:
+    f* = (p - c) / (1 - c)
+before any paper or live order is placed.
 """
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Set
@@ -27,7 +29,7 @@ class RiskDecision:
 
 
 class RiskManager:
-    """Evaluates trade signals against quantitative risk guardrails and sizes positions via Quarter-Kelly."""
+    """Evaluates trade signals against quantitative risk guardrails and sizes positions via Binary Quarter-Kelly."""
 
     def __init__(self, config: TradingConfig = DEFAULT_CONFIG):
         self.config = config
@@ -43,12 +45,12 @@ class RiskManager:
     ) -> RiskDecision:
         checks_passed: List[str] = []
 
-        # 1. Kill-Switch Check: Daily Drawdown
+        # 1. Kill-Switch Check: Daily Drawdown against start-of-day / peak equity
         max_loss_usdc = -abs(total_equity_usdc * self.config.max_daily_drawdown_pct)
         if daily_pnl_usdc <= max_loss_usdc:
             return self._reject(
                 signal,
-                f"KILL_SWITCH_ACTIVE: Lỗ trong ngày (${daily_pnl_usdc:.2f}) vượt ngưỡng {self.config.max_daily_drawdown_pct * 100:.1f}%",
+                f"KILL_SWITCH_ACTIVE: Sụt giảm trong ngày (${daily_pnl_usdc:.2f}) vượt ngưỡng {self.config.max_daily_drawdown_pct * 100:.1f}%",
                 checks_passed,
             )
         checks_passed.append("KILL_SWITCH_OK")
@@ -78,10 +80,15 @@ class RiskManager:
         checks_passed.append("LIQUIDITY_OK")
 
         # 4. Spread / Slippage Check
-        if signal.spread > self.config.max_spread_taker:
+        max_allowed_spread = (
+            self.config.maker_max_spread
+            if signal.strategy == "MAKER_SPREAD"
+            else self.config.max_spread_taker
+        )
+        if signal.spread > max_allowed_spread:
             return self._reject(
                 signal,
-                f"WIDE_SPREAD: Chênh lệch Bid-Ask ({signal.spread * 100:.1f}¢) vượt trần cho phép ({self.config.max_spread_taker * 100:.1f}¢)",
+                f"WIDE_SPREAD: Chênh lệch Bid-Ask ({signal.spread * 100:.1f}¢) vượt trần cho phép ({max_allowed_spread * 100:.1f}¢)",
                 checks_passed,
             )
         checks_passed.append("SPREAD_OK")
@@ -98,7 +105,10 @@ class RiskManager:
         # 6. Portfolio Exposure Ceiling Check
         max_total_exposure = total_equity_usdc * self.config.max_total_exposure_pct
         remaining_exposure_budget = max_total_exposure - current_exposure_usdc
-        if remaining_exposure_budget < 10.0 or available_cash_usdc < 10.0:
+        if (
+            remaining_exposure_budget < self.config.min_order_size_usdc
+            or available_cash_usdc < self.config.min_order_size_usdc
+        ):
             return self._reject(
                 signal,
                 f"EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn ({self.config.max_total_exposure_pct * 100:.0f}% tổng tài sản)",
@@ -106,19 +116,35 @@ class RiskManager:
             )
         checks_passed.append("EXPOSURE_BUDGET_OK")
 
-        # 7. Quarter-Kelly Position Sizing Capped at max_position_pct (5%)
+        # 7. Exact Binary Kelly Position Sizing: f* = (p - c) / (1 - c)
+        p = signal.fair_value
+        c = signal.entry_price
+        if p <= c or c <= 0.0 or c >= 0.999:
+            return self._reject(
+                signal,
+                f"NEGATIVE_OR_ZERO_EDGE: Xác suất kỳ vọng ({p:.4f}) không lớn hơn giá mua ({c:.4f})",
+                checks_passed,
+            )
+
+        raw_binary_kelly = (p - c) / (1.0 - c)
+        quarter_kelly_pct = raw_binary_kelly * self.config.kelly_fraction
         max_single_trade_usdc = total_equity_usdc * self.config.max_position_pct
-        edge_decimal = max(0.005, signal.edge_bps / 10000.0)
-        odds_b = max(0.03, (1.0 - signal.entry_price) / max(0.05, signal.entry_price))
-        raw_kelly_pct = edge_decimal / odds_b
-        fractional_kelly_usdc = total_equity_usdc * min(0.20, raw_kelly_pct * self.config.kelly_fraction)
 
-        # Bound position size between $15 min and $50 max (5% of $1,000)
-        target_usdc = max(15.0, min(max_single_trade_usdc, fractional_kelly_usdc))
-        final_size_usdc = round(min(target_usdc, remaining_exposure_budget, available_cash_usdc), 2)
-        shares_qty = round(final_size_usdc / signal.entry_price, 2)
+        kelly_usdc = total_equity_usdc * quarter_kelly_pct
+        target_usdc = min(max_single_trade_usdc, kelly_usdc)
+        final_size_usdc = round(
+            min(target_usdc, remaining_exposure_budget, available_cash_usdc), 2
+        )
 
-        checks_passed.append(f"KELLY_SIZED_${final_size_usdc:.2f}")
+        if final_size_usdc < self.config.min_order_size_usdc:
+            return self._reject(
+                signal,
+                f"KELLY_SIZE_TOO_SMALL: Quy mô Kelly (${final_size_usdc:.2f}) nhỏ hơn lệnh tối thiểu (${self.config.min_order_size_usdc:.2f})",
+                checks_passed,
+            )
+
+        shares_qty = final_size_usdc / signal.entry_price
+        checks_passed.append(f"BINARY_KELLY_SIZED_${final_size_usdc:.2f}")
 
         return RiskDecision(
             signal_id=signal.signal_id,
@@ -134,7 +160,9 @@ class RiskManager:
         )
 
     @staticmethod
-    def _reject(signal: TradeSignal, reason: str, checks_passed: List[str]) -> RiskDecision:
+    def _reject(
+        signal: TradeSignal, reason: str, checks_passed: List[str]
+    ) -> RiskDecision:
         return RiskDecision(
             signal_id=signal.signal_id,
             market_id=signal.market_id,

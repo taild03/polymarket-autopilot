@@ -4,13 +4,16 @@ Manages multiple Google / Antigravity accounts (Account #1 & Account #2 with Arg
 Automatically detects quota exhaustion (HTTP 429 / RESOURCE_EXHAUSTED / rate-limit)
 and hot-swaps the active credential profile so the 24/7 trading daemon never stops.
 """
+from __future__ import annotations
+
 import json
 import os
+import re
 import shutil
 from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from .config import DATA_DIR
 
@@ -20,15 +23,10 @@ CLI_STATE_FILE = GEMINI_HOME / "antigravity-cli" / "jetski_state.pbtxt"
 PROFILES_ROOT = GEMINI_HOME / "autopilot_accounts"
 ROUTER_STATE_FILE = DATA_DIR / "account_router_state.json"
 
-QUOTA_ERROR_PATTERNS = (
-    "429",
-    "quota",
-    "resource_exhausted",
-    "rate limit",
-    "rate_limit",
-    "too many requests",
-    "exhausted",
-    "limit exceeded",
+QUOTA_ERROR_REGEX = re.compile(
+    r"(?:\bhttp[s]?[\s/:]*429\b|\berror[\s:]*429\b|\bstatus[\s:]*429\b|\b429\s+quota\b|\b429\s+too\s+many\b|"
+    r"resource_exhausted|quota\s+exceeded|rate[\s_-]?limit|too\s+many\s+requests|limit\s+exceeded)",
+    re.IGNORECASE,
 )
 
 
@@ -51,20 +49,29 @@ class AccountSlot:
 class ArgonAccountRouter:
     """
     Hot-swaps between 2+ Google Argon accounts when quota limits are reached.
-    Supports both Antigravity OAuth token profiles and fallback API keys.
+    Supports both Antigravity OAuth token profiles and fallback API keys,
+    plus isolated test mode so unit tests never overwrite live credentials.
     """
 
-    def __init__(self, cooldown_minutes: int = 60) -> None:
+    def __init__(
+        self,
+        cooldown_minutes: int = 60,
+        state_file: Optional[Path] = None,
+        isolated_mode: bool = False,
+    ) -> None:
         self.cooldown_minutes = cooldown_minutes
+        self.isolated_mode = isolated_mode or (os.environ.get("AUTOPILOT_TEST_MODE") == "1")
+        self.state_file = state_file or ROUTER_STATE_FILE
         PROFILES_ROOT.mkdir(parents=True, exist_ok=True)
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.state = self._load_or_init_state()
         self._auto_enroll_primary_if_needed()
+        self._refresh_expired_cooldowns()
 
     def _load_or_init_state(self) -> Dict[str, Any]:
-        if ROUTER_STATE_FILE.exists():
+        if not self.isolated_mode and self.state_file.exists():
             try:
-                return json.loads(ROUTER_STATE_FILE.read_text(encoding="utf-8"))
+                return json.loads(self.state_file.read_text(encoding="utf-8"))
             except Exception:
                 pass
 
@@ -103,16 +110,40 @@ class ArgonAccountRouter:
 
     def _save_state(self, state: Optional[Dict[str, Any]] = None) -> None:
         target = state or self.state
-        ROUTER_STATE_FILE.write_text(json.dumps(target, indent=2, ensure_ascii=False), encoding="utf-8")
+        if not self.isolated_mode:
+            self.state_file.write_text(
+                json.dumps(target, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
+
+    def _refresh_expired_cooldowns(self) -> None:
+        now_utc = datetime.now(timezone.utc)
+        changed = False
+        for slot_id, info in self.state.get("accounts", {}).items():
+            cd_iso = info.get("cooldown_until_iso", "")
+            if cd_iso:
+                try:
+                    cd_dt = datetime.fromisoformat(cd_iso.replace("Z", "+00:00"))
+                    if now_utc >= cd_dt:
+                        info["cooldown_until_iso"] = ""
+                        if info.get("status") == "COOLDOWN":
+                            info["status"] = (
+                                "ACTIVE"
+                                if self.state.get("active_slot") == slot_id
+                                else ("STANDBY" if info.get("configured") else "READY_TO_LINK")
+                            )
+                        changed = True
+                except Exception:
+                    pass
+        if changed:
+            self._save_state()
 
     def _auto_enroll_primary_if_needed(self) -> None:
         """Automatically snapshots the currently logged-in Google account into slot `account_1`."""
         slot1_dir = PROFILES_ROOT / "account_1"
         slot1_token = slot1_dir / "jetski-standalone-oauth-token"
-        if OAUTH_TOKEN_FILE.exists() and not slot1_token.exists():
+        if not self.isolated_mode and OAUTH_TOKEN_FILE.exists() and not slot1_token.exists():
             self.save_current_login_to_slot("account_1", label="Google Argon #1 (Primary)")
 
-        # Refresh configured flags
         for slot_id in ("account_1", "account_2"):
             slot_token = PROFILES_ROOT / slot_id / "jetski-standalone-oauth-token"
             env_key = os.environ.get(f"GEMINI_API_KEY_{slot_id[-1]}")
@@ -130,12 +161,13 @@ class ArgonAccountRouter:
         slot_dir.mkdir(parents=True, exist_ok=True)
 
         copied = False
-        if OAUTH_TOKEN_FILE.exists():
-            shutil.copy2(OAUTH_TOKEN_FILE, slot_dir / "jetski-standalone-oauth-token")
-            copied = True
-        if CLI_STATE_FILE.exists():
-            shutil.copy2(CLI_STATE_FILE, slot_dir / "jetski_state.pbtxt")
-            copied = True
+        if not self.isolated_mode:
+            if OAUTH_TOKEN_FILE.exists():
+                shutil.copy2(OAUTH_TOKEN_FILE, slot_dir / "jetski-standalone-oauth-token")
+                copied = True
+            if CLI_STATE_FILE.exists():
+                shutil.copy2(CLI_STATE_FILE, slot_dir / "jetski_state.pbtxt")
+                copied = True
 
         acct = self.state["accounts"][slot_id]
         acct["configured"] = copied
@@ -150,14 +182,16 @@ class ArgonAccountRouter:
         if slot_id not in self.state["accounts"]:
             return False
 
+        self._refresh_expired_cooldowns()
         slot_dir = PROFILES_ROOT / slot_id
         slot_token = slot_dir / "jetski-standalone-oauth-token"
         slot_state = slot_dir / "jetski_state.pbtxt"
 
-        if slot_token.exists():
-            shutil.copy2(slot_token, OAUTH_TOKEN_FILE)
-        if slot_state.exists() and CLI_STATE_FILE.parent.exists():
-            shutil.copy2(slot_state, CLI_STATE_FILE)
+        if not self.isolated_mode:
+            if slot_token.exists():
+                shutil.copy2(slot_token, OAUTH_TOKEN_FILE)
+            if slot_state.exists() and CLI_STATE_FILE.parent.exists():
+                shutil.copy2(slot_state, CLI_STATE_FILE)
 
         now_iso = datetime.now(timezone.utc).isoformat()
         prev_slot = self.state["active_slot"]
@@ -170,7 +204,6 @@ class ArgonAccountRouter:
         for s_id, info in self.state["accounts"].items():
             if s_id == slot_id:
                 info["status"] = "ACTIVE"
-                info["cooldown_until_iso"] = ""
             else:
                 if info["status"] == "ACTIVE":
                     info["status"] = "STANDBY" if info["configured"] else "READY_TO_LINK"
@@ -186,15 +219,17 @@ class ArgonAccountRouter:
         self._save_state()
 
     def is_quota_error(self, output_or_error: str) -> bool:
-        lower = (output_or_error or "").lower()
-        return any(pat in lower for pat in QUOTA_ERROR_PATTERNS)
+        if not output_or_error:
+            return False
+        return bool(QUOTA_ERROR_REGEX.search(output_or_error))
 
     def handle_quota_exhausted(self, error_detail: str = "429 Quota Exceeded") -> str:
         """
         Marks the current active slot as COOLDOWN and automatically fails over
-        to the alternate Google Argon account slot.
+        to the alternate Google Argon account slot if available.
         Returns the newly activated slot_id.
         """
+        self._refresh_expired_cooldowns()
         now = datetime.now(timezone.utc)
         cooldown_until = (now + timedelta(minutes=self.cooldown_minutes)).isoformat()
 
@@ -205,15 +240,26 @@ class ArgonAccountRouter:
         cur_acct["cooldown_until_iso"] = cooldown_until
 
         next_slot = "account_2" if current_slot == "account_1" else "account_1"
-        reason = (
-            f"Tự động Failover từ {current_slot} sang {next_slot} do chạm giới hạn Quota "
-            f"({error_detail[:60]}). Cooldown {self.cooldown_minutes} phút."
-        )
+        next_acct = self.state["accounts"][next_slot]
+        next_cd = next_acct.get("cooldown_until_iso", "")
+
+        if next_cd:
+            reason = (
+                f"Cả 2 tài khoản đều chạm Quota ({error_detail[:50]}). "
+                f"Chuyển tạm sang {next_slot} chờ hết Cooldown."
+            )
+        else:
+            reason = (
+                f"Tự động Failover từ {current_slot} sang {next_slot} do chạm giới hạn Quota "
+                f"({error_detail[:60]}). Cooldown {self.cooldown_minutes} phút."
+            )
         self.activate_slot(next_slot, reason=reason)
         cur_acct["status"] = "COOLDOWN"
+        cur_acct["cooldown_until_iso"] = cooldown_until
         self._save_state()
         return next_slot
 
     def get_status_summary(self) -> Dict[str, Any]:
         self._auto_enroll_primary_if_needed()
+        self._refresh_expired_cooldowns()
         return self.state

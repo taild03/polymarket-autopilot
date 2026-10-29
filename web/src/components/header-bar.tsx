@@ -40,6 +40,18 @@ export function HeaderBar() {
                 VÒNG QUÉT #{m.cycle_count}
               </span>
               <span className="text-white/40">•</span>
+              <span
+                className={`rounded-[6px] px-2.5 py-0.5 text-[12px] font-extrabold uppercase ${
+                  data.data_source === "LIVE_POLYMARKET_GAMMA_API"
+                    ? "bg-[#B8F397]/20 text-[#B8F397]"
+                    : "bg-[#FFD166]/20 text-[#FFD166]"
+                }`}
+              >
+                {data.data_source === "LIVE_POLYMARKET_GAMMA_API"
+                  ? `POLYMARKET LIVE (${data.scanned_markets_count} KÈO)`
+                  : "CHẾ ĐỘ SNAPSHOT (TẠM KHÓA VÀO LỆNH)"}
+              </span>
+              <span className="text-white/40">•</span>
               <span className="font-mono text-[#FFD166]">{liveClock}</span>
             </div>
           </div>

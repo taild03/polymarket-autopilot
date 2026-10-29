@@ -1,8 +1,12 @@
 """
 AI-Driven Autonomous Analyst & Portfolio Manager for Polymarket Autopilot.
 Integrated with `ArgonAccountRouter` (`src/account_router.py`) for automatic
-failover between 2 Google Argon accounts when quota limits are reached.
+failover between 2 Google Argon accounts when quota limits are reached,
+with persistent rule-hash caching so unchanged market rules are not re-queried.
 """
+from __future__ import annotations
+
+import hashlib
 import json
 import os
 import re
@@ -15,10 +19,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .account_router import ArgonAccountRouter
+from .config import AI_CACHE_FILE_PATH
 from .polymarket_client import MarketContract
 from .strategy_engine import TradeSignal
 
 AGY_BIN_DEFAULT = "/Users/taileduc/.local/bin/agy"
+VALID_VERDICTS = {"STRONG_BUY", "APPROVE", "VETO_TRAP"}
 
 AUDIT_JSON_SCHEMA = json.dumps({
     "type": "object",
@@ -62,53 +68,102 @@ class PositionExitDecision:
 
 
 class AutonomousAIAnalyst:
-    """Zero-touch AI brain with automatic Dual-Account Google Argon Quota Failover."""
+    """Zero-touch AI brain with automatic Dual-Account Google Argon Quota Failover and Rule Caching."""
 
     SUBJECTIVE_KEYWORDS = [
         "meme", "rumor", "vague", "opinion", "controversial", "might", "social media poll"
     ]
     AUTHORITATIVE_SOURCES = [
         "federal reserve", "fomc", "coinbase", "national weather service", "nws",
-        "opm", "farside", "official", "sec", "bls", "department of"
+        "opm", "farside", "official", "sec", "bls", "department of", "associated press", "reuters"
     ]
 
-    def __init__(self, use_agy_cli: bool = True) -> None:
-        self.account_router = ArgonAccountRouter()
+    def __init__(self, use_agy_cli: bool = True, isolated_mode: bool = False) -> None:
+        self.account_router = ArgonAccountRouter(isolated_mode=isolated_mode)
         self.agy_bin: Optional[str] = (
             AGY_BIN_DEFAULT if Path(AGY_BIN_DEFAULT).exists() else shutil.which("agy")
         )
         self.use_agy_cli = use_agy_cli and bool(self.agy_bin)
         self.gemini_api_key: Optional[str] = os.environ.get("GEMINI_API_KEY")
+        self.isolated_mode = isolated_mode or (os.environ.get("AUTOPILOT_TEST_MODE") == "1")
+        self._rules_cache: Dict[str, Dict[str, Any]] = self._load_rules_cache()
 
-        if self.use_agy_cli:
+        if self.use_agy_cli and os.environ.get("AUTOPILOT_ENABLE_AGY_SUBPROCESS", "0") == "1":
             self.ai_mode = "AGY_CLI_AGENT"
         elif self.gemini_api_key:
             self.ai_mode = "GEMINI_LLM"
         else:
             self.ai_mode = "QUANT_SEMANTIC_AI"
 
+    def _load_rules_cache(self) -> Dict[str, Dict[str, Any]]:
+        if not self.isolated_mode and AI_CACHE_FILE_PATH.exists():
+            try:
+                return json.loads(AI_CACHE_FILE_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                return {}
+        return {}
+
+    def _save_rules_cache(self) -> None:
+        if not self.isolated_mode:
+            try:
+                AI_CACHE_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+                AI_CACHE_FILE_PATH.write_text(
+                    json.dumps(self._rules_cache, indent=2, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+            except Exception:
+                pass
+
+    @staticmethod
+    def _normalize_verdict(raw_verdict: Any) -> str:
+        val = str(raw_verdict or "").strip().upper()
+        if val == "CAUTIOUS_BUY":
+            return "APPROVE"
+        if val in VALID_VERDICTS:
+            return val
+        return "VETO_TRAP"
+
     def audit_signal(self, signal: TradeSignal, contract: Optional[MarketContract]) -> MarketAIAudit:
         """
-        Audits a candidate trade signal by calling `agy -p` (Antigravity CLI) with automatic
-        dual-account quota failover, then Gemini API, and embedded Semantic Quant AI Engine.
+        Audits a candidate trade signal by checking the rule-hash cache first, then calling
+        `agy -p` (Antigravity CLI) with dual-account quota failover, Gemini REST API,
+        or the deterministic Quantitative Rule-Clarity Engine.
         """
         rules_text = (contract.resolution_rules if contract else "").strip()
         question_text = signal.question
+        rule_hash = hashlib.sha256(f"{question_text}||{rules_text}".encode("utf-8")).hexdigest()[:16]
+        cache_key = f"{signal.market_id}:{rule_hash}"
+
+        cached = self._rules_cache.get(cache_key)
+        if cached and cached.get("ai_mode") in ("AGY_CLI_AGENT", "GEMINI_LLM"):
+            return MarketAIAudit(
+                market_id=signal.market_id,
+                question=signal.question,
+                ai_mode=str(cached["ai_mode"]),
+                oracle_clarity_score=float(cached["oracle_clarity_score"]),
+                ambiguity_flags=list(cached.get("ambiguity_flags", [])),
+                ai_fair_prob=float(cached.get("ai_fair_prob", signal.fair_value)),
+                ai_verdict=self._normalize_verdict(cached.get("ai_verdict")),
+                ai_reasoning=str(cached.get("ai_reasoning", "")),
+            )
 
         # 1. Primary: Active invocation of Antigravity CLI (`agy -p`) with Dual-Account Failover
         if self.use_agy_cli and os.environ.get("AUTOPILOT_ENABLE_AGY_SUBPROCESS", "0") == "1":
             agy_audit = self._try_agy_cli_audit_with_failover(signal, rules_text)
             if agy_audit is not None:
+                self._rules_cache[cache_key] = agy_audit.to_dict()
+                self._save_rules_cache()
                 return agy_audit
 
         # 2. Secondary: Live Gemini REST API if GEMINI_API_KEY is present
         if self.gemini_api_key:
             llm_audit = self._try_gemini_audit(signal, rules_text)
             if llm_audit is not None:
+                self._rules_cache[cache_key] = llm_audit.to_dict()
+                self._save_rules_cache()
                 return llm_audit
 
-        # 3. Embedded Zero-Latency Semantic Quantitative AI Engine (records call on active Argon slot)
-        self.account_router.record_success()
+        # 3. Deterministic Quantitative Rule-Clarity Engine (does not inflate LLM call counters)
         active_slot = self.account_router.state.get("active_slot", "account_1")
 
         lower_rules = rules_text.lower()
@@ -133,7 +188,7 @@ class AutonomousAIAnalyst:
                 clarity -= 30.0
                 flags.append(f"Từ khóa rủi ro thao túng/mơ hồ: '{kw}'")
 
-        if re.search(r"\b(utc|et|bps|\$\d+|°f|11:59|23:59)\b", lower_rules):
+        if re.search(r"\b(utc|et|bps|\$\d+|°f|11:59|23:59|202\d)\b", lower_rules):
             clarity += 8.0
 
         clarity = max(5.0, min(99.0, round(clarity, 1)))
@@ -145,13 +200,13 @@ class AutonomousAIAnalyst:
                 f"[{active_slot} VETO] Phát hiện rủi ro tranh chấp UMA Oracle (Clarity {clarity}/100). "
                 f"Cảnh báo: {', '.join(flags)}."
             )
-        elif clarity >= 82.0 and signal.edge_bps >= 100.0:
+        elif clarity >= 82.0 and signal.edge_bps >= 80.0:
             verdict = "STRONG_BUY"
-            ai_fair = round(min(0.995, signal.fair_value + 0.004), 4)
+            ai_fair = signal.fair_value
             src_note = matched_sources[0].upper() if matched_sources else "PRIMARY_ORACLE"
             reasoning = (
                 f"[{active_slot} STRONG_BUY] Luật phân xử định lượng rõ ràng ({clarity}/100, nguồn {src_note}). "
-                f"Xác nhận lợi thế +{signal.edge_bps:.0f} bps ({signal.strategy})."
+                f"Xác nhận lợi thế ròng +{signal.edge_bps:.0f} bps ({signal.strategy})."
             )
         else:
             verdict = "APPROVE"
@@ -164,7 +219,7 @@ class AutonomousAIAnalyst:
         return MarketAIAudit(
             market_id=signal.market_id,
             question=signal.question,
-            ai_mode=self.ai_mode,
+            ai_mode="QUANT_SEMANTIC_AI",
             oracle_clarity_score=clarity,
             ambiguity_flags=flags,
             ai_fair_prob=ai_fair,
@@ -199,13 +254,12 @@ class AutonomousAIAnalyst:
             "20s",
         ]
 
-        # Try up to 2 attempts (Active Account -> Failover Backup Account if Quota hit)
-        for attempt in range(2):
+        for _ in range(2):
             try:
                 proc = subprocess.run(cmd, capture_output=True, text=True, timeout=22, check=False)
                 combined_out = f"{proc.stdout}\n{proc.stderr}"
                 if self.account_router.is_quota_error(combined_out):
-                    new_slot = self.account_router.handle_quota_exhausted(combined_out.strip())
+                    self.account_router.handle_quota_exhausted(combined_out.strip())
                     continue
 
                 if proc.returncode != 0 or not proc.stdout.strip():
@@ -217,6 +271,7 @@ class AutonomousAIAnalyst:
 
                 self.account_router.record_success()
                 active_slot = self.account_router.state.get("active_slot", "account_1")
+                verdict = self._normalize_verdict(parsed.get("verdict", "APPROVE"))
                 return MarketAIAudit(
                     market_id=signal.market_id,
                     question=signal.question,
@@ -224,7 +279,7 @@ class AutonomousAIAnalyst:
                     oracle_clarity_score=float(parsed.get("clarity_score", 85.0)),
                     ambiguity_flags=[],
                     ai_fair_prob=float(parsed.get("fair_prob", signal.fair_value)),
-                    ai_verdict=str(parsed.get("verdict", "APPROVE")),
+                    ai_verdict=verdict,
                     ai_reasoning=f"[{active_slot} agy CLI] {parsed.get('reasoning', 'Đã kiểm duyệt bởi Antigravity CLI.')}",
                 )
             except Exception:
@@ -232,6 +287,11 @@ class AutonomousAIAnalyst:
         return None
 
     def evaluate_open_positions(self, open_positions: List[Dict[str, Any]]) -> List[PositionExitDecision]:
+        """
+        Evaluates open positions using strictly executable mark_price (live best_bid).
+        Only triggers TAKE_PROFIT when live bid genuinely exceeds entry_price by target threshold,
+        or STOP_LOSS when live bid drops below adverse stop threshold (-5.0% beyond spread).
+        """
         decisions: List[PositionExitDecision] = []
 
         for pos in open_positions:
@@ -249,7 +309,7 @@ class AutonomousAIAnalyst:
             captured_move = mark_price - entry_price
             capture_ratio = captured_move / total_expected_move
 
-            if capture_ratio >= 0.75 or pnl_pct >= 2.2:
+            if captured_move > 0 and (capture_ratio >= 0.75 or pnl_pct >= 2.2):
                 decisions.append(
                     PositionExitDecision(
                         position_id=pos_id,
@@ -259,13 +319,13 @@ class AutonomousAIAnalyst:
                         exit_price=mark_price,
                         realized_pnl_usdc=round(unrealized_pnl, 2),
                         ai_reasoning=(
-                            f"[AI AUTO-TAKE-PROFIT] Giá thị trường (${mark_price:.3f}) đã hội tụ "
-                            f"{min(100.0, capture_ratio * 100):.0f}% về Fair Value (${fair_value:.3f}). "
-                            f"Tự động chốt lời +${unrealized_pnl:.2f} (+{pnl_pct:.2f}%) để thu hồi vốn quay vòng."
+                            f"[AI AUTO-TAKE-PROFIT] Giá Bid thực tế trên sổ lệnh (${mark_price:.3f}) đã tăng vượt giá vốn "
+                            f"(${entry_price:.3f}), hội tụ {min(100.0, capture_ratio * 100):.0f}% về Fair Value (${fair_value:.3f}). "
+                            f"Chốt lời thực tế +${unrealized_pnl:.2f} (+{pnl_pct:.2f}%)."
                         ),
                     )
                 )
-            elif pnl_pct <= -3.5:
+            elif pnl_pct <= -5.0:
                 decisions.append(
                     PositionExitDecision(
                         position_id=pos_id,
@@ -275,7 +335,7 @@ class AutonomousAIAnalyst:
                         exit_price=mark_price,
                         realized_pnl_usdc=round(unrealized_pnl, 2),
                         ai_reasoning=(
-                            f"[AI AUTO-STOP-LOSS] Vị thế giảm {pnl_pct:.2f}% xuống ${mark_price:.3f}. "
+                            f"[AI AUTO-STOP-LOSS] Giá Bid thanh khoản (${mark_price:.3f}) giảm {pnl_pct:.2f}% so với giá vào. "
                             f"Cắt lỗ tự động (${unrealized_pnl:.2f}) để bảo toàn vốn."
                         ),
                     )
@@ -290,15 +350,20 @@ class AutonomousAIAnalyst:
                         exit_price=mark_price,
                         realized_pnl_usdc=0.0,
                         ai_reasoning=(
-                            f"[AI HOLD] Đang nắm giữ (Lãi tạm tính +${unrealized_pnl:.2f} / "
-                            f"Đã đạt {max(0.0, capture_ratio * 100):.0f}% mục tiêu hội tụ giá)."
+                            f"[AI HOLD] Đang nắm giữ theo sổ lệnh thực (Mark Bid ${mark_price:.3f} vs Entry ${entry_price:.3f} | "
+                            f"PnL tạm tính {unrealized_pnl:+.2f} USDC)."
                         ),
                     )
                 )
 
         return decisions
 
-    def generate_self_tuning_summary(self, metrics: Dict[str, Any], decisions_count: int) -> Dict[str, Any]:
+    def generate_self_tuning_summary(
+        self,
+        metrics: Dict[str, Any],
+        decisions_count: int,
+        data_source: str = "LIVE_POLYMARKET_GAMMA_API",
+    ) -> Dict[str, Any]:
         total_pnl = float(metrics.get("total_pnl_usdc", 0.0))
         realized_pnl = float(metrics.get("realized_pnl_usdc", 0.0))
         unrealized_pnl = float(metrics.get("unrealized_pnl_usdc", 0.0))
@@ -308,18 +373,24 @@ class AutonomousAIAnalyst:
         router_status = self.account_router.get_status_summary()
         active_slot = router_status.get("active_slot", "account_1")
 
-        if total_pnl >= 0:
+        if data_source != "LIVE_POLYMARKET_GAMMA_API":
+            regime = "OFFLINE_SNAPSHOT_READONLY"
+            recommendation = (
+                f"[{active_slot} STANDBY] Mất kết nối tới Polymarket Gamma API ({data_source}). "
+                f"Hệ thống tự động khóa mở vị thế mới để tránh giao dịch trên dữ liệu giả lập."
+            )
+        elif total_pnl >= 0:
             regime = "OPTIMAL_COMPOUNDING"
             recommendation = (
-                f"[{active_slot} ACTIVE] Hệ thống đang sinh lời tự động (+${total_pnl:.2f} USDC | "
-                f"Đã chốt: +${realized_pnl:.2f}, Đang mở: +${unrealized_pnl:.2f}). "
+                f"[{active_slot} ACTIVE] Định giá trực tiếp từ sổ lệnh Polymarket Live "
+                f"(PnL: {total_pnl:+.2f} USDC | Đã chốt: {realized_pnl:+.2f}, Đang mở: {unrealized_pnl:+.2f}). "
                 f"Tự động Failover giữa 2 tài khoản Google Argon khi chạm Quota."
             )
         else:
             regime = "DEFENSIVE_PRESERVATION"
             recommendation = (
-                f"[{active_slot} ACTIVE] Danh mục đang điều chỉnh (${total_pnl:.2f} USDC). "
-                f"AI tự động siết ngưỡng Oracle Clarity lên 75/100."
+                f"[{active_slot} ACTIVE] Danh mục đang ghi nhận chênh lệch Bid-Ask thực tế ({total_pnl:+.2f} USDC). "
+                f"Chỉ chốt lời khi giá Bid vượt giá vào hoặc đáo hạn hợp đồng."
             )
 
         return {
@@ -333,10 +404,12 @@ class AutonomousAIAnalyst:
         }
 
     def _try_gemini_audit(self, signal: TradeSignal, rules_text: str) -> Optional[MarketAIAudit]:
+        if not self.gemini_api_key:
+            return None
         try:
             url = (
                 "https://generativelanguage.googleapis.com/v1beta/models/"
-                f"gemini-2.5-flash:generateContent?key={self.gemini_api_key}"
+                "gemini-2.5-flash:generateContent"
             )
             prompt = (
                 "Analyze this Polymarket contract resolution rule for ambiguity or oracle trap risk. "
@@ -347,12 +420,20 @@ class AutonomousAIAnalyst:
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {"responseMimeType": "application/json"},
             }).encode("utf-8")
-            req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+            req = urllib.request.Request(
+                url,
+                data=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": self.gemini_api_key,
+                },
+            )
             with urllib.request.urlopen(req, timeout=6) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 text = data["candidates"][0]["content"]["parts"][0]["text"]
                 parsed = json.loads(text)
                 self.account_router.record_success()
+                verdict = self._normalize_verdict(parsed.get("verdict", "APPROVE"))
                 return MarketAIAudit(
                     market_id=signal.market_id,
                     question=signal.question,
@@ -360,7 +441,7 @@ class AutonomousAIAnalyst:
                     oracle_clarity_score=float(parsed.get("clarity_score", 85.0)),
                     ambiguity_flags=[],
                     ai_fair_prob=signal.fair_value,
-                    ai_verdict=str(parsed.get("verdict", "APPROVE")),
+                    ai_verdict=verdict,
                     ai_reasoning=str(parsed.get("reasoning", "[Gemini AI] Đã kiểm duyệt điều khoản phân xử.")),
                 )
         except Exception as exc:

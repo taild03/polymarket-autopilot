@@ -109,6 +109,8 @@ export interface AiBrainLogItem {
 
 export interface AutopilotState {
   generated_at: string;
+  runtime?: { mode: "paper" | "snapshot"; can_scan: boolean; can_switch_accounts: boolean };
+  equity_history?: { cycle: number; timestamp: string; equity: number }[];
   data_source: string;
   ai_summary: {
     timestamp?: string;

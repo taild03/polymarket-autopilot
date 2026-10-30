@@ -17,6 +17,8 @@ export function HeaderBar() {
       ? "Nick Google #1 (leductai21204@gmail.com)"
       : "Nick Google #2 (taoyeumaygianga@gmail.com)");
 
+  const stale = !data.generated_at || Date.now() - Date.parse(data.generated_at) > 120000;
+  const live = data.data_source === "LIVE_POLYMARKET_GAMMA_API" && !stale && !state.error;
   const progressPct = ((5 - secondsToNextSync) / 5) * 100;
 
   return (
@@ -31,7 +33,7 @@ export function HeaderBar() {
               <span className="text-[13px] font-bold uppercase tracking-[0.04em] text-[#B8F397]">
                 {meta.isPolling || justUpdated
                   ? "ĐANG CẬP NHẬT DỮ LIỆU..."
-                  : "TRỰC TIẾP THỜI GIAN THỰC"}
+                  : live ? "DỮ LIỆU LIVE · PAPER TRADING" : "DỮ LIỆU CŨ / CHỈ XEM"}
               </span>
             </div>
 
@@ -42,12 +44,12 @@ export function HeaderBar() {
               <span className="text-white/40">•</span>
               <span
                 className={`rounded-[6px] px-2.5 py-0.5 text-[12px] font-extrabold uppercase ${
-                  data.data_source === "LIVE_POLYMARKET_GAMMA_API"
+                  live
                     ? "bg-[#B8F397]/20 text-[#B8F397]"
                     : "bg-[#FFD166]/20 text-[#FFD166]"
                 }`}
               >
-                {data.data_source === "LIVE_POLYMARKET_GAMMA_API"
+                {live
                   ? `POLYMARKET LIVE (${data.scanned_markets_count} KÈO)`
                   : "CHẾ ĐỘ SNAPSHOT (TẠM KHÓA VÀO LỆNH)"}
               </span>
@@ -81,6 +83,8 @@ export function HeaderBar() {
         </div>
       </div>
 
+      {state.error && <p role="alert" className="bg-[#FFD6D6] px-4 py-3 font-semibold">{state.error}</p>}
+      {(!live) && <p className="px-4 py-2 text-sm">Nguồn: {data.data_source}. Lần ghi dữ liệu: {data.generated_at || "chưa có"}.</p>}
       {/* 2. Main Oversized MetaMask-Style Brand & Action Bar */}
       <div className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-8">
         <div className="flex items-center gap-3.5">
@@ -103,7 +107,7 @@ export function HeaderBar() {
               SỔ ĐẦU TƯ POLYMARKET
             </h1>
             <p className="mt-1 text-[14px] font-semibold text-[#52514E] sm:text-[15px]">
-              Máy tự săn kèo lệch giá • Tự chốt lời về két 24/7
+              Mô phỏng giao dịch • Không gửi lệnh tiền thật
             </p>
           </div>
         </div>
@@ -111,7 +115,7 @@ export function HeaderBar() {
         <button
           type="button"
           onClick={actions.runAiScanNow}
-          disabled={meta.isPending}
+          disabled={meta.isPending || meta.isPolling || data.runtime?.can_scan === false}
           className="inline-flex items-center gap-2.5 rounded-[12px] border-2 border-[#111111] bg-[#FF5C16] px-5 py-3 text-[15px] font-extrabold uppercase tracking-[0.02em] text-white shadow-[4px_4px_0px_#111111] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-[#E04809] hover:shadow-[2px_2px_0px_#111111] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-60 cursor-pointer sm:text-[16px]"
         >
           <svg

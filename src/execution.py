@@ -48,6 +48,13 @@ class ExecutionBooks:
                 reason = "INSUFFICIENT_BID_DEPTH"
                 break
             if signal.order_type == "LIMIT_MAKER":
+                tick = book.get("tick_size", self.client.config.tick_size)
+                if abs(signal.entry_price / tick - round(signal.entry_price / tick)) > 1e-7:
+                    reason = "INVALID_TICK_SIZE"
+                    break
+                if decision.shares_qty < book.get("min_order_size", 0):
+                    reason = "BELOW_MINIMUM_SHARES"
+                    break
                 if not book["asks"] or book["best_ask"] <= signal.entry_price:
                     reason = "MAKER_WOULD_CROSS"
                 break

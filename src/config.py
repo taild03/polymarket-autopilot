@@ -1,11 +1,12 @@
 """
 Core configuration and risk guardrails for the Polymarket Quantitative Paper-Trading Engine.
 """
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "data"
+DATA_DIR = Path(os.environ.get("AUTOPILOT_DATA_DIR", str(BASE_DIR / "data"))).expanduser().resolve()
 DB_PATH = DATA_DIR / "autopilot.db"
 STATE_JSON_PATH = DATA_DIR / "portfolio_state.json"
 LOCK_FILE_PATH = DATA_DIR / "autopilot.lock"

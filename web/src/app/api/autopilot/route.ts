@@ -1,47 +1,29 @@
 import { NextResponse } from "next/server";
-import {
-  getAutopilotServerState,
-  switchArgonAccountServer,
-  triggerPythonCycle,
-} from "@/lib/autopilot-server";
+import { getAutopilotServerState, triggerPythonCycle } from "@/lib/autopilot-server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const state = await getAutopilotServerState();
-    return NextResponse.json(state, {
-      headers: {
-        "Cache-Control": "no-store, max-age=0",
-      },
-    });
-  } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to load state" },
-      { status: 500 }
-    );
+    return NextResponse.json(await getAutopilotServerState(), { headers: { "Cache-Control": "no-store" } });
+  } catch {
+    return NextResponse.json({ error: "Unable to read portfolio" }, { status: 503 });
   }
 }
 
 export async function POST(request: Request) {
+  // Public deployments are read-only; backend credentials never reach the browser.
+  if (process.env.VERCEL || request.headers.get("origin") !== new URL(request.url).origin) {
+    return NextResponse.json({ error: "Remote controls are disabled" }, { status: 403 });
+  }
+  if (!request.headers.get("content-type")?.startsWith("application/json")) {
+    return NextResponse.json({ error: "application/json required" }, { status: 415 });
+  }
   try {
-    const bodyPromise = request.json().catch(() => ({}));
-    const body = (await bodyPromise) as {
-      action?: "scan" | "switch_account";
-      slot?: "account_1" | "account_2" | "failover";
-    };
-
-    if (body.action === "switch_account" && body.slot) {
-      const updated = await switchArgonAccountServer(body.slot);
-      return NextResponse.json(updated);
-    }
-
-    const updated = await triggerPythonCycle();
-    return NextResponse.json(updated);
-  } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Execution failed" },
-      { status: 500 }
-    );
+    const body = await request.json();
+    if (body?.action !== "scan") return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+    return NextResponse.json(await triggerPythonCycle());
+  } catch {
+    return NextResponse.json({ error: "Scan failed. Check the Python backend and its logs." }, { status: 503 });
   }
 }

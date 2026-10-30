@@ -4,6 +4,7 @@ Enforces strict capital preservation rules and exact Binary Kelly sizing:
     f* = (p - c) / (1 - c)
 before any paper or live order is placed.
 """
+import math
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Set
 
@@ -42,11 +43,18 @@ class RiskManager:
         current_exposure_usdc: float,
         daily_pnl_usdc: float,
         open_market_ids: Set[str],
+        strategy_exposure_usdc: float = 0.0,
+        daily_risk_reference_usdc: float = None,
     ) -> RiskDecision:
         checks_passed: List[str] = []
 
+        values = (signal.entry_price, signal.fair_value, total_equity_usdc, available_cash_usdc,
+                  current_exposure_usdc, daily_pnl_usdc, strategy_exposure_usdc)
+        if not all(math.isfinite(v) for v in values) or total_equity_usdc <= 0 or not 0 < signal.fair_value <= 1:
+            return self._reject(signal, "INVALID_NUMERIC_INPUT", checks_passed)
+
         # 1. Kill-Switch Check: Daily Drawdown against start-of-day / peak equity
-        max_loss_usdc = -abs(total_equity_usdc * self.config.max_daily_drawdown_pct)
+        max_loss_usdc = -abs((daily_risk_reference_usdc or total_equity_usdc) * self.config.max_daily_drawdown_pct)
         if daily_pnl_usdc <= max_loss_usdc:
             return self._reject(
                 signal,
@@ -104,7 +112,8 @@ class RiskManager:
 
         # 6. Portfolio Exposure Ceiling Check
         max_total_exposure = total_equity_usdc * self.config.max_total_exposure_pct
-        remaining_exposure_budget = max_total_exposure - current_exposure_usdc
+        remaining_exposure_budget = min(max_total_exposure - current_exposure_usdc,
+                                        total_equity_usdc * self.config.max_strategy_bucket_pct - strategy_exposure_usdc)
         if (
             remaining_exposure_budget < self.config.min_order_size_usdc
             or available_cash_usdc < self.config.min_order_size_usdc

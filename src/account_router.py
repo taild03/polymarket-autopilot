@@ -62,8 +62,9 @@ class ArgonAccountRouter:
         self.cooldown_minutes = cooldown_minutes
         self.isolated_mode = isolated_mode or (os.environ.get("AUTOPILOT_TEST_MODE") == "1")
         self.state_file = state_file or ROUTER_STATE_FILE
-        PROFILES_ROOT.mkdir(parents=True, exist_ok=True)
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        if not self.isolated_mode:
+            PROFILES_ROOT.mkdir(parents=True, exist_ok=True)
+            self.state_file.parent.mkdir(parents=True, exist_ok=True)
         self.state = self._load_or_init_state()
         self._auto_enroll_primary_if_needed()
         self._refresh_expired_cooldowns()
@@ -158,7 +159,8 @@ class ArgonAccountRouter:
         if slot_id not in ("account_1", "account_2"):
             raise ValueError("slot_id must be 'account_1' or 'account_2'")
         slot_dir = PROFILES_ROOT / slot_id
-        slot_dir.mkdir(parents=True, exist_ok=True)
+        if not self.isolated_mode:
+            slot_dir.mkdir(parents=True, exist_ok=True)
 
         copied = False
         if not self.isolated_mode:
@@ -188,6 +190,10 @@ class ArgonAccountRouter:
         slot_state = slot_dir / "jetski_state.pbtxt"
 
         if not self.isolated_mode:
+            if not slot_token.exists() and not os.environ.get(f"GEMINI_API_KEY_{slot_id[-1]}"):
+                return False
+            if self.state["accounts"][slot_id].get("cooldown_until_iso"):
+                return False
             if slot_token.exists():
                 shutil.copy2(slot_token, OAUTH_TOKEN_FILE)
             if slot_state.exists() and CLI_STATE_FILE.parent.exists():
@@ -253,11 +259,13 @@ class ArgonAccountRouter:
                 f"Tự động Failover từ {current_slot} sang {next_slot} do chạm giới hạn Quota "
                 f"({error_detail[:60]}). Cooldown {self.cooldown_minutes} phút."
             )
-        self.activate_slot(next_slot, reason=reason)
+        switched = self.activate_slot(next_slot, reason=reason)
+        if not switched:
+            self.state["last_switch_reason"] = "Không có tài khoản dự phòng sẵn sàng; tạm dùng kiểm tra xác định."
         cur_acct["status"] = "COOLDOWN"
         cur_acct["cooldown_until_iso"] = cooldown_until
         self._save_state()
-        return next_slot
+        return self.state["active_slot"]
 
     def get_status_summary(self) -> Dict[str, Any]:
         self._auto_enroll_primary_if_needed()

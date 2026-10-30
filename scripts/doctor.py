@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""Read-only checks. --network verifies public Gamma/CLOB without placing paper orders."""
+import argparse
+import json
+from pathlib import Path
+import shutil
+import socket
+import sqlite3
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.config import DB_PATH, STATE_JSON_PATH
+from src.polymarket_client import PolymarketClient
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--network', action='store_true')
+    args = parser.parse_args()
+    checks = {'python': sys.version.split()[0], 'node': bool(shutil.which('node')), 'npm': bool(shutil.which('npm')),
+              'data_directory': str(DB_PATH.parent), 'database': 'not_initialized', 'snapshot': 'not_initialized'}
+    ok = True
+    if DB_PATH.exists():
+        try:
+            with sqlite3.connect(f'file:{DB_PATH}?mode=ro', uri=True) as conn:
+                checks['database'] = conn.execute('PRAGMA integrity_check').fetchone()[0]
+            ok &= checks['database'] == 'ok'
+        except sqlite3.Error as exc:
+            checks['database'] = str(exc)
+            ok = False
+    if STATE_JSON_PATH.exists():
+        try:
+            state = json.loads(STATE_JSON_PATH.read_text())
+            checks['snapshot'] = {'generated_at': state['generated_at'], 'data_source': state['data_source'], 'equity': state['metrics']['total_equity_usdc']}
+        except (ValueError, KeyError) as exc:
+            checks['snapshot'] = str(exc)
+            ok = False
+    if args.network:
+        checks['dns'] = {}
+        for host in ('gamma-api.polymarket.com', 'clob.polymarket.com'):
+            try: checks['dns'][host] = sorted({r[4][0] for r in socket.getaddrinfo(host, 443)})
+            except OSError as exc: checks['dns'][host] = str(exc)
+        client = PolymarketClient()
+        markets = client.fetch_active_markets(limit=2)
+        checks['gamma'] = client.last_source
+        live = client.last_source == 'LIVE_POLYMARKET_GAMMA_API'
+        checks['server_time'] = client.server_now.isoformat() if client.server_now else None
+        books = [client.fetch_clob_book_top(c.yes_token_id) for c in markets[:3]] if live else []
+        checks['clob'] = 'ok' if any(book and book['bids'] and book['asks'] for book in books) else 'unavailable'
+        ok &= live and checks['clob'] == 'ok'
+    print(json.dumps(checks, indent=2, ensure_ascii=False))
+    return 0 if ok else 1
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

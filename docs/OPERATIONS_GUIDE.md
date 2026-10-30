@@ -1,50 +1,111 @@
-# Cẩm Nang Vận Hành Chi Tiết: Polymarket Autopilot 24/7
+# Vận hành Polymarket Autopilot (paper trading)
 
-Tài liệu này giải thích chi tiết cơ chế vận hành của từng mô-đun bên trong hệ thống **Polymarket Autopilot**, cách đọc các chỉ số trên **Visual Command Center**, và quy trình chuyển đổi từ **Paper Trading (Tiền ảo)** sang **Live Trading (Tiền thật)** an toàn.
+Dự án chỉ mô phỏng giao dịch. Không có chức năng gửi lệnh tiền thật, ký ví hoặc rút tiền. Kết quả và APR là số liệu/ước tính của mô hình, không phải cam kết lợi nhuận.
 
----
+## 1. Chuẩn bị máy
 
-## 1. Giải Phẫu 3 Chiến Lược Định Lượng (`src/strategy_engine.py`)
+Cần Python 3.9 trở lên, Node.js 24, npm, curl, Git. Backend dùng thư viện chuẩn Python. Chạy trên macOS/Linux vì khóa chu kỳ sử dụng `fcntl`.
 
-### 1.1. `BUNDLE_ARB` (Arbitrage Giỏ Sự Kiện Loại Trừ Nhau)
-* **Nguyên lý toán học:** Trong một sự kiện có $N$ kịch bản loại trừ lẫn nhau và bao quát toàn bộ khả năng (ví dụ: Quyết định lãi suất của Fed gồm 3 cửa: *Giảm 25bps*, *Giữ nguyên*, *Giảm 50+ bps hoặc Tăng*), khi sự kiện kết thúc, **chính xác 1 cửa sẽ trả về `$1.00`** và các cửa còn lại trả về `$0.00`.
-* **Điều kiện vào lệnh:** Khi tổng giá mua (`Ask`) của cả $N$ cửa nhỏ hơn `$0.985`:
-  $$\sum_{i=1}^{N} P_{\text{ask}}(\text{YES}_i) \le 0.985$$
-* **Lợi thế:** Khóa lợi nhuận thuần từ `1.5%` đến `3.5%` bất chấp kết quả sự kiện ra sao.
+```bash
+cd /Users/taileduc/Personal/polymarket-autopilot
+npm ci --prefix web
+python3 -m unittest discover -s tests -v
+npm --prefix web run build
+python3 scripts/doctor.py --network
+```
 
-### 1.2. `BOND_CARRY` (Thu Lợi Suất Đáo Hạn Ngắn Hạn)
-* **Nguyên lý:** Nhiều thị trường có kết quả gần như chắc chắn (`88% - 97.5%`) và sắp phân xử trong vòng `1 - 14 ngày`, nhưng người chơi muốn rút vốn sớm nên bán rẻ lại hợp đồng ở giá `$0.94 - $0.97`.
-* **Công thức APR quy đổi:**
-  $$\text{APR} = \left(\frac{1.00 - P_{\text{entry}}}{P_{\text{entry}}}\right) \times \left(\frac{365}{\text{Days to Expiry}}\right) \times 100\%$$
-* **Ví dụ:** Mua ở giá `$0.945`, đáo hạn sau `4.5 ngày` $\rightarrow$ Lãi tĩnh `+5.82%` sau 4.5 ngày, tương đương hiệu suất quay vòng vốn **472% APR**.
+`doctor` chỉ đọc trạng thái và gọi API công khai, không tạo lệnh. Mã thoát 0 với `--network` chỉ khi kiểm tra Gamma và ít nhất một sổ lệnh CLOB thành công. Tìm `LIVE_POLYMARKET_GAMMA_API` và `clob: ok`.
 
-### 1.3. `MAKER_SPREAD` (Làm Tạo Lập Thị Trường Hưởng Chênh Lệch Bid-Ask)
-* **Nguyên lý:** Thay vì đặt lệnh Market (mất chênh lệch giá Bid-Ask), Bot tìm các thị trường có thanh khoản tốt nhưng sổ lệnh đang giãn khoảng cách mua-bán (`Spread >= 2.0¢`). Bot đặt lệnh chờ mua (`Limit Maker`) ngay trên giá `Best Bid` để thu lợi thế từ chênh lệch giá trung bình (`Fair Mid`).
+Nếu DNS trả `127.0.0.1` hoặc `::1`, client thử DoH có xác thực TLS. Nếu vẫn `Connection reset by peer`, kiểm tra cấu hình DNS/proxy/firewall của máy và mạng hoặc chạy backend trên máy có quyền truy cập các endpoint đó. Không tắt xác thực SSL. Đặt ngày giờ hệ thống tự động; thời gian server chỉ hỗ trợ tính ngày và quản trị phiên giao dịch, không sửa lỗi chứng chỉ của máy.
 
----
+Khi chưa truy cập API, bot giữ nguyên danh mục và chặn mở/đóng lệnh trên snapshot. Không đặt `allow_snapshot_trading=True` khi vận hành.
 
-## 2. Cơ Chế Bảo Vệ Vốn 7 Lớp (`src/risk_manager.py`)
+## 2. Chạy trên máy cá nhân
 
-Mọi tín hiệu từ `StrategyEngine` đều phải đi qua 7 cổng kiểm duyệt tự động trước khi được phép vào lệnh:
+Terminal 1 — Python thực hiện chu kỳ và lưu SQLite bền vững:
 
-1. `KILL_SWITCH_OK`: Kiểm tra tổng lãi/lỗ trong ngày. Nếu lỗ chạm `-3.0%` (`-$30.00`), khóa toàn bộ hệ thống.
-2. `NO_DUPLICATE`: Không bao giờ nhồi thêm lệnh vào một thị trường đang có vị thế mở.
-3. `LIQUIDITY_OK`: Loại bỏ mọi thị trường có thanh khoản `< $5,000` hoặc khối lượng giao dịch 24h `< $1,500`.
-4. `SPREAD_OK`: Chặn các thị trường có chênh lệch giá mua-bán quá rộng (`> 4.5¢`), tránh trượt giá (Slippage).
-5. `ORACLE_RULES_CLEAR`: Kiểm tra độ dài và tính chi tiết của văn bản `Resolution Rules` để tránh "bẫy chữ nghĩa" khi phân xử trên UMA Oracle.
-6. `EXPOSURE_BUDGET_OK`: Đảm bảo tổng số vốn đang nằm trong các lệnh mở không bao giờ vượt quá `50%` tổng tài sản (luôn giữ tối thiểu `50%` tiền mặt USDC).
-7. `KELLY_SIZED`: Tính toán khối lượng vào lệnh theo công thức **Quarter-Kelly (1/4 Kelly)** và khóa trần tối đa `5%` tổng vốn (`$50.00`) cho mỗi lệnh.
+```bash
+cd /Users/taileduc/Personal/polymarket-autopilot
+python3 server.py --host 127.0.0.1 --port 8080 --interval 30
+```
 
----
+Terminal 2 — dashboard Next.js:
 
-## 3. Quy Trình Vận Hành Tự Động 24/7
+```bash
+cd /Users/taileduc/Personal/polymarket-autopilot
+# Chỉ copy khi chưa có file; nếu có, chỉnh biến trong file hiện tại.
+cp -n web/.env.example web/.env.local
+npm --prefix web run start
+```
 
-* **Chạy định kỳ bằng `/schedule` hoặc Cron:**
-  Hệ thống chỉ cần quét mỗi `15 - 30 phút/lần` qua lệnh:
-  ```bash
-  python3 /Users/taileduc/Personal/polymarket-autopilot/run_autopilot.py
-  ```
-* **Khi nào mới nên chuyển sang Tiền Thật (Live Trading)?**
-  1. Chạy Paper Trading tối thiểu **14 ngày liên tục**.
-  2. Kiểm tra nhật ký `audit_log` trong `data/autopilot.db` đảm bảo tỷ lệ thắng (Win Rate) và lợi nhuận kỳ vọng sát với thực tế phân xử của sàn.
-  3. Khi kết nối API thật (`py-clob-client`), sử dụng **1 ví Polygon phụ chuyên biệt**, chỉ nạp đúng số vốn nhỏ chấp nhận rủi ro (ví dụ `$100 - $200 USDC`).
+Mở http://localhost:3000. File `web/.env.local` đặt `AUTOPILOT_BACKEND_URL=http://127.0.0.1:8080`. Dashboard tự đọc mỗi 5 giây; backend quét sau mỗi chu kỳ cộng khoảng nghỉ 30 giây. Một chu kỳ có thể lâu hơn 30 giây nếu nhiều API/AI cần gọi. Bấm quét yêu cầu backend chạy một chu kỳ; khóa file tránh chạy trùng. Ctrl+C để dừng mỗi tiến trình.
+
+`GET /health` xác nhận API đang phục vụ. `GET /api/state` trả trạng thái cuối cùng; chưa có snapshot trả 503. Không mở lệnh chỉ vì người dùng đọc dashboard.
+
+## 3. Đọc số liệu và trạng thái
+
+- `Cash`: tiền khả dụng sau khi giữ chỗ lệnh maker.
+- `reserved_cash_usdc`: tiền đã giữ chỗ, vẫn nằm trong tổng tài sản; lệnh chờ chưa có PnL.
+- Tổng tài sản = tiền khả dụng + tiền giữ chỗ + giá trị vị thế mở.
+- Biểu đồ chỉ dùng các điểm đã lưu trong SQLite. Dữ liệu cũ chỉ có một điểm thì không tự tạo thêm lịch sử.
+- `LIVE_POLYMARKET_GAMMA_API`: Gamma thành công trong chu kỳ đó. CLOB vẫn phải đạt kiểm tra riêng cho từng lệnh.
+- `SNAPSHOT_FALLBACK`: dữ liệu mẫu, giao dịch bị khóa.
+- `READONLY_SNAPSHOT`: dashboard không kết nối backend, chỉ xem bản chụp.
+- `BACKEND_UNAVAILABLE`: đã cấu hình backend nhưng không đọc được. Xem API token, URL và log backend.
+- Trạng thái quá 120 giây sẽ không được gắn nhãn live trên giao diện. Timestamp là lần ghi dữ liệu, không phải giờ trình duyệt tải lại.
+
+Lệnh maker chỉ khớp ở chu kỳ sau khi đủ ask tại/dưới mức đặt. Hết hạn/đóng thì hoàn tiền. Giới hạn sụt giảm sẽ hủy lệnh chờ trước khi xử lý khớp mới. Vị thế được tất toán một lần khi Gamma xác nhận kết quả; cờ `closed` riêng lẻ không đủ.
+
+## 4. Giới hạn rủi ro mặc định
+
+Cấu hình nằm trong `src/config.py`: vốn mô phỏng $1.000; tối đa 8%/lệnh, 30%/chiến lược, 60% tổng phân bổ (gồm tiền giữ chỗ); dừng mở mới khi giảm 3% từ mốc vốn/ngưỡng cao nhất trong ngày UTC. Ngày mới tính lại mốc ngày, còn drawdown toàn kỳ được báo riêng. Định cỡ theo Quarter-Kelly, tối thiểu $5.
+
+Thị trường cần thanh khoản $5.000, volume 24h $1.500, spread taker tối đa 3¢; maker 2–10¢. Giỏ arbitrage yêu cầu tổng giá ask và dự phòng phí không vượt 0,990. Carry dùng giá 0,94–0,992, tối đa 14 ngày, có dự phòng rủi ro phân xử.
+
+## 5. AI và tài khoản
+
+Không cần đăng nhập để chạy mô hình kiểm tra điều khoản xác định (`QUANT_SEMANTIC_AI`). Đây không phải một lần gọi LLM. Tùy chọn `GEMINI_API_KEY` bật kiểm duyệt Gemini; `AUTOPILOT_ENABLE_AGY_SUBPROCESS=1` bật CLI `agy` nếu cài sẵn. Không đưa API key vào frontend hoặc Git.
+
+```bash
+python3 manage_accounts.py --help
+python3 manage_accounts.py status
+```
+
+Đăng nhập/lưu profile/chuyển tài khoản thực hiện tại máy backend theo `--help`. Dashboard chỉ hiển thị trạng thái tài khoản; không có API công khai sao chép hoặc đổi OAuth token. Không chuyển sang tài khoản chưa cấu hình/đang cooldown. Xác minh `ai_mode` và log để biết bot thực sự đã dùng LLM hay fallback; không suy ra chỉ từ tên tài khoản.
+
+## 6. Sao lưu và khôi phục
+
+```bash
+python3 scripts/backup.py
+python3 scripts/doctor.py
+```
+
+Backup sử dụng SQLite Backup API và `integrity_check`, chạy được khi worker đang hoạt động. Mặc định lưu tại `data/backups/`, không đưa lên Git. Sao chép backup sang nơi lưu trữ riêng định kỳ.
+
+Khôi phục: dừng backend và mọi `run_autopilot.py`; sao lưu database hiện tại; dùng bản backup đã kiểm chứng thay `autopilot.db` trong đúng thư mục dữ liệu; chạy `doctor`; chạy một chu kỳ để xuất lại snapshot. Không xóa database để sửa một lỗi kết nối.
+
+Có thể đặt `AUTOPILOT_DATA_DIR=/absolute/path/polymarket-data` cho backend để giữ dữ liệu ngoài source. Trỏ Next.js tới backend bằng URL. Thư mục mới khởi tạo tài khoản mô phỏng mới; muốn giữ lịch sử phải chuyển bản backup sang đó trước khi chạy.
+
+## 7. Chạy liên tục và Vercel
+
+Vercel chỉ phục vụ dashboard. SQLite/worker Python phải chạy trên máy cá nhân luôn bật hoặc máy chủ có ổ đĩa bền vững. Có thể quản lý `python3 server.py` bằng launchd/systemd với tự khởi động lại và lưu stdout/stderr; không chạy thêm daemon `run_autopilot.py` song song nếu đã có worker trong `server.py`. Máy ngủ/tắt thì bot ngừng quét.
+
+Với backend truy cập từ xa:
+
+1. Sinh token dài ngẫu nhiên bằng `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'`; lưu ngoài Git.
+2. Đặt `AUTOPILOT_API_TOKEN` ở backend. Backend từ chối bind địa chỉ ngoài loopback nếu chưa có token.
+3. Chạy backend sau reverse proxy HTTPS trên máy có truy cập Gamma/CLOB. Không công khai cổng HTTP thô.
+4. Trong Vercel chọn root directory `web`, framework Next.js. `web/vercel.json` cố định cài đặt bằng `npm ci` và build bằng npm để dùng đúng lockfile. Đặt biến server `AUTOPILOT_BACKEND_URL=https://backend-cua-ban` và `AUTOPILOT_API_TOKEN` trùng backend. Không dùng tiền tố `NEXT_PUBLIC_`.
+5. Deploy lại dashboard. Trên Vercel chỉ GET trạng thái; nút điều khiển bị vô hiệu hóa. Token chỉ ở server, không gửi xuống trình duyệt. Dashboard có thể công khai số liệu danh mục: dùng Deployment Protection nếu muốn giữ riêng tư.
+6. Xem log backend và kiểm tra `doctor --network` trước khi coi hệ thống là live. Build/deploy thành công không xác nhận bot đang chạy 24/7.
+
+Chưa cấu hình backend thì dashboard hiện rõ chế độ snapshot. Không tự cập nhật PnL ở frontend bằng một tập thị trường Gamma không đầy đủ.
+
+## 8. Việc cần làm tiếp theo
+
+1. Khôi phục kết nối Gamma/CLOB và đồng hồ hệ thống, chạy doctor đến khi đạt.
+2. Chạy backend + dashboard theo mục 2; xác nhận timestamp, nguồn dữ liệu và vốn $1.000.
+3. Để paper trading thu thập các chu kỳ, lệnh chờ/khớp/hủy và phân xử thật; đối chiếu một số lệnh với sổ lệnh. Không có số ngày cố định nào tự chứng minh lợi nhuận.
+4. Sao lưu, kiểm tra lỗi vận hành và đánh giá phí/trượt giá trước khi cân nhắc mở rộng.
+
+Giới hạn mô hình: chưa mô phỏng ưu tiên hàng đợi, khớp từng phần, độ trễ thực thi; phí dự phòng vẫn là tham số tĩnh, chưa đồng bộ từng thị trường; định giá có thể cũ nếu CLOB không đủ độ sâu (khi đó AI không được thoát vị thế đó); chưa có backtest chứng minh lợi thế. Tiền thật là một dự án bổ sung riêng, không phải bật một biến cấu hình.

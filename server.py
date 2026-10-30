@@ -1,125 +1,138 @@
 #!/usr/bin/env python3
-"""
-Decoupled Backend API Server & 24/7 Autonomous AI Daemon (`server.py`).
-Binds to 127.0.0.1:8080 by default (configurable via --host) with CORS enabled
-so the local Next.js Frontend or tunnel can poll live data directly.
-"""
+"""Persistent paper-trading API. Remote bindings require a bearer token."""
 from __future__ import annotations
 
 import argparse
+import hmac
 import json
+import os
 import sys
 import threading
-import time
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlsplit
 
 from run_autopilot import run_cycle
-from src.account_router import ArgonAccountRouter
-from src.config import BASE_DIR, STATE_JSON_PATH
+from src.config import STATE_JSON_PATH
 
-FRONTEND_HTML_PATH = BASE_DIR / "frontend" / "index.html"
-FALLBACK_HTML_PATH = BASE_DIR / "dashboard.html"
+STOP = threading.Event()
 
 
-def autonomous_background_worker(interval_sec: int) -> None:
-    """Runs continuously in the background to keep market state and positions up to date."""
-    while True:
+def autonomous_background_worker(interval_sec):
+    while not STOP.is_set():
         try:
             run_cycle(verbose=False)
         except Exception as exc:
-            sys.stderr.write(f"[AUTOPILOT WORKER ERROR] {exc}\n")
-        time.sleep(max(10, interval_sec))
+            sys.stderr.write(f"[AUTOPILOT WORKER ERROR] {type(exc).__name__}: {exc}\n")
+        STOP.wait(max(10, interval_sec))
+
+
+def allowed_origins():
+    return {x.strip() for x in os.environ.get('AUTOPILOT_ALLOWED_ORIGINS',
+        'http://localhost:3000,http://127.0.0.1:3000').split(',') if x.strip()}
 
 
 class AutopilotRequestHandler(BaseHTTPRequestHandler):
-    def _set_cors_headers(self) -> None:
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Cache-Control", "no-store")
-
-    def do_OPTIONS(self) -> None:
-        self.send_response(204)
-        self._set_cors_headers()
-        self.end_headers()
-
-    def _send_json(self, payload: dict, status: int = 200) -> None:
-        raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    def _send_json(self, payload, status=200):
+        raw = json.dumps(payload, ensure_ascii=False).encode()
         self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self._set_cors_headers()
-        self.send_header("Content-Length", str(len(raw)))
+        origin = self.headers.get('Origin')
+        if origin in allowed_origins():
+            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Vary', 'Origin')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(raw)))
         self.end_headers()
         self.wfile.write(raw)
 
-    def do_GET(self) -> None:
-        if self.path in ("/", "/index.html", "/dashboard"):
-            target_html = FRONTEND_HTML_PATH if FRONTEND_HTML_PATH.exists() else FALLBACK_HTML_PATH
-            raw = target_html.read_bytes() if target_html.exists() else b"<h1>Frontend not found.</h1>"
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self._set_cors_headers()
-            self.send_header("Content-Length", str(len(raw)))
-            self.end_headers()
-            self.wfile.write(raw)
-        elif self.path.startswith("/api/state"):
-            if not STATE_JSON_PATH.exists():
-                state = run_cycle(verbose=False)
-            else:
-                state = json.loads(STATE_JSON_PATH.read_text(encoding="utf-8"))
-            self._send_json(state)
-        elif self.path.startswith("/api/accounts"):
-            router = ArgonAccountRouter()
-            self._send_json(router.get_status_summary())
-        else:
-            self._send_json({"error": "Not found"}, status=404)
+    def _authorized(self):
+        origin = self.headers.get('Origin')
+        if origin and origin not in allowed_origins():
+            self._send_json({'error': 'Origin not allowed'}, 403)
+            return False
+        token = os.environ.get('AUTOPILOT_API_TOKEN', '')
+        supplied = self.headers.get('Authorization', '')
+        if token and not hmac.compare_digest(supplied, f'Bearer {token}'):
+            self._send_json({'error': 'Authentication required'}, 401)
+            return False
+        if not token and self.client_address[0] not in ('127.0.0.1', '::1'):
+            self._send_json({'error': 'Remote access requires a token'}, 403)
+            return False
+        return True
 
-    def do_POST(self) -> None:
-        if self.path.startswith("/api/scan"):
-            state = run_cycle(verbose=False)
-            self._send_json(state)
-        elif self.path.startswith("/api/switch-account"):
-            length = int(self.headers.get("Content-Length", "0"))
-            body = json.loads(self.rfile.read(length).decode("utf-8")) if length > 0 else {}
-            router = ArgonAccountRouter()
-            target_slot = body.get("slot")
-            if target_slot in ("account_1", "account_2"):
-                router.activate_slot(target_slot, reason="Chuyển đổi từ giao diện Web Command Center")
-            else:
-                router.handle_quota_exhausted("Simulated Quota Failover from Web UI")
-            state = run_cycle(verbose=False)
-            self._send_json(state)
-        else:
-            self._send_json({"error": "Not found"}, status=404)
+    def do_OPTIONS(self):
+        self._send_json({}, 200 if self.headers.get('Origin') in allowed_origins() else 403)
 
-    def log_message(self, format: str, *args) -> None:
+    def do_GET(self):
+        if not self._authorized():
+            return
+        route = urlsplit(self.path).path
+        if route == '/health':
+            self._send_json({'status': 'ok', 'mode': 'paper', 'state_available': STATE_JSON_PATH.exists()})
+        elif route == '/api/state':
+            try:
+                state = json.loads(STATE_JSON_PATH.read_text())
+                state['runtime'] = {'mode': 'paper', 'can_scan': True, 'can_switch_accounts': False}
+                self._send_json(state)
+            except (OSError, ValueError):
+                self._send_json({'error': 'State not ready; wait for the first cycle'}, 503)
+        else:
+            self._send_json({'error': 'Not found'}, 404)
+
+    def do_POST(self):
+        if not self._authorized():
+            return
+        if urlsplit(self.path).path != '/api/scan':
+            self._send_json({'error': 'Not found; manage account credentials locally'}, 404)
+            return
+        if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
+            self._send_json({'error': 'application/json required'}, 415)
+            return
+        try:
+            size = int(self.headers.get('Content-Length', '0'))
+            if not 0 <= size <= 4096:
+                raise ValueError('Body too large')
+            body = json.loads(self.rfile.read(size) or b'{}')
+            if not isinstance(body, dict):
+                raise ValueError('Expected object')
+        except (ValueError, UnicodeError):
+            self._send_json({'error': 'Invalid request body'}, 400)
+            return
+        try:
+            state = run_cycle(verbose=False)
+            state['runtime'] = {'mode': 'paper', 'can_scan': True, 'can_switch_accounts': False}
+            self._send_json(state)
+        except Exception as exc:
+            sys.stderr.write(f'[API] {type(exc).__name__}: {exc}\n')
+            self._send_json({'error': 'Cycle failed; inspect backend logs'}, 503)
+
+    def log_message(self, fmt, *args):
         return
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Polymarket Decoupled Backend API & Daemon")
-    parser.add_argument("--host", type=str, default="127.0.0.1", help="Bind host (default: 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=8080, help="HTTP port (default: 8080)")
-    parser.add_argument("--interval", type=int, default=30, help="Autonomous AI cycle interval in seconds")
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--host', default='127.0.0.1')
+    parser.add_argument('--port', type=int, default=8080)
+    parser.add_argument('--interval', type=int, default=30)
+    parser.add_argument('--no-worker', action='store_true', help='Serve existing state without running cycles')
     args = parser.parse_args()
-
-    run_cycle(verbose=True)
-
-    worker = threading.Thread(
-        target=autonomous_background_worker,
-        args=(args.interval,),
-        daemon=True,
-    )
-    worker.start()
-
-    server = HTTPServer((args.host, args.port), AutopilotRequestHandler)
-    print(f"[BACKEND API LIVE] Listening on http://{args.host}:{args.port} (CORS enabled)")
+    if args.host not in ('127.0.0.1', 'localhost', '::1') and not os.environ.get('AUTOPILOT_API_TOKEN'):
+        parser.error('Set AUTOPILOT_API_TOKEN before binding a remote interface')
+    server = ThreadingHTTPServer((args.host, args.port), AutopilotRequestHandler)
+    if not args.no_worker:
+        threading.Thread(target=autonomous_background_worker, args=(args.interval,), daemon=True).start()
+    print(f'Paper API: http://{args.host}:{args.port}', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nShutting down server.")
+        pass
+    finally:
+        STOP.set()
         server.server_close()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

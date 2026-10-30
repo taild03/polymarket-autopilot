@@ -97,6 +97,7 @@ def run_cycle(
 
         # Step 1: Fetch active Polymarket contracts
         contracts = client.fetch_active_markets(limit=limit)
+        trader.set_reference_time(client.server_now)
         contracts_by_id: Dict[str, MarketContract] = {c.market_id: c for c in contracts}
         is_live_data = client.last_source == "LIVE_POLYMARKET_GAMMA_API"
         can_trade = is_live_data or cfg.allow_snapshot_trading
@@ -111,6 +112,10 @@ def run_cycle(
 
         # Step 2: Mark-to-market existing positions & run AI Autonomous Exit Manager (only on live data)
         if can_trade:
+            trader.mark_with_books(books)
+            before = trader.get_account_metrics()
+            if before["daily_pnl_usdc"] <= -before["daily_risk_reference_usdc"] * cfg.max_daily_drawdown_pct:
+                trader.cancel_pending()
             trader.process_lifecycle(valuation_contracts, books)
             open_positions = trader.mark_with_books(books)
             exit_decisions = ai_analyst.evaluate_open_positions(open_positions)
@@ -127,7 +132,11 @@ def run_cycle(
             metrics = trader.get_account_metrics()
             open_ids = trader.get_open_market_ids()
 
-            already_open = sig.market_id in open_ids
+            if set(sig.leg_market_ids) & (open_ids | trader.held_market_ids()):
+                open_ids.add(sig.market_id)
+            already_open = sig.market_id in (open_ids | trader.held_market_ids())
+            if already_open:
+                open_ids.add(sig.market_id)
             ai_audit = None
 
             if not can_trade:
@@ -156,6 +165,8 @@ def run_cycle(
                 current_exposure_usdc=metrics["current_exposure_usdc"],
                 daily_pnl_usdc=metrics.get("daily_pnl_usdc", 0.0),
                 open_market_ids=open_ids,
+                strategy_exposure_usdc=trader.strategy_exposure(sig.strategy),
+                daily_risk_reference_usdc=metrics["daily_risk_reference_usdc"],
             )
 
             decision = books.validate(sig, decision)

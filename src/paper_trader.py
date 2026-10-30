@@ -8,7 +8,8 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+import time
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -26,7 +27,18 @@ class PaperTrader:
         self.config = config
         self.db_path = db_path or DB_PATH
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._reference_time = None
+        self._reference_tick = time.monotonic()
         self._init_db()
+
+    def set_reference_time(self, server_now):
+        self._reference_time = server_now
+        self._reference_tick = time.monotonic()
+
+    def _now(self):
+        if self._reference_time is not None:
+            return self._reference_time + timedelta(seconds=time.monotonic() - self._reference_tick)
+        return datetime.now(timezone.utc)
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self.db_path), timeout=15.0)
@@ -53,12 +65,14 @@ class PaperTrader:
                 conn.execute(
                     f"ALTER TABLE account_state ADD COLUMN day_start_equity_usdc REAL NOT NULL DEFAULT {float(self.config.initial_capital_usdc)}"
                 )
+            if "day_peak_equity_usdc" not in cols:
+                conn.execute(f"ALTER TABLE account_state ADD COLUMN day_peak_equity_usdc REAL NOT NULL DEFAULT {float(self.config.initial_capital_usdc)}")
             if "peak_equity_usdc" not in cols:
                 conn.execute(
                     f"ALTER TABLE account_state ADD COLUMN peak_equity_usdc REAL NOT NULL DEFAULT {float(self.config.initial_capital_usdc)}"
                 )
             if "trading_day_utc" not in cols:
-                today_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                today_utc = self._now().strftime("%Y-%m-%d")
                 conn.execute(
                     f"ALTER TABLE account_state ADD COLUMN trading_day_utc TEXT NOT NULL DEFAULT '{today_utc}'"
                 )
@@ -119,12 +133,13 @@ class PaperTrader:
                 )
                 """
             )
+            conn.execute("CREATE TABLE IF NOT EXISTS equity_history (cycle INTEGER PRIMARY KEY, timestamp TEXT NOT NULL, equity REAL NOT NULL)")
             pos_cols = {r["name"] for r in conn.execute("PRAGMA table_info(positions)")}
             if "leg_market_ids" not in pos_cols:
                 conn.execute("ALTER TABLE positions ADD COLUMN leg_market_ids TEXT NOT NULL DEFAULT '[]'")
             row = conn.execute("SELECT id FROM account_state WHERE id = 1").fetchone()
             if not row:
-                now_utc = datetime.now(timezone.utc)
+                now_utc = self._now()
                 now_iso = now_utc.isoformat()
                 today_utc = now_utc.strftime("%Y-%m-%d")
                 cap = float(self.config.initial_capital_usdc)
@@ -141,7 +156,7 @@ class PaperTrader:
             conn.commit()
 
     def increment_cycle(self) -> int:
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = self._now().isoformat()
         with self._connect() as conn:
             conn.execute(
                 "UPDATE account_state SET cycle_count = cycle_count + 1, updated_at = ? WHERE id = 1",
@@ -160,7 +175,7 @@ class PaperTrader:
         verdict: str,
         impact_usdc: float = 0.0,
     ) -> None:
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = self._now().isoformat()
         with self._connect() as conn:
             conn.execute(
                 """
@@ -197,7 +212,7 @@ class PaperTrader:
             ]
 
     def get_account_metrics(self) -> Dict[str, Any]:
-        now_utc = datetime.now(timezone.utc)
+        now_utc = self._now()
         today_utc = now_utc.strftime("%Y-%m-%d")
 
         with self._connect() as conn:
@@ -237,13 +252,18 @@ class PaperTrader:
                 else today_utc
             )
 
+            day_peak = float(acct["day_peak_equity_usdc"])
+
             # Roll day_start_equity on new UTC day or update high-water mark peak_equity
             if stored_day != today_utc:
                 day_start_equity = total_equity
+                day_peak = total_equity
                 stored_day = today_utc
             if total_equity > peak_equity:
                 peak_equity = total_equity
 
+            day_peak = max(day_peak, total_equity)
+            conn.execute("UPDATE account_state SET day_peak_equity_usdc=? WHERE id=1", (day_peak,))
             conn.execute(
                 """
                 UPDATE account_state
@@ -256,7 +276,7 @@ class PaperTrader:
 
             daily_pnl = round(total_equity - day_start_equity, 2)
             drawdown_from_peak = round(total_equity - peak_equity, 2)
-            effective_daily_drawdown = min(daily_pnl, drawdown_from_peak)
+            effective_daily_drawdown = min(daily_pnl, round(total_equity - day_peak, 2))
 
             return {
                 "cycle_count": cycle_count,
@@ -268,6 +288,8 @@ class PaperTrader:
                 "realized_pnl_usdc": round(realized_pnl, 2),
                 "total_pnl_usdc": total_pnl,
                 "daily_pnl_usdc": effective_daily_drawdown,
+                "daily_risk_reference_usdc": day_peak,
+                "drawdown_from_peak_usdc": drawdown_from_peak,
                 "total_equity_usdc": total_equity,
                 "return_pct": round((total_pnl / initial_capital) * 100.0, 2),
                 "open_positions_count": sum(r["status"] == "OPEN" for r in pos_rows),
@@ -334,7 +356,7 @@ class PaperTrader:
     def execute_ai_exits(self, exit_decisions: List[PositionExitDecision]) -> int:
         """Executes autonomous TAKE_PROFIT / STOP_LOSS decisions from the AI Analyst."""
         closed_count = 0
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = self._now().isoformat()
         with self._connect() as conn:
             for d in exit_decisions:
                 if d.action not in ("TAKE_PROFIT", "STOP_LOSS", "TIME_DECAY_EXIT"):
@@ -385,7 +407,7 @@ class PaperTrader:
         decision: RiskDecision,
         ai_audit: Optional[MarketAIAudit] = None,
     ) -> None:
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = self._now().isoformat()
         with self._connect() as conn:
             conn.execute(
                 """
@@ -478,6 +500,16 @@ class PaperTrader:
         with self._connect() as conn:
             return [dict(r) for r in conn.execute("SELECT * FROM positions WHERE status = 'PENDING_MAKER'")]
 
+    def strategy_exposure(self, strategy):
+        with self._connect() as conn:
+            return conn.execute("SELECT COALESCE(SUM(cost_basis_usdc),0) FROM positions WHERE strategy=? AND status IN ('OPEN','PENDING_MAKER')", (strategy,)).fetchone()[0]
+
+    def cancel_pending(self):
+        with self._connect() as conn:
+            amount = conn.execute("SELECT COALESCE(SUM(cost_basis_usdc),0) FROM positions WHERE status='PENDING_MAKER'").fetchone()[0]
+            conn.execute("UPDATE account_state SET cash_usdc=cash_usdc+? WHERE id=1", (amount,))
+            conn.execute("UPDATE positions SET status='CANCELLED' WHERE status='PENDING_MAKER'")
+
     def held_market_ids(self):
         result = set()
         for p in self.get_open_positions() + self.get_pending_orders():
@@ -549,6 +581,9 @@ class PaperTrader:
     ) -> Dict[str, Any]:
         metrics = self.get_account_metrics()
         with self._connect() as conn:
+            conn.execute("INSERT OR REPLACE INTO equity_history VALUES (?, ?, ?)", (metrics["cycle_count"], self._now().isoformat(), metrics["total_equity_usdc"]))
+            history = [dict(r) for r in conn.execute("SELECT * FROM (SELECT * FROM equity_history ORDER BY cycle DESC LIMIT 200) ORDER BY cycle")]
+
             positions = [
                 dict(r)
                 for r in conn.execute(
@@ -575,7 +610,7 @@ class PaperTrader:
             ]
 
         state = {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": self._now().isoformat(),
             "data_source": data_source,
             "ai_summary": ai_summary or {},
             "config": {
@@ -587,6 +622,8 @@ class PaperTrader:
                 "max_spread_taker": self.config.max_spread_taker,
             },
             "metrics": metrics,
+            "equity_history": history,
+            "runtime": {"mode": "paper", "can_scan": True, "can_switch_accounts": False},
             "open_positions": positions,
             "closed_positions": closed_positions,
             "pending_orders": self.get_pending_orders(),

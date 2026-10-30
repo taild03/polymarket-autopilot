@@ -6,6 +6,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -22,6 +23,7 @@ export interface AutopilotContextValue {
     secondsToNextSync: number;
     liveClock: string;
     justUpdated: boolean;
+    error: string | null;
   };
   actions: {
     setFilterMode: (mode: FilterMode) => void;
@@ -66,6 +68,10 @@ export function AutopilotProvider({
   );
   const [liveClock, setLiveClock] = useState<string>("--:--:--");
   const [justUpdated, setJustUpdated] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const inFlight = useRef(false);
+  const requestGeneration = useRef(0);
+  const latestTimestamp = useRef(initialData.generated_at);
   const [isPolling, setIsPolling] = useState<boolean>(false);
   const [isPending, startTransition] = useTransition();
 
@@ -87,6 +93,11 @@ export function AutopilotProvider({
 
   const setCustomApiUrl = useCallback((url: string) => {
     const clean = url.trim().replace(/\/$/, "");
+    if (clean) {
+      try { const u = new URL(clean); if (!["http:", "https:"].includes(u.protocol)) throw new Error(); }
+      catch { setError("URL backend phải bắt đầu bằng http:// hoặc https://"); return; }
+    }
+    requestGeneration.current += 1;
     setCustomApiUrlState(clean);
     try {
       localStorage.setItem(STORAGE_KEY, clean);
@@ -97,18 +108,28 @@ export function AutopilotProvider({
 
   const fetchLatestState = useCallback(
     async (apiBase: string) => {
+      if (inFlight.current) return;
+      inFlight.current = true;
+      const generation = requestGeneration.current;
       setIsPolling(true);
       try {
         const endpoint = apiBase ? `${apiBase}/api/state` : "/api/autopilot";
-        const res = await fetch(endpoint, { cache: "no-store" });
-        if (!res.ok) return;
+        const res = await fetch(endpoint, { cache: "no-store", signal: AbortSignal.timeout(10000) });
+        if (!res.ok) throw new Error(`Không đọc được backend (HTTP ${res.status})`);
         const nextState = (await res.json()) as AutopilotState;
+        if (!nextState.metrics || !Array.isArray(nextState.open_positions)) throw new Error("Dữ liệu backend không hợp lệ");
+        if (generation !== requestGeneration.current) return;
+        setError(null);
         setData(nextState);
-        setLastRefreshedAt(new Date().toISOString());
-        triggerFlash();
-      } catch {
-        // keep previous state if network glitch occurs
+        setLastRefreshedAt(nextState.generated_at);
+        if (latestTimestamp.current !== nextState.generated_at) {
+          latestTimestamp.current = nextState.generated_at;
+          triggerFlash();
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Mất kết nối backend");
       } finally {
+        inFlight.current = false;
         setIsPolling(false);
         setSecondsToNextSync(POLL_INTERVAL_SECONDS);
       }
@@ -131,72 +152,47 @@ export function AutopilotProvider({
 
     const tick = setInterval(() => {
       updateClock();
-      setSecondsToNextSync((prev) => {
-        if (prev <= 1) {
-          void fetchLatestState(customApiUrl);
-          return POLL_INTERVAL_SECONDS;
-        }
-        return prev - 1;
-      });
+      setSecondsToNextSync((prev) => prev <= 1 ? POLL_INTERVAL_SECONDS : prev - 1);
     }, 1000);
-
-    return () => clearInterval(tick);
+    const poll = setInterval(() => { void fetchLatestState(customApiUrl); }, POLL_INTERVAL_SECONDS * 1000);
+    void fetchLatestState(customApiUrl);
+    return () => { clearInterval(tick); clearInterval(poll); requestGeneration.current += 1; };
   }, [customApiUrl, fetchLatestState]);
 
   const runAiScanNow = useCallback(() => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     startTransition(async () => {
       setIsPolling(true);
       try {
         const endpoint = customApiUrl ? `${customApiUrl}/api/scan` : "/api/autopilot";
         const res = await fetch(endpoint, {
           method: "POST",
+          signal: AbortSignal.timeout(120000),
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "scan" }),
         });
+        if (!res.ok) throw new Error((await res.json()).error || `HTTP ${res.status}`);
         if (res.ok) {
+          setError(null);
           const updated = (await res.json()) as AutopilotState;
           setData(updated);
-          setLastRefreshedAt(new Date().toISOString());
+          setLastRefreshedAt(updated.generated_at);
           setSecondsToNextSync(POLL_INTERVAL_SECONDS);
           triggerFlash();
         }
-      } catch {
-        // ignore error
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Không chạy được vòng quét");
       } finally {
+        inFlight.current = false;
         setIsPolling(false);
       }
     });
   }, [customApiUrl, triggerFlash]);
 
-  const switchArgonAccount = useCallback(
-    (slot: "account_1" | "account_2" | "failover") => {
-      startTransition(async () => {
-        setIsPolling(true);
-        try {
-          const endpoint = customApiUrl
-            ? `${customApiUrl}/api/switch-account`
-            : "/api/autopilot";
-          const res = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "switch_account", slot }),
-          });
-          if (res.ok) {
-            const updated = (await res.json()) as AutopilotState;
-            setData(updated);
-            setLastRefreshedAt(new Date().toISOString());
-            setSecondsToNextSync(POLL_INTERVAL_SECONDS);
-            triggerFlash();
-          }
-        } catch {
-          // ignore error
-        } finally {
-          setIsPolling(false);
-        }
-      });
-    },
-    [customApiUrl, triggerFlash]
-  );
+  const switchArgonAccount = useCallback(() => {
+    setError("Quản lý tài khoản bằng manage_accounts.py trên máy chạy backend.");
+  }, []);
 
   const value = useMemo<AutopilotContextValue>(
     () => ({
@@ -208,6 +204,7 @@ export function AutopilotProvider({
         secondsToNextSync,
         liveClock,
         justUpdated,
+        error,
       },
       actions: {
         setFilterMode,
@@ -225,6 +222,7 @@ export function AutopilotProvider({
       secondsToNextSync,
       liveClock,
       justUpdated,
+      error,
       setCustomApiUrl,
       runAiScanNow,
       switchArgonAccount,

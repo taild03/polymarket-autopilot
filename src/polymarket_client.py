@@ -7,7 +7,7 @@ from __future__ import annotations
 import email.utils
 import json
 import math
-import ssl
+import ipaddress
 import subprocess
 import urllib.error
 import urllib.parse
@@ -54,6 +54,8 @@ class PolymarketClient:
     def __init__(self, config: TradingConfig = DEFAULT_CONFIG):
         self.config = config
         self.last_source: str = "unknown"
+        self.server_now: Optional[datetime] = None
+        self._dns_cache = {}
 
     def fetch_active_markets(self, limit: int = 40) -> List[MarketContract]:
         """
@@ -71,6 +73,7 @@ class PolymarketClient:
         url = f"{base_url}?{params}"
         try:
             raw_bytes, server_now = self._http_get_with_clock_skew_tolerance(url)
+            self.server_now = server_now
             raw_data = json.loads(raw_bytes.decode("utf-8"))
             contracts = self._parse_events_payload(raw_data, reference_now=server_now)
             if contracts:
@@ -79,6 +82,8 @@ class PolymarketClient:
         except Exception as exc:
             self.last_source = f"SNAPSHOT_FALLBACK ({type(exc).__name__}: {exc})"
 
+        if self.last_source == "unknown":
+            self.last_source = "SNAPSHOT_FALLBACK (empty Gamma response)"
         return self._get_fallback_contracts()
 
     def _http_get_with_clock_skew_tolerance(self, url: str) -> tuple[bytes, datetime]:
@@ -86,7 +91,7 @@ class PolymarketClient:
         Performs HTTP GET and extracts the authoritative server `Date` header so
         days-to-expiry math remains accurate even if the local host clock is skewed.
         If local ISP DNS sinkholes `gamma-api.polymarket.com` to 127.0.0.1 (Errno 61),
-        automatically resolves the real Cloudflare IP via Google/Cloudflare DoH and uses `curl --resolve`.
+        automatically resolves the real Cloudflare IP via Google/Cloudflare DoH and uses `curl --resolve`. TLS verification stays enabled.
         """
         req = urllib.request.Request(
             url,
@@ -102,14 +107,16 @@ class PolymarketClient:
         except Exception:
             parsed_url = urllib.parse.urlparse(url)
             host = parsed_url.hostname or "gamma-api.polymarket.com"
-            doh_ip = self._resolve_host_via_doh(host)
+            if host not in self._dns_cache:
+                self._dns_cache[host] = self._resolve_host_via_doh(host)
+            doh_ip = self._dns_cache[host]
 
             curl_cmds = []
             if doh_ip:
                 curl_cmds.append(
-                    ["curl", "-f", "-sS", "-k", "--resolve", f"{host}:443:{doh_ip}", "--max-time", "10", "-D", "-", url]
+                    ["curl", "-f", "-sS", "--resolve", f"{host}:443:{doh_ip}", "--max-time", "10", "-D", "-", url]
                 )
-            curl_cmds.append(["curl", "-f", "-sS", "-k", "--max-time", "8", "-D", "-", url])
+            curl_cmds.append(["curl", "-f", "-sS", "--max-time", "8", "-D", "-", url])
 
             for cmd in curl_cmds:
                 proc = subprocess.run(cmd, capture_output=True, timeout=12, check=False)
@@ -134,7 +141,7 @@ class PolymarketClient:
         ]
         for endpoint in doh_endpoints:
             proc = subprocess.run(
-                ["curl", "-sS", "-k", "-H", "Accept: application/dns-json", "--max-time", "5", endpoint],
+                ["curl", "-sS", "-H", "Accept: application/dns-json", "--max-time", "5", endpoint],
                 capture_output=True,
                 timeout=7,
                 check=False,
@@ -144,7 +151,7 @@ class PolymarketClient:
                     data = json.loads(proc.stdout.decode("utf-8"))
                     for ans in data.get("Answer", []):
                         ip = str(ans.get("data", "")).strip()
-                        if ans.get("type") == 1 and ip and not ip.startswith(("127.", "0.")):
+                        if ans.get("type") == 1 and ip and ipaddress.ip_address(ip).is_global:
                             return ip
                 except Exception:
                     continue
@@ -186,7 +193,11 @@ class PolymarketClient:
         bids, asks = levels("bids", True), levels("asks", False)
         if bids and asks and bids[0][0] >= asks[0][0]:
             raise ValueError("Crossed orderbook")
-        return {"bids": bids, "asks": asks,
+        tick = float(book.get("tick_size", "0.01"))
+        minimum = float(book.get("min_order_size", "0"))
+        if not math.isfinite(tick) or tick <= 0 or not math.isfinite(minimum) or minimum < 0:
+            raise ValueError("Invalid book metadata")
+        return {"bids": bids, "asks": asks, "tick_size": tick, "min_order_size": minimum,
                 "best_bid": bids[0][0] if bids else 0.0,
                 "best_ask": asks[0][0] if asks else 1.0,
                 "bid_depth_usd": sum(p*q for p,q in bids),

@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-29T09:32:02.488033+00:00",
+  "generated_at": "2026-10-29T09:46:42.294295+00:00",
   "data_source": "SNAPSHOT_FALLBACK (URLError: <urlopen error [Errno 8] nodename nor servname provided, or not known>)",
   "ai_summary": {
-    "timestamp": "2026-10-29T09:32:02.487597+00:00",
+    "timestamp": "2026-10-29T09:46:42.293673+00:00",
     "ai_mode": "QUANT_SEMANTIC_AI",
     "agy_cli_path": "/Users/taileduc/.local/bin/agy",
     "regime": "OFFLINE_SNAPSHOT_READONLY",
@@ -48,7 +48,7 @@
     "max_spread_taker": 0.03
   },
   "metrics": {
-    "cycle_count": 11,
+    "cycle_count": 12,
     "initial_capital_usdc": 1000.0,
     "cash_usdc": 1000.0,
     "current_exposure_usdc": 0,
@@ -57,12 +57,26 @@
     "realized_pnl_usdc": 0.0,
     "total_pnl_usdc": 0.0,
     "daily_pnl_usdc": 0.0,
+    "daily_risk_reference_usdc": 1000.0,
+    "drawdown_from_peak_usdc": 0.0,
     "total_equity_usdc": 1000.0,
     "return_pct": 0.0,
     "open_positions_count": 0,
     "pending_orders_count": 0,
     "reserved_cash_usdc": 0,
     "closed_positions_count": 0
+  },
+  "equity_history": [
+    {
+      "cycle": 12,
+      "timestamp": "2026-10-29T09:46:42.293881+00:00",
+      "equity": 1000.0
+    }
+  ],
+  "runtime": {
+    "mode": "paper",
+    "can_scan": true,
+    "can_switch_accounts": false
   },
   "open_positions": [],
   "closed_positions": [],

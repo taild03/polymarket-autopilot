@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sổ Đầu Tư Polymarket Tự Hành • Trực Tiếp 24/7",
+  title: "Polymarket Autopilot • Paper Trading",
   description:
     "Bảng theo dõi tài sản và kèo Polymarket tự hành thời gian thực với chữ siêu lớn, rõ ràng trong 1 giây.",
 };

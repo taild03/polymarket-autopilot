@@ -32,12 +32,12 @@ export function ArgonAccountPanel() {
                 2 TÀI KHOẢN GOOGLE ARGON DỰ PHÒNG
               </h2>
               <p className="mt-1 text-[15px] font-semibold text-[#52514E]">
-                Khi nick đang chạy hết lượt Quota, máy tự động nhảy sang nick còn lại trong 1 giây
+                Quản lý đăng nhập và chuyển tài khoản bằng manage_accounts.py trên máy chạy backend.
               </p>
             </div>
             <button
               type="button"
-              disabled={meta.isPending}
+              disabled={true}
               onClick={() => actions.switchArgonAccount("failover")}
               className="rounded-[10px] border-2 border-[#111111] bg-[#FFD166] px-4 py-2.5 text-[14px] font-extrabold uppercase text-[#111111] shadow-[3px_3px_0px_#111111] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#111111] disabled:opacity-50 cursor-pointer"
             >
@@ -69,7 +69,7 @@ export function ArgonAccountPanel() {
               {activeSlot !== "account_1" && (
                 <button
                   type="button"
-                  disabled={meta.isPending}
+                  disabled={true}
                   onClick={() => actions.switchArgonAccount("account_1")}
                   className="mt-3 w-full rounded-[8px] border-2 border-[#111111] bg-white py-2 text-[13px] font-extrabold uppercase text-[#111111] hover:bg-[#111111] hover:text-white cursor-pointer"
                 >
@@ -101,7 +101,7 @@ export function ArgonAccountPanel() {
               {activeSlot !== "account_2" && (
                 <button
                   type="button"
-                  disabled={meta.isPending}
+                  disabled={true}
                   onClick={() => actions.switchArgonAccount("account_2")}
                   className="mt-3 w-full rounded-[8px] border-2 border-[#111111] bg-white py-2 text-[13px] font-extrabold uppercase text-[#111111] hover:bg-[#111111] hover:text-white cursor-pointer"
                 >
@@ -118,7 +118,7 @@ export function ArgonAccountPanel() {
             NGUỒN DỮ LIỆU MÁY CHỦ
           </h2>
           <p className="mt-1 text-[15px] font-semibold text-[#52514E]">
-            Trang web tự động đồng bộ mỗi 5 giây. Nếu xem trên Vercel và muốn nối về máy Mac ở nhà, dán địa chỉ vào đây:
+            Trang web đọc trạng thái mỗi 5 giây. URL bên dưới dành cho backend cục bộ; khi triển khai, cấu hình AUTOPILOT_BACKEND_URL phía server theo hướng dẫn vận hành.
           </p>
 
           <form onSubmit={handleSaveApi} className="mt-4 flex flex-col gap-3 sm:flex-row">

@@ -23,27 +23,15 @@ export function PortfolioKpiGrid() {
   const isPositive = m.total_pnl_usdc >= 0;
 
   const chartPoints = React.useMemo(() => {
-    const start = m.initial_capital_usdc || 1000;
-    const end = m.total_equity_usdc || start;
-    const diff = end - start;
-    const totalCycles = Math.max(m.cycle_count, 1);
-    const ratios = [0, 0.12, 0.25, 0.4, 0.55, 0.7, 0.85, 1];
-
-    return ratios.map((r, idx) => {
-      const cycleNum =
-        idx === 0
-          ? 0
-          : idx === ratios.length - 1
-            ? totalCycles
-            : Math.max(1, Math.round(totalCycles * r));
-      const value = Number((start + diff * Math.pow(r, 0.92)).toFixed(2));
-      return {
-        label: idx === 0 ? "VỐN BAN ĐẦU" : `VÒNG QUÉT #${cycleNum}`,
-        value,
-        pnl: Number((value - start).toFixed(2)),
-      };
-    });
-  }, [m.initial_capital_usdc, m.total_equity_usdc, m.cycle_count]);
+    const history = data.equity_history?.length ? data.equity_history : [
+      { cycle: m.cycle_count, timestamp: data.generated_at, equity: m.total_equity_usdc },
+    ];
+    return history.map((point) => ({
+      label: `VÒNG QUÉT #${point.cycle}`,
+      value: point.equity,
+      pnl: Number((point.equity - m.initial_capital_usdc).toFixed(2)),
+    }));
+  }, [data.equity_history, data.generated_at, m.initial_capital_usdc, m.total_equity_usdc, m.cycle_count]);
 
   const activePoint =
     hoverIdx !== null && chartPoints[hoverIdx]
@@ -94,7 +82,7 @@ export function PortfolioKpiGrid() {
           <div className="lg:col-span-7">
             <div className="flex flex-wrap items-center gap-3">
               <span className="rounded-[8px] border-2 border-[#111111] bg-[#111111] px-3 py-1 text-[13px] font-extrabold uppercase tracking-[0.05em] text-[#B8F397]">
-                TỔNG TÀI SẢN TRỰC TIẾP
+                TỔNG TÀI SẢN MÔ PHỎNG
               </span>
               <span className="rounded-[8px] border-2 border-[#111111] bg-[#F4F0EA] px-3 py-1 text-[13px] font-bold uppercase text-[#111111] tabular-nums">
                 {activePoint.label} • {liveClock}
@@ -128,7 +116,7 @@ export function PortfolioKpiGrid() {
               <span className="font-extrabold text-[#111111]">
                 {m.cycle_count} vòng
               </span>{" "}
-              và đút túi thêm{" "}
+              và ghi nhận PnL mô phỏng{" "}
               <span className="rounded-[6px] bg-[#B8F397] px-2 py-0.5 font-extrabold text-[#111111] border border-[#111111]">
                 {formatUsd(m.total_pnl_usdc, true)}
               </span>{" "}
@@ -144,7 +132,7 @@ export function PortfolioKpiGrid() {
               <div className="flex h-5 w-full overflow-hidden rounded-[10px] border-2 border-[#111111] bg-[#F4F0EA]">
                 <div
                   className="bg-[#FF5C16] border-r-2 border-[#111111] transition-all duration-300"
-                  style={{ width: `${Math.max(investedPct, 8)}%` }}
+                  style={{ width: `${Math.max(0, Math.min(100, investedPct))}%` }}
                 />
                 <div
                   className="bg-[#B8F397] transition-all duration-300"
@@ -159,7 +147,7 @@ export function PortfolioKpiGrid() {
             <div className="rounded-[16px] border-2 border-[#111111] bg-[#111111] p-5 text-white shadow-[4px_4px_0px_#FF5C16]">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-[14px] font-extrabold uppercase tracking-[0.03em] text-[#B8F397]">
-                  ĐƯỜNG CONG TĂNG TRƯỞNG TÀI SẢN
+                  LỊCH SỬ TÀI SẢN ĐÃ GHI NHẬN
                 </span>
                 <span className="rounded-[6px] bg-white/15 px-2.5 py-1 font-mono text-[13px] font-bold text-white tabular-nums">
                   {formatUsd(m.initial_capital_usdc)} -&gt;{" "}
@@ -250,7 +238,7 @@ export function PortfolioKpiGrid() {
               1. TIỀN MẶT TRONG KÉT
             </span>
             <span className="rounded-[6px] border-2 border-[#111111] bg-[#F4F0EA] px-2.5 py-0.5 text-[12px] font-extrabold text-[#111111]">
-              AN TOÀN 100%
+              GIỚI HẠN RỦI RO
             </span>
           </div>
           <div className="mt-3 font-display tabular-nums text-[38px] font-bold leading-none tracking-[-0.03em] text-[#111111] sm:text-[44px]">
@@ -293,7 +281,7 @@ export function PortfolioKpiGrid() {
             {formatUsd(m.realized_pnl_usdc, true)}
           </div>
           <p className="mt-3 text-[15px] font-semibold leading-snug text-[#111111]">
-            Tiền lời thật đã bán xong và cộng thẳng vào tiền mặt ở mục số 1.
+            PnL đã thực hiện trong sổ cái mô phỏng, được cộng vào tiền mặt khả dụng.
           </p>
         </div>
       </div>
@@ -301,7 +289,7 @@ export function PortfolioKpiGrid() {
       {/* 3. BOLD 3-STEP EXPLAINER STRIP */}
       <div className="rounded-[18px] border-2 border-[#111111] bg-white p-6 shadow-[5px_5px_0px_#111111]">
         <div className="text-[16px] font-extrabold uppercase tracking-[0.02em] text-[#111111] sm:text-[18px]">
-          CƠ CHẾ TỰ ĐỘNG KIẾM TIỀN TRONG 3 BƯỚC RÕ RÀNG:
+          QUY TRÌNH PAPER TRADING:
         </div>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-[12px] border-2 border-[#111111] bg-[#F4F0EA] p-4">
@@ -312,7 +300,7 @@ export function PortfolioKpiGrid() {
               Săn kèo lệch giá dưới $1.00
             </h3>
             <p className="mt-1 text-[14.5px] font-medium leading-relaxed text-[#3A3936]">
-              Chỉ mua khi tổng giá các cửa cộng lại rẻ hơn <strong>$1.00</strong> (ăn chắc chênh lệch) hoặc kèo đã rõ kết quả <strong>95%+</strong>.
+              Chỉ mô phỏng lệnh đạt kiểm tra giá, độ sâu và giới hạn vốn. Kỳ vọng mô hình không bảo đảm kết quả phân xử.
             </p>
           </div>
 

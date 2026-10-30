@@ -18,6 +18,8 @@ import http.server
 import json
 import os
 import secrets
+import time
+import webbrowser
 import subprocess
 import urllib.parse
 import urllib.request
@@ -96,6 +98,12 @@ def exchange_code_for_token(
     return None
 
 
+def valid_oauth_callback(path: str, expected_state: str) -> bool:
+    parsed = urllib.parse.urlparse(path)
+    qs = urllib.parse.parse_qs(parsed.query)
+    return parsed.path == "/auth/callback" and secrets.compare_digest(qs.get("state", [""])[0], expected_state)
+
+
 def interactive_login_slot(
     router: ArgonAccountRouter, slot: str, label: Optional[str] = None
 ) -> bool:
@@ -118,6 +126,10 @@ def interactive_login_slot(
         def do_GET(self) -> None:
             parsed = urllib.parse.urlparse(self.path)
             qs = urllib.parse.parse_qs(parsed.query)
+            if not valid_oauth_callback(self.path, state_token):
+                self.send_response(400)
+                self.end_headers()
+                return
             if "error" in qs:
                 captured["error"] = qs["error"][0]
                 self.send_response(400)
@@ -135,19 +147,7 @@ def interactive_login_slot(
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.end_headers()
-                html = """
-                <!DOCTYPE html>
-                <html lang="vi">
-                <head><meta charset="utf-8"><title>Đăng nhập thành công</title></head>
-                <body style="font-family: -apple-system, sans-serif; background: #F7F6F3; color: #111; display:flex; align-items:center; justify-content:center; height:90vh; margin:0;">
-                  <div style="background:#FFF; border:1px solid #EAEAEA; border-radius:8px; padding:32px; max-width:440px; text-align:center;">
-                    <div style="display:inline-block; background:#EDF3EC; color:#346538; padding:4px 10px; border-radius:4px; font-size:12px; font-weight:600;">ĐÃ LƯU KHÓA THÀNH CÔNG</div>
-                    <h2 style="margin-top:12px; font-size:20px;">Đã kết nối Nick Google #2!</h2>
-                    <p style="color:#787774; font-size:14px; line-height:1.5;">Hệ thống Sổ Đầu Tư Polymarket đã lưu tài khoản dự phòng của bạn. Bạn có thể đóng tab trình duyệt này lại.</p>
-                  </div>
-                </body>
-                </html>
-                """
+                html = "<h3>Da nhan ma xac thuc. Kiem tra terminal de biet ket qua dang nhap.</h3>"
                 self.wfile.write(html.encode("utf-8"))
                 return
 
@@ -155,7 +155,7 @@ def interactive_login_slot(
             self.end_headers()
 
     server = http.server.HTTPServer(("127.0.0.1", 0), OAuthCallbackHandler)
-    server.timeout = 180
+    server.timeout = 1
     port = server.server_port
     redirect_uri = f"http://localhost:{port}/auth/callback"
     client_id, _ = _discover_local_agy_oauth_config()
@@ -183,13 +183,17 @@ def interactive_login_slot(
     print("=" * 74, flush=True)
 
     try:
-        subprocess.run(["/usr/bin/open", auth_url], check=False)
+        webbrowser.open(auth_url)
     except Exception:
         pass
 
     # Wait for the single OAuth callback request (up to 180 seconds)
-    server.handle_request()
-    server.server_close()
+    deadline = time.monotonic() + 180
+    try:
+        while time.monotonic() < deadline and not captured["code"] and not captured["error"]:
+            server.handle_request()
+    finally:
+        server.server_close()
 
     if not captured["code"]:
         print(

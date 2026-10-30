@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-10-29T09:46:42.294295+00:00",
-  "data_source": "SNAPSHOT_FALLBACK (URLError: <urlopen error [Errno 8] nodename nor servname provided, or not known>)",
+  "generated_at": "2026-10-30T06:42:54.541079+00:00",
+  "data_source": "LIVE_POLYMARKET_GAMMA_API",
   "ai_summary": {
-    "timestamp": "2026-10-29T09:46:42.293673+00:00",
+    "timestamp": "2026-10-30T06:44:15.816990+00:00",
     "ai_mode": "QUANT_SEMANTIC_AI",
     "agy_cli_path": "/Users/taileduc/.local/bin/agy",
-    "regime": "OFFLINE_SNAPSHOT_READONLY",
-    "capital_utilization_pct": 0.0,
-    "executive_summary": "[account_1 STANDBY] Mất kết nối tới Polymarket Gamma API (SNAPSHOT_FALLBACK (URLError: <urlopen error [Errno 8] nodename nor servname provided, or not known>)). Hệ thống tự động khóa mở vị thế mới để tránh giao dịch trên dữ liệu giả lập.",
+    "regime": "DEFENSIVE_PRESERVATION",
+    "capital_utilization_pct": 33.8,
+    "executive_summary": "[account_1 ACTIVE] Danh mục đang ghi nhận chênh lệch Bid-Ask thực tế (-5.31 USDC). Chỉ chốt lời khi giá Bid vượt giá vào hoặc đáo hạn hợp đồng.",
     "account_router": {
       "active_slot": "account_1",
       "total_switches": 6,
@@ -48,22 +48,22 @@
     "max_spread_taker": 0.03
   },
   "metrics": {
-    "cycle_count": 12,
+    "cycle_count": 150,
     "initial_capital_usdc": 1000.0,
-    "cash_usdc": 1000.0,
-    "current_exposure_usdc": 0,
-    "open_market_value_usdc": 0,
-    "unrealized_pnl_usdc": 0,
+    "cash_usdc": 663.97,
+    "current_exposure_usdc": 336.03,
+    "open_market_value_usdc": 294.69,
+    "unrealized_pnl_usdc": -5.31,
     "realized_pnl_usdc": 0.0,
-    "total_pnl_usdc": 0.0,
-    "daily_pnl_usdc": 0.0,
+    "total_pnl_usdc": -5.31,
+    "daily_pnl_usdc": -5.31,
     "daily_risk_reference_usdc": 1000.0,
-    "drawdown_from_peak_usdc": 0.0,
-    "total_equity_usdc": 1000.0,
-    "return_pct": 0.0,
-    "open_positions_count": 0,
-    "pending_orders_count": 0,
-    "reserved_cash_usdc": 0,
+    "drawdown_from_peak_usdc": -5.31,
+    "total_equity_usdc": 994.69,
+    "return_pct": -0.53,
+    "open_positions_count": 4,
+    "pending_orders_count": 3,
+    "reserved_cash_usdc": 36.03,
     "closed_positions_count": 0
   },
   "equity_history": [
@@ -71,6 +71,696 @@
       "cycle": 12,
       "timestamp": "2026-10-29T09:46:42.293881+00:00",
       "equity": 1000.0
+    },
+    {
+      "cycle": 13,
+      "timestamp": "2026-10-30T03:44:43.939806+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 14,
+      "timestamp": "2026-10-30T03:48:35.382387+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 15,
+      "timestamp": "2026-10-30T03:48:35.419037+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 16,
+      "timestamp": "2026-10-30T03:51:55.509679+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 17,
+      "timestamp": "2026-10-30T03:51:55.279970+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 18,
+      "timestamp": "2026-10-30T03:49:56.030033+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 19,
+      "timestamp": "2026-10-30T03:53:41.338357+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 20,
+      "timestamp": "2026-10-30T03:55:01.508337+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 21,
+      "timestamp": "2026-10-30T03:55:02.343889+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 22,
+      "timestamp": "2026-10-30T03:55:01.404146+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 23,
+      "timestamp": "2026-10-30T03:59:07.067282+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 24,
+      "timestamp": "2026-10-30T04:01:05.197416+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 25,
+      "timestamp": "2026-10-30T03:59:07.325942+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 26,
+      "timestamp": "2026-10-30T04:01:05.340149+00:00",
+      "equity": 996.17
+    },
+    {
+      "cycle": 27,
+      "timestamp": "2026-10-30T04:00:07.689075+00:00",
+      "equity": 996.17
+    },
+    {
+      "cycle": 28,
+      "timestamp": "2026-10-30T04:05:39.452668+00:00",
+      "equity": 996.17
+    },
+    {
+      "cycle": 29,
+      "timestamp": "2026-10-30T04:04:23.458285+00:00",
+      "equity": 996.17
+    },
+    {
+      "cycle": 30,
+      "timestamp": "2026-10-30T04:04:22.992571+00:00",
+      "equity": 996.17
+    },
+    {
+      "cycle": 31,
+      "timestamp": "2026-10-30T04:15:34.780561+00:00",
+      "equity": 994.9
+    },
+    {
+      "cycle": 32,
+      "timestamp": "2026-10-30T04:19:46.537607+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 33,
+      "timestamp": "2026-10-30T04:19:47.549087+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 34,
+      "timestamp": "2026-10-30T04:19:47.499751+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 35,
+      "timestamp": "2026-10-30T04:24:51.481636+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 36,
+      "timestamp": "2026-10-30T04:24:51.758991+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 37,
+      "timestamp": "2026-10-30T04:24:51.725850+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 38,
+      "timestamp": "2026-10-30T04:24:51.445032+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 39,
+      "timestamp": "2026-10-30T04:24:51.268023+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 40,
+      "timestamp": "2026-10-30T04:30:14.963570+00:00",
+      "equity": 994.9
+    },
+    {
+      "cycle": 41,
+      "timestamp": "2026-10-30T04:30:54.965226+00:00",
+      "equity": 994.9
+    },
+    {
+      "cycle": 42,
+      "timestamp": "2026-10-30T04:30:14.559794+00:00",
+      "equity": 994.9
+    },
+    {
+      "cycle": 43,
+      "timestamp": "2026-10-30T04:30:14.850035+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 44,
+      "timestamp": "2026-10-30T04:35:33.496451+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 45,
+      "timestamp": "2026-10-30T04:36:08.468271+00:00",
+      "equity": 994.9
+    },
+    {
+      "cycle": 46,
+      "timestamp": "2026-10-30T04:36:08.756653+00:00",
+      "equity": 994.9
+    },
+    {
+      "cycle": 47,
+      "timestamp": "2026-10-30T04:36:08.794453+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 48,
+      "timestamp": "2026-10-30T04:36:08.593175+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 49,
+      "timestamp": "2026-10-30T04:41:14.605059+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 50,
+      "timestamp": "2026-10-30T04:41:14.935691+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 51,
+      "timestamp": "2026-10-30T04:43:53.637795+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 52,
+      "timestamp": "2026-10-30T04:41:15.541296+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 53,
+      "timestamp": "2026-10-30T04:46:17.916902+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 54,
+      "timestamp": "2026-10-30T04:43:53.351220+00:00",
+      "equity": 994.89
+    },
+    {
+      "cycle": 55,
+      "timestamp": "2026-10-30T04:46:18.114271+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 56,
+      "timestamp": "2026-10-30T04:46:12.733132+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 57,
+      "timestamp": "2026-10-30T04:46:18.480488+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 58,
+      "timestamp": "2026-10-30T04:51:51.836565+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 59,
+      "timestamp": "2026-10-30T04:51:52.894202+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 60,
+      "timestamp": "2026-10-30T04:54:40.402443+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 61,
+      "timestamp": "2026-10-30T04:51:53.109442+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 62,
+      "timestamp": "2026-10-30T04:54:39.912524+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 63,
+      "timestamp": "2026-10-30T04:57:22.831825+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 64,
+      "timestamp": "2026-10-30T04:57:23.325560+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 65,
+      "timestamp": "2026-10-30T04:57:22.651659+00:00",
+      "equity": 995.59
+    },
+    {
+      "cycle": 66,
+      "timestamp": "2026-10-30T05:01:54.826598+00:00",
+      "equity": 994.89
+    },
+    {
+      "cycle": 67,
+      "timestamp": "2026-10-30T05:01:54.788498+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 68,
+      "timestamp": "2026-10-30T05:01:55.070332+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 69,
+      "timestamp": "2026-10-30T05:01:55.067776+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 70,
+      "timestamp": "2026-10-30T05:03:03.659246+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 71,
+      "timestamp": "2026-10-30T05:03:02.010473+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 72,
+      "timestamp": "2026-10-30T05:09:12.774948+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 73,
+      "timestamp": "2026-10-30T05:10:23.959144+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 74,
+      "timestamp": "2026-10-30T05:08:16.952380+00:00",
+      "equity": 995.03
+    },
+    {
+      "cycle": 75,
+      "timestamp": "2026-10-30T05:09:12.521088+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 76,
+      "timestamp": "2026-10-30T05:09:12.487681+00:00",
+      "equity": 996.17
+    },
+    {
+      "cycle": 77,
+      "timestamp": "2026-10-30T05:13:20.994247+00:00",
+      "equity": 996.17
+    },
+    {
+      "cycle": 78,
+      "timestamp": "2026-10-30T05:16:23.096477+00:00",
+      "equity": 996.17
+    },
+    {
+      "cycle": 79,
+      "timestamp": "2026-10-30T05:16:21.769529+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 80,
+      "timestamp": "2026-10-30T05:18:55.466940+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 81,
+      "timestamp": "2026-10-30T05:16:21.502743+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 82,
+      "timestamp": "2026-10-30T05:18:55.558251+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 83,
+      "timestamp": "2026-10-30T05:18:55.617930+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 84,
+      "timestamp": "2026-10-30T05:24:13.374859+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 85,
+      "timestamp": "2026-10-30T05:24:13.132010+00:00",
+      "equity": 996.17
+    },
+    {
+      "cycle": 86,
+      "timestamp": "2026-10-30T05:27:08.299924+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 87,
+      "timestamp": "2026-10-30T05:24:13.421699+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 88,
+      "timestamp": "2026-10-30T05:29:20.896983+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 89,
+      "timestamp": "2026-10-30T05:27:07.496482+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 90,
+      "timestamp": "2026-10-30T05:27:09.502717+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 91,
+      "timestamp": "2026-10-30T05:29:22.821968+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 92,
+      "timestamp": "2026-10-30T05:34:26.061201+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 93,
+      "timestamp": "2026-10-30T05:34:24.843100+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 94,
+      "timestamp": "2026-10-30T05:36:51.234657+00:00",
+      "equity": 995.54
+    },
+    {
+      "cycle": 95,
+      "timestamp": "2026-10-30T05:34:23.935933+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 96,
+      "timestamp": "2026-10-30T05:34:25.283052+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 97,
+      "timestamp": "2026-10-30T05:39:36.034866+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 98,
+      "timestamp": "2026-10-30T05:41:40.174388+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 99,
+      "timestamp": "2026-10-30T05:41:39.757226+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 100,
+      "timestamp": "2026-10-30T05:39:36.335963+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 101,
+      "timestamp": "2026-10-30T05:45:15.032197+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 102,
+      "timestamp": "2026-10-30T05:41:39.692422+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 103,
+      "timestamp": "2026-10-30T05:45:15.138873+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 104,
+      "timestamp": "2026-10-30T05:45:15.350769+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 105,
+      "timestamp": "2026-10-30T05:45:15.273780+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 106,
+      "timestamp": "2026-10-30T05:50:46.246507+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 107,
+      "timestamp": "2026-10-30T05:50:45.759059+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 108,
+      "timestamp": "2026-10-30T05:50:46.038332+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 109,
+      "timestamp": "2026-10-30T05:54:55.052474+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 110,
+      "timestamp": "2026-10-30T05:56:05.780434+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 111,
+      "timestamp": "2026-10-30T05:56:05.428658+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 112,
+      "timestamp": "2026-10-30T05:55:49.485034+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 113,
+      "timestamp": "2026-10-30T05:55:49.006049+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 114,
+      "timestamp": "2026-10-30T06:00:56.139178+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 115,
+      "timestamp": "2026-10-30T06:00:56.043002+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 116,
+      "timestamp": "2026-10-30T06:03:21.384782+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 117,
+      "timestamp": "2026-10-30T06:03:22.099438+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 118,
+      "timestamp": "2026-10-30T06:00:57.323217+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 119,
+      "timestamp": "2026-10-30T06:07:00.117234+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 120,
+      "timestamp": "2026-10-30T06:07:00.224631+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 121,
+      "timestamp": "2026-10-30T06:06:59.577597+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 122,
+      "timestamp": "2026-10-30T06:06:05.911324+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 123,
+      "timestamp": "2026-10-30T06:11:47.336612+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 124,
+      "timestamp": "2026-10-30T06:12:57.164700+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 125,
+      "timestamp": "2026-10-30T06:11:29.147312+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 126,
+      "timestamp": "2026-10-30T06:11:28.440238+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 127,
+      "timestamp": "2026-10-30T06:16:33.577117+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 128,
+      "timestamp": "2026-10-30T06:12:56.951353+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 129,
+      "timestamp": "2026-10-30T06:16:34.802237+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 130,
+      "timestamp": "2026-10-30T06:16:32.325566+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 131,
+      "timestamp": "2026-10-30T06:21:26.056027+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 132,
+      "timestamp": "2026-10-30T06:22:36.884923+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 133,
+      "timestamp": "2026-10-30T06:21:25.866658+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 134,
+      "timestamp": "2026-10-30T06:21:46.931738+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 135,
+      "timestamp": "2026-10-30T06:21:47.200889+00:00",
+      "equity": 995.32
+    },
+    {
+      "cycle": 136,
+      "timestamp": "2026-10-30T06:26:53.561738+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 137,
+      "timestamp": "2026-10-30T06:26:53.456784+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 138,
+      "timestamp": "2026-10-30T06:29:51.899257+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 139,
+      "timestamp": "2026-10-30T06:26:53.092925+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 140,
+      "timestamp": "2026-10-30T06:32:18.698509+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 141,
+      "timestamp": "2026-10-30T06:33:30.140073+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 142,
+      "timestamp": "2026-10-30T06:33:29.620936+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 143,
+      "timestamp": "2026-10-30T06:32:18.432723+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 144,
+      "timestamp": "2026-10-30T06:33:29.777525+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 145,
+      "timestamp": "2026-10-30T06:37:30.324869+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 146,
+      "timestamp": "2026-10-30T06:39:28.902395+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 147,
+      "timestamp": "2026-10-30T06:40:40.081246+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 148,
+      "timestamp": "2026-10-30T06:40:40.056159+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 149,
+      "timestamp": "2026-10-30T06:40:39.848853+00:00",
+      "equity": 994.69
+    },
+    {
+      "cycle": 150,
+      "timestamp": "2026-10-30T06:42:54.540274+00:00",
+      "equity": 994.69
     }
   ],
   "runtime": {
@@ -78,383 +768,1563 @@
     "can_scan": true,
     "can_switch_accounts": false
   },
-  "open_positions": [],
-  "closed_positions": [],
-  "pending_orders": [],
-  "latest_signals": [
+  "open_positions": [
     {
-      "signal_id": "sig-arb-evt-fed-rate-decision",
-      "market_id": "bundle-evt-fed-rate-decision",
-      "event_title": "Fed Interest Rate Decision - Next FOMC Meeting",
-      "question": "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
-      "strategy": "BUNDLE_ARB",
-      "side": "BUY_BUNDLE",
+      "position_id": "pos-6139608-4488fd88",
+      "market_id": "6139608",
+      "event_title": "What price will Ethereum hit in October?",
+      "question": "Will Ethereum reach $2,400 in October?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_NO",
       "order_type": "LIMIT_IOC",
-      "entry_price": 0.965,
-      "fair_value": 1.0,
-      "edge_bps": 350.0,
-      "expected_apr_pct": 147.1,
-      "confidence_score": 0.96,
-      "liquidity_usd": 145000.0,
-      "volume_24h_usd": 345000.0,
-      "spread": 0.008,
-      "days_to_expiry": 9.0,
-      "resolution_rules_len": 134,
-      "rationale": "Tổng giá Ask thực thi của toàn bộ 3 cửa cộng phí là $0.965 (< $1.00). Chênh lệch ròng +3.50% khi sự kiện phân xử sau 9.0 ngày.",
-      "leg_market_ids": [
-        "pm-fed-nov-hold",
-        "pm-fed-nov-nochange",
-        "pm-fed-nov-50bps"
-      ]
+      "shares_qty": 63.76195536663125,
+      "entry_price": 0.941,
+      "mark_price": 0.9190433333333333,
+      "fair_value": 0.982,
+      "cost_basis_usdc": 60.0,
+      "market_value_usdc": 58.6,
+      "unrealized_pnl_usdc": -1.4,
+      "expected_apr_pct": 792.1,
+      "days_to_expiry": 2.01,
+      "rationale": "Kèo xác suất cao (giá Ask 94.0¢) đáo hạn sau 2.0 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.8¢), kỳ vọng lãi ròng +4.10%.",
+      "opened_at": "2026-10-30T03:44:43.464949+00:00",
+      "status": "OPEN",
+      "leg_market_ids": "[]"
     },
     {
-      "signal_id": "sig-bond-pm-btc-above-55k-week",
-      "market_id": "pm-btc-above-55k-week",
-      "event_title": "Bitcoin Weekly Milestone Check",
-      "question": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
+      "position_id": "pos-562802-0e48ac37",
+      "market_id": "562802",
+      "event_title": "Which party will win the House in 2026?",
+      "question": "Will the Democratic Party control the House after the 2026 Midterm elections?",
       "strategy": "BOND_CARRY",
       "side": "BUY_YES",
       "order_type": "LIMIT_IOC",
-      "entry_price": 0.956,
+      "shares_qty": 85.01594048884166,
+      "entry_price": 0.941,
+      "mark_price": 0.9290022499999999,
       "fair_value": 0.988,
-      "edge_bps": 320.0,
-      "expected_apr_pct": 271.8,
-      "confidence_score": 0.88,
-      "liquidity_usd": 198000.0,
-      "volume_24h_usd": 94500.0,
-      "spread": 0.007,
-      "days_to_expiry": 4.5,
-      "resolution_rules_len": 121,
-      "rationale": "Kèo xác suất cao (giá Ask 95.5¢) đáo hạn sau 4.5 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +3.20%.",
-      "leg_market_ids": []
+      "cost_basis_usdc": 80.0,
+      "market_value_usdc": 78.98,
+      "unrealized_pnl_usdc": -1.02,
+      "expected_apr_pct": 361.4,
+      "days_to_expiry": 5.05,
+      "rationale": "Kèo xác suất cao (giá Ask 94.0¢) đáo hạn sau 5.0 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +4.70%.",
+      "opened_at": "2026-10-30T03:44:42.377383+00:00",
+      "status": "OPEN",
+      "leg_market_ids": "[]"
     },
     {
-      "signal_id": "sig-bond-pm-illiquid-meme-trap",
-      "market_id": "pm-illiquid-meme-trap",
-      "event_title": "Viral Social Media Poll Outcome",
-      "question": "Will X account post a meme coin ticker before midnight?",
+      "position_id": "pos-562803-3aaf61d5",
+      "market_id": "562803",
+      "event_title": "Which party will win the House in 2026?",
+      "question": "Will the Republican Party control the House after the 2026 Midterm elections?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_NO",
+      "order_type": "LIMIT_IOC",
+      "shares_qty": 85.01594048884166,
+      "entry_price": 0.941,
+      "mark_price": 0.9190041249999998,
+      "fair_value": 0.988,
+      "cost_basis_usdc": 80.0,
+      "market_value_usdc": 78.13,
+      "unrealized_pnl_usdc": -1.87,
+      "expected_apr_pct": 361.4,
+      "days_to_expiry": 5.05,
+      "rationale": "Kèo xác suất cao (giá Ask 94.0¢) đáo hạn sau 5.0 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +4.70%.",
+      "opened_at": "2026-10-30T03:44:42.727962+00:00",
+      "status": "OPEN",
+      "leg_market_ids": "[]"
+    },
+    {
+      "position_id": "pos-562831-511b831d",
+      "market_id": "562831",
+      "event_title": "Balance of Power: 2026 Midterms",
+      "question": "2026 Balance of Power: R Senate, R House",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_NO",
+      "order_type": "LIMIT_IOC",
+      "shares_qty": 85.01594048884166,
+      "entry_price": 0.941,
+      "mark_price": 0.9290022499999999,
+      "fair_value": 0.988,
+      "cost_basis_usdc": 80.0,
+      "market_value_usdc": 78.98,
+      "unrealized_pnl_usdc": -1.02,
+      "expected_apr_pct": 361.4,
+      "days_to_expiry": 5.05,
+      "rationale": "Kèo xác suất cao (giá Ask 94.0¢) đáo hạn sau 5.0 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +4.70%.",
+      "opened_at": "2026-10-30T03:44:43.130566+00:00",
+      "status": "OPEN",
+      "leg_market_ids": "[]"
+    }
+  ],
+  "closed_positions": [],
+  "pending_orders": [
+    {
+      "position_id": "pos-1393324-ea866a17",
+      "market_id": "1393324",
+      "event_title": "Predict.fun FDV above ___ one day after launch?",
+      "question": "Predict.fun FDV above $1B one day after launch?",
+      "strategy": "MAKER_SPREAD",
+      "side": "BUY_YES",
+      "order_type": "LIMIT_MAKER",
+      "shares_qty": 25.038461538461537,
+      "entry_price": 0.52,
+      "mark_price": 0.52,
+      "fair_value": 0.545,
+      "cost_basis_usdc": 13.02,
+      "market_value_usdc": 13.02,
+      "unrealized_pnl_usdc": 0.0,
+      "expected_apr_pct": 125.3,
+      "days_to_expiry": 428.05,
+      "rationale": "Sổ lệnh giãn Spread 7.0¢ trên thị trường thanh khoản $40,495. Đặt lệnh chờ mua đúng bước giá $0.52 (dưới giá Mid $0.547).",
+      "opened_at": "2026-10-30T03:44:43.925800+00:00",
+      "status": "PENDING_MAKER",
+      "leg_market_ids": "[]"
+    },
+    {
+      "position_id": "pos-1393323-8e073843",
+      "market_id": "1393323",
+      "event_title": "Predict.fun FDV above ___ one day after launch?",
+      "question": "Predict.fun FDV above $800M one day after launch?",
+      "strategy": "MAKER_SPREAD",
+      "side": "BUY_YES",
+      "order_type": "LIMIT_MAKER",
+      "shares_qty": 11.602564102564102,
+      "entry_price": 0.78,
+      "mark_price": 0.78,
+      "fair_value": 0.788,
+      "cost_basis_usdc": 9.05,
+      "market_value_usdc": 9.05,
+      "unrealized_pnl_usdc": 0.0,
+      "expected_apr_pct": 26.7,
+      "days_to_expiry": 428.03,
+      "rationale": "Sổ lệnh giãn Spread 4.0¢ trên thị trường thanh khoản $33,954. Đặt lệnh chờ mua đúng bước giá $0.78 (dưới giá Mid $0.790).",
+      "opened_at": "2026-10-30T04:19:46.525824+00:00",
+      "status": "PENDING_MAKER",
+      "leg_market_ids": "[]"
+    },
+    {
+      "position_id": "pos-5786297-60401ab4",
+      "market_id": "5786297",
+      "event_title": "Total commitments for the 1win ($1w) public sale",
+      "question": "Will commitments to the 1W public sale exceed $40M?",
+      "strategy": "MAKER_SPREAD",
+      "side": "BUY_YES",
+      "order_type": "LIMIT_MAKER",
+      "shares_qty": 23.661016949152547,
+      "entry_price": 0.59,
+      "mark_price": 0.59,
+      "fair_value": 0.613,
+      "cost_basis_usdc": 13.96,
+      "market_value_usdc": 13.96,
+      "unrealized_pnl_usdc": 0.0,
+      "expected_apr_pct": 354.8,
+      "days_to_expiry": 4.01,
+      "rationale": "Sổ lệnh giãn Spread 7.0¢ trên thị trường thanh khoản $5,069. Đặt lệnh chờ mua đúng bước giá $0.59 (dưới giá Mid $0.615).",
+      "opened_at": "2026-10-30T04:51:51.805427+00:00",
+      "status": "PENDING_MAKER",
+      "leg_market_ids": "[]"
+    }
+  ],
+  "latest_signals": [
+    {
+      "signal_id": "sig-bond-562802",
+      "market_id": "562802",
+      "event_title": "Which party will win the House in 2026?",
+      "question": "Will the Democratic Party control the House after the 2026 Midterm elections?",
       "strategy": "BOND_CARRY",
       "side": "BUY_YES",
       "order_type": "LIMIT_IOC",
       "entry_price": 0.941,
-      "fair_value": 0.97,
-      "edge_bps": 290.0,
-      "expected_apr_pct": 450.4,
-      "confidence_score": 0.88,
-      "liquidity_usd": 1200.0,
-      "volume_24h_usd": 450.0,
-      "spread": 0.12,
-      "days_to_expiry": 2.5,
-      "resolution_rules_len": 17,
-      "rationale": "Kèo xác suất cao (giá Ask 94.0¢) đáo hạn sau 2.5 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (3.0¢), kỳ vọng lãi ròng +2.90%.",
-      "leg_market_ids": []
-    },
-    {
-      "signal_id": "sig-bond-pm-us-gov-shutdown-week",
-      "market_id": "pm-us-gov-shutdown-week",
-      "event_title": "US Government Operations Status This Week",
-      "question": "Will the US Federal Government remain open through November 5?",
-      "strategy": "BOND_CARRY",
-      "side": "BUY_YES",
-      "order_type": "LIMIT_IOC",
-      "entry_price": 0.966,
       "fair_value": 0.988,
-      "edge_bps": 220.0,
-      "expected_apr_pct": 118.9,
+      "edge_bps": 470.0,
+      "expected_apr_pct": 370.2,
       "confidence_score": 0.88,
-      "liquidity_usd": 276000.0,
-      "volume_24h_usd": 83200.0,
-      "spread": 0.007,
-      "days_to_expiry": 7.0,
-      "resolution_rules_len": 135,
-      "rationale": "Kèo xác suất cao (giá Ask 96.5¢) đáo hạn sau 7.0 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +2.20%.",
+      "liquidity_usd": 7109155.43,
+      "volume_24h_usd": 2211583.16,
+      "spread": 0.01,
+      "days_to_expiry": 4.93,
+      "resolution_rules_len": 1965,
+      "rationale": "Kèo xác suất cao (giá Ask 94.0¢) đáo hạn sau 4.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +4.70%.",
       "leg_market_ids": []
     },
     {
-      "signal_id": "sig-bond-pm-fed-nov-50bps",
-      "market_id": "pm-fed-nov-50bps",
-      "event_title": "Fed Interest Rate Decision - Next FOMC Meeting",
-      "question": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
+      "signal_id": "sig-bond-562803",
+      "market_id": "562803",
+      "event_title": "Which party will win the House in 2026?",
+      "question": "Will the Republican Party control the House after the 2026 Midterm elections?",
       "strategy": "BOND_CARRY",
       "side": "BUY_NO",
       "order_type": "LIMIT_IOC",
-      "entry_price": 0.973,
+      "entry_price": 0.941,
       "fair_value": 0.988,
-      "edge_bps": 150.0,
-      "expected_apr_pct": 62.6,
+      "edge_bps": 470.0,
+      "expected_apr_pct": 370.2,
       "confidence_score": 0.88,
-      "liquidity_usd": 145000.0,
-      "volume_24h_usd": 44000.0,
-      "spread": 0.004,
-      "days_to_expiry": 9.0,
-      "resolution_rules_len": 134,
-      "rationale": "Kèo xác suất cao (giá Ask 97.2¢) đáo hạn sau 9.0 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +1.50%.",
+      "liquidity_usd": 4641104.97,
+      "volume_24h_usd": 2713966.24,
+      "spread": 0.02,
+      "days_to_expiry": 4.93,
+      "resolution_rules_len": 1965,
+      "rationale": "Kèo xác suất cao (giá Ask 94.0¢) đáo hạn sau 4.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +4.70%.",
       "leg_market_ids": []
     },
     {
-      "signal_id": "sig-maker-pm-eth-etf-inflows-pos",
-      "market_id": "pm-eth-etf-inflows-pos",
-      "event_title": "Spot ETH ETF Weekly Net Flows",
-      "question": "Will US Spot Ethereum ETFs record positive net inflows this week?",
+      "signal_id": "sig-bond-562831",
+      "market_id": "562831",
+      "event_title": "Balance of Power: 2026 Midterms",
+      "question": "2026 Balance of Power: R Senate, R House",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_NO",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.941,
+      "fair_value": 0.988,
+      "edge_bps": 470.0,
+      "expected_apr_pct": 370.2,
+      "confidence_score": 0.88,
+      "liquidity_usd": 5419596.31,
+      "volume_24h_usd": 1280262.86,
+      "spread": 0.01,
+      "days_to_expiry": 4.93,
+      "resolution_rules_len": 3556,
+      "rationale": "Kèo xác suất cao (giá Ask 94.0¢) đáo hạn sau 4.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +4.70%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-bond-6367376",
+      "market_id": "6367376",
+      "event_title": "Israel x Iran ceasefire continues through...?",
+      "question": "Israel x Iran ceasefire continues through November 1?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_YES",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.955,
+      "fair_value": 0.982,
+      "edge_bps": 270.0,
+      "expected_apr_pct": 352.6,
+      "confidence_score": 0.88,
+      "liquidity_usd": 45513.92,
+      "volume_24h_usd": 40947.51,
+      "spread": 0.014,
+      "days_to_expiry": 2.93,
+      "resolution_rules_len": 3203,
+      "rationale": "Kèo xác suất cao (giá Ask 95.4¢) đáo hạn sau 2.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.8¢), kỳ vọng lãi ròng +2.70%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-bond-6236211",
+      "market_id": "6236211",
+      "event_title": "What price will Bitcoin hit October 26-November 1?",
+      "question": "Will Bitcoin reach $84,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_NO",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.959,
+      "fair_value": 0.982,
+      "edge_bps": 230.0,
+      "expected_apr_pct": 299.1,
+      "confidence_score": 0.88,
+      "liquidity_usd": 38734.03,
+      "volume_24h_usd": 47897.99,
+      "spread": 0.009,
+      "days_to_expiry": 2.93,
+      "resolution_rules_len": 785,
+      "rationale": "Kèo xác suất cao (giá Ask 95.8¢) đáo hạn sau 2.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.8¢), kỳ vọng lãi ròng +2.30%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-bond-6084518",
+      "market_id": "6084518",
+      "event_title": "Bitcoin above ___ on October 30?",
+      "question": "Will the price of Bitcoin be above $76,000 on October 30?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_YES",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.961,
+      "fair_value": 0.982,
+      "edge_bps": 210.0,
+      "expected_apr_pct": 798.4,
+      "confidence_score": 0.88,
+      "liquidity_usd": 50455.89,
+      "volume_24h_usd": 118322.6,
+      "spread": 0.003,
+      "days_to_expiry": 0.39,
+      "resolution_rules_len": 687,
+      "rationale": "Kèo xác suất cao (giá Ask 96.0¢) đáo hạn sau 0.4 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.8¢), kỳ vọng lãi ròng +2.10%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-bond-6236265",
+      "market_id": "6236265",
+      "event_title": "What price will Ethereum hit October 26-November 1?",
+      "question": "Will Ethereum dip to $2,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_NO",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.961,
+      "fair_value": 0.982,
+      "edge_bps": 210.0,
+      "expected_apr_pct": 272.5,
+      "confidence_score": 0.88,
+      "liquidity_usd": 32083.07,
+      "volume_24h_usd": 31888.55,
+      "spread": 0.006,
+      "days_to_expiry": 2.93,
+      "resolution_rules_len": 792,
+      "rationale": "Kèo xác suất cao (giá Ask 96.0¢) đáo hạn sau 2.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.8¢), kỳ vọng lãi ròng +2.10%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-bond-6236222",
+      "market_id": "6236222",
+      "event_title": "What price will Bitcoin hit October 26-November 1?",
+      "question": "Will Bitcoin dip to $72,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_NO",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.962,
+      "fair_value": 0.982,
+      "edge_bps": 200.0,
+      "expected_apr_pct": 259.3,
+      "confidence_score": 0.88,
+      "liquidity_usd": 58575.77,
+      "volume_24h_usd": 47478.94,
+      "spread": 0.001,
+      "days_to_expiry": 2.93,
+      "resolution_rules_len": 791,
+      "rationale": "Kèo xác suất cao (giá Ask 96.1¢) đáo hạn sau 2.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.8¢), kỳ vọng lãi ròng +2.00%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-maker-5407574",
+      "market_id": "5407574",
+      "event_title": "Will Predict.fun launch a token by ___?",
+      "question": "Will Predict.fun launch a token by October 31, 2026?",
       "strategy": "MAKER_SPREAD",
       "side": "BUY_YES",
       "order_type": "LIMIT_MAKER",
-      "entry_price": 0.6,
-      "fair_value": 0.603,
-      "edge_bps": 30.0,
-      "expected_apr_pct": 30.4,
+      "entry_price": 0.25,
+      "fair_value": 0.266,
+      "edge_bps": 160.0,
+      "expected_apr_pct": 1236.0,
       "confidence_score": 0.82,
-      "liquidity_usd": 84000.0,
-      "volume_24h_usd": 52000.0,
+      "liquidity_usd": 3576.84,
+      "volume_24h_usd": 202548.17,
+      "spread": 0.056,
+      "days_to_expiry": 1.89,
+      "resolution_rules_len": 456,
+      "rationale": "Sổ lệnh giãn Spread 5.6¢ trên thị trường thanh khoản $3,577. Đặt lệnh chờ mua đúng bước giá $0.25 (dưới giá Mid $0.268).",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-bond-3399459",
+      "market_id": "3399459",
+      "event_title": "Israel x Iran ceasefire continues through...?",
+      "question": "Israel x Iran ceasefire continues through October 31?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_YES",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.967,
+      "fair_value": 0.982,
+      "edge_bps": 150.0,
+      "expected_apr_pct": 361.0,
+      "confidence_score": 0.88,
+      "liquidity_usd": 75017.08,
+      "volume_24h_usd": 182156.46,
+      "spread": 0.003,
+      "days_to_expiry": 1.57,
+      "resolution_rules_len": 3203,
+      "rationale": "Kèo xác suất cao (giá Ask 96.6¢) đáo hạn sau 1.6 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.8¢), kỳ vọng lãi ròng +1.50%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-bond-5170792",
+      "market_id": "5170792",
+      "event_title": "What price will Ethereum hit in October?",
+      "question": "Will Ethereum dip to $2,000 in October?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_NO",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.967,
+      "fair_value": 0.982,
+      "edge_bps": 150.0,
+      "expected_apr_pct": 299.9,
+      "confidence_score": 0.88,
+      "liquidity_usd": 85277.5,
+      "volume_24h_usd": 44556.34,
+      "spread": 0.004,
+      "days_to_expiry": 1.89,
+      "resolution_rules_len": 787,
+      "rationale": "Kèo xác suất cao (giá Ask 96.6¢) đáo hạn sau 1.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.8¢), kỳ vọng lãi ròng +1.50%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-bond-5170741",
+      "market_id": "5170741",
+      "event_title": "What price will Bitcoin hit in October?",
+      "question": "Will Bitcoin dip to $72,500 in October?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_NO",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.976,
+      "fair_value": 0.988,
+      "edge_bps": 120.0,
+      "expected_apr_pct": 237.7,
+      "confidence_score": 0.88,
+      "liquidity_usd": 110923.07,
+      "volume_24h_usd": 170610.23,
+      "spread": 0.003,
+      "days_to_expiry": 1.89,
+      "resolution_rules_len": 787,
+      "rationale": "Kèo xác suất cao (giá Ask 97.5¢) đáo hạn sau 1.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +1.20%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-bond-628940",
+      "market_id": "628940",
+      "event_title": "California Governor Election Winner",
+      "question": "Will Steve Hilton win the California Governor Election in 2026?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_NO",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.976,
+      "fair_value": 0.988,
+      "edge_bps": 120.0,
+      "expected_apr_pct": 91.1,
+      "confidence_score": 0.88,
+      "liquidity_usd": 486442.5,
+      "volume_24h_usd": 160212.79,
+      "spread": 0.002,
+      "days_to_expiry": 4.93,
+      "resolution_rules_len": 563,
+      "rationale": "Kèo xác suất cao (giá Ask 97.5¢) đáo hạn sau 4.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +1.20%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-bond-628941",
+      "market_id": "628941",
+      "event_title": "California Governor Election Winner",
+      "question": "Will Xavier Becerra win the California Governor Election in 2026?",
+      "strategy": "BOND_CARRY",
+      "side": "BUY_YES",
+      "order_type": "LIMIT_IOC",
+      "entry_price": 0.977,
+      "fair_value": 0.988,
+      "edge_bps": 110.0,
+      "expected_apr_pct": 83.4,
+      "confidence_score": 0.88,
+      "liquidity_usd": 388274.47,
+      "volume_24h_usd": 145787.02,
+      "spread": 0.004,
+      "days_to_expiry": 4.93,
+      "resolution_rules_len": 563,
+      "rationale": "Kèo xác suất cao (giá Ask 97.6¢) đáo hạn sau 4.9 ngày. Sau khi trừ dự phòng rủi ro đuôi UMA (1.2¢), kỳ vọng lãi ròng +1.10%.",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-maker-1393324",
+      "market_id": "1393324",
+      "event_title": "Predict.fun FDV above ___ one day after launch?",
+      "question": "Predict.fun FDV above $1B one day after launch?",
+      "strategy": "MAKER_SPREAD",
+      "side": "BUY_YES",
+      "order_type": "LIMIT_MAKER",
+      "entry_price": 0.59,
+      "fair_value": 0.5935,
+      "edge_bps": 35.0,
+      "expected_apr_pct": 15.5,
+      "confidence_score": 0.82,
+      "liquidity_usd": 44978.0,
+      "volume_24h_usd": 106382.4,
+      "spread": 0.025,
+      "days_to_expiry": 427.93,
+      "resolution_rules_len": 686,
+      "rationale": "Sổ lệnh giãn Spread 2.5¢ trên thị trường thanh khoản $44,978. Đặt lệnh chờ mua đúng bước giá $0.59 (dưới giá Mid $0.596).",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-maker-6351848",
+      "market_id": "6351848",
+      "event_title": "Total commitments for the 1win ($1w) public sale",
+      "question": "Will commitments to the 1W public sale exceed $50M?",
+      "strategy": "MAKER_SPREAD",
+      "side": "BUY_YES",
+      "order_type": "LIMIT_MAKER",
+      "entry_price": 0.41,
+      "fair_value": 0.413,
+      "edge_bps": 30.0,
+      "expected_apr_pct": 68.0,
+      "confidence_score": 0.82,
+      "liquidity_usd": 4291.48,
+      "volume_24h_usd": 5416.35,
       "spread": 0.03,
-      "days_to_expiry": 6.0,
-      "resolution_rules_len": 156,
-      "rationale": "Sổ lệnh giãn Spread 3.0¢ trên thị trường thanh khoản $84,000. Đặt lệnh chờ mua đúng bước giá $0.60 (dưới giá Mid $0.605).",
+      "days_to_expiry": 3.93,
+      "resolution_rules_len": 1873,
+      "rationale": "Sổ lệnh giãn Spread 3.0¢ trên thị trường thanh khoản $4,291. Đặt lệnh chờ mua đúng bước giá $0.41 (dưới giá Mid $0.415).",
+      "leg_market_ids": []
+    },
+    {
+      "signal_id": "sig-maker-5786297",
+      "market_id": "5786297",
+      "event_title": "Total commitments for the 1win ($1w) public sale",
+      "question": "Will commitments to the 1W public sale exceed $40M?",
+      "strategy": "MAKER_SPREAD",
+      "side": "BUY_YES",
+      "order_type": "LIMIT_MAKER",
+      "entry_price": 0.61,
+      "fair_value": 0.613,
+      "edge_bps": 30.0,
+      "expected_apr_pct": 45.7,
+      "confidence_score": 0.82,
+      "liquidity_usd": 5075.28,
+      "volume_24h_usd": 25989.33,
+      "spread": 0.03,
+      "days_to_expiry": 3.93,
+      "resolution_rules_len": 1873,
+      "rationale": "Sổ lệnh giãn Spread 3.0¢ trên thị trường thanh khoản $5,075. Đặt lệnh chờ mua đúng bước giá $0.61 (dưới giá Mid $0.615).",
       "leg_market_ids": []
     }
   ],
   "latest_decisions": [
     {
-      "signal_id": "sig-arb-evt-fed-rate-decision",
-      "market_id": "bundle-evt-fed-rate-decision",
-      "question": "[Giỏ 3 cửa] Fed Interest Rate Decision - Next FOMC Meeting",
-      "strategy": "BUNDLE_ARB",
-      "approved": false,
-      "recommended_size_usdc": 0.0,
-      "shares_qty": 0.0,
-      "entry_price": 0.965,
-      "reject_reason": "OFFLINE_SNAPSHOT_PROTECTION: Nguồn dữ liệu hiện tại là SNAPSHOT_FALLBACK (URLError: <urlopen error [Errno 8] nodename nor servname provided, or not known>). Tạm khóa mở lệnh mới cho tới khi kết nối trực tiếp Polymarket Gamma API.",
-      "risk_checks_passed": []
-    },
-    {
-      "signal_id": "sig-bond-pm-btc-above-55k-week",
-      "market_id": "pm-btc-above-55k-week",
-      "question": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
-      "strategy": "BOND_CARRY",
-      "approved": false,
-      "recommended_size_usdc": 0.0,
-      "shares_qty": 0.0,
-      "entry_price": 0.956,
-      "reject_reason": "OFFLINE_SNAPSHOT_PROTECTION: Nguồn dữ liệu hiện tại là SNAPSHOT_FALLBACK (URLError: <urlopen error [Errno 8] nodename nor servname provided, or not known>). Tạm khóa mở lệnh mới cho tới khi kết nối trực tiếp Polymarket Gamma API.",
-      "risk_checks_passed": []
-    },
-    {
-      "signal_id": "sig-bond-pm-illiquid-meme-trap",
-      "market_id": "pm-illiquid-meme-trap",
-      "question": "Will X account post a meme coin ticker before midnight?",
+      "signal_id": "sig-bond-562802",
+      "market_id": "562802",
+      "question": "Will the Democratic Party control the House after the 2026 Midterm elections?",
       "strategy": "BOND_CARRY",
       "approved": false,
       "recommended_size_usdc": 0.0,
       "shares_qty": 0.0,
       "entry_price": 0.941,
-      "reject_reason": "OFFLINE_SNAPSHOT_PROTECTION: Nguồn dữ liệu hiện tại là SNAPSHOT_FALLBACK (URLError: <urlopen error [Errno 8] nodename nor servname provided, or not known>). Tạm khóa mở lệnh mới cho tới khi kết nối trực tiếp Polymarket Gamma API.",
-      "risk_checks_passed": []
+      "reject_reason": "DUPLICATE_POSITION: Đã có vị thế đang mở trên thị trường này",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK"
+      ]
     },
     {
-      "signal_id": "sig-bond-pm-us-gov-shutdown-week",
-      "market_id": "pm-us-gov-shutdown-week",
-      "question": "Will the US Federal Government remain open through November 5?",
+      "signal_id": "sig-bond-562803",
+      "market_id": "562803",
+      "question": "Will the Republican Party control the House after the 2026 Midterm elections?",
       "strategy": "BOND_CARRY",
       "approved": false,
       "recommended_size_usdc": 0.0,
       "shares_qty": 0.0,
-      "entry_price": 0.966,
-      "reject_reason": "OFFLINE_SNAPSHOT_PROTECTION: Nguồn dữ liệu hiện tại là SNAPSHOT_FALLBACK (URLError: <urlopen error [Errno 8] nodename nor servname provided, or not known>). Tạm khóa mở lệnh mới cho tới khi kết nối trực tiếp Polymarket Gamma API.",
-      "risk_checks_passed": []
+      "entry_price": 0.941,
+      "reject_reason": "DUPLICATE_POSITION: Đã có vị thế đang mở trên thị trường này",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK"
+      ]
     },
     {
-      "signal_id": "sig-bond-pm-fed-nov-50bps",
-      "market_id": "pm-fed-nov-50bps",
-      "question": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
+      "signal_id": "sig-bond-562831",
+      "market_id": "562831",
+      "question": "2026 Balance of Power: R Senate, R House",
       "strategy": "BOND_CARRY",
       "approved": false,
       "recommended_size_usdc": 0.0,
       "shares_qty": 0.0,
-      "entry_price": 0.973,
-      "reject_reason": "OFFLINE_SNAPSHOT_PROTECTION: Nguồn dữ liệu hiện tại là SNAPSHOT_FALLBACK (URLError: <urlopen error [Errno 8] nodename nor servname provided, or not known>). Tạm khóa mở lệnh mới cho tới khi kết nối trực tiếp Polymarket Gamma API.",
-      "risk_checks_passed": []
+      "entry_price": 0.941,
+      "reject_reason": "DUPLICATE_POSITION: Đã có vị thế đang mở trên thị trường này",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK"
+      ]
     },
     {
-      "signal_id": "sig-maker-pm-eth-etf-inflows-pos",
-      "market_id": "pm-eth-etf-inflows-pos",
-      "question": "Will US Spot Ethereum ETFs record positive net inflows this week?",
+      "signal_id": "sig-bond-6367376",
+      "market_id": "6367376",
+      "question": "Israel x Iran ceasefire continues through November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.955,
+      "reject_reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR"
+      ]
+    },
+    {
+      "signal_id": "sig-bond-6236211",
+      "market_id": "6236211",
+      "question": "Will Bitcoin reach $84,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.959,
+      "reject_reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR"
+      ]
+    },
+    {
+      "signal_id": "sig-bond-6084518",
+      "market_id": "6084518",
+      "question": "Will the price of Bitcoin be above $76,000 on October 30?",
+      "strategy": "BOND_CARRY",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.961,
+      "reject_reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR"
+      ]
+    },
+    {
+      "signal_id": "sig-bond-6236265",
+      "market_id": "6236265",
+      "question": "Will Ethereum dip to $2,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.961,
+      "reject_reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR"
+      ]
+    },
+    {
+      "signal_id": "sig-bond-6236222",
+      "market_id": "6236222",
+      "question": "Will Bitcoin dip to $72,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.962,
+      "reject_reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR"
+      ]
+    },
+    {
+      "signal_id": "sig-maker-5407574",
+      "market_id": "5407574",
+      "question": "Will Predict.fun launch a token by October 31, 2026?",
       "strategy": "MAKER_SPREAD",
       "approved": false,
       "recommended_size_usdc": 0.0,
       "shares_qty": 0.0,
-      "entry_price": 0.6,
-      "reject_reason": "OFFLINE_SNAPSHOT_PROTECTION: Nguồn dữ liệu hiện tại là SNAPSHOT_FALLBACK (URLError: <urlopen error [Errno 8] nodename nor servname provided, or not known>). Tạm khóa mở lệnh mới cho tới khi kết nối trực tiếp Polymarket Gamma API.",
-      "risk_checks_passed": []
+      "entry_price": 0.25,
+      "reject_reason": "LOW_LIQUIDITY: Thanh khoản $3,577 < mức tối thiểu $5,000",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE"
+      ]
+    },
+    {
+      "signal_id": "sig-bond-3399459",
+      "market_id": "3399459",
+      "question": "Israel x Iran ceasefire continues through October 31?",
+      "strategy": "BOND_CARRY",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.967,
+      "reject_reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR"
+      ]
+    },
+    {
+      "signal_id": "sig-bond-5170792",
+      "market_id": "5170792",
+      "question": "Will Ethereum dip to $2,000 in October?",
+      "strategy": "BOND_CARRY",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.967,
+      "reject_reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR"
+      ]
+    },
+    {
+      "signal_id": "sig-bond-5170741",
+      "market_id": "5170741",
+      "question": "Will Bitcoin dip to $72,500 in October?",
+      "strategy": "BOND_CARRY",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.976,
+      "reject_reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR"
+      ]
+    },
+    {
+      "signal_id": "sig-bond-628940",
+      "market_id": "628940",
+      "question": "Will Steve Hilton win the California Governor Election in 2026?",
+      "strategy": "BOND_CARRY",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.976,
+      "reject_reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR"
+      ]
+    },
+    {
+      "signal_id": "sig-bond-628941",
+      "market_id": "628941",
+      "question": "Will Xavier Becerra win the California Governor Election in 2026?",
+      "strategy": "BOND_CARRY",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.977,
+      "reject_reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE",
+        "LIQUIDITY_OK",
+        "SPREAD_OK",
+        "ORACLE_RULES_CLEAR"
+      ]
+    },
+    {
+      "signal_id": "sig-maker-1393324",
+      "market_id": "1393324",
+      "question": "Predict.fun FDV above $1B one day after launch?",
+      "strategy": "MAKER_SPREAD",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.59,
+      "reject_reason": "DUPLICATE_POSITION: Đã có vị thế đang mở trên thị trường này",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK"
+      ]
+    },
+    {
+      "signal_id": "sig-maker-6351848",
+      "market_id": "6351848",
+      "question": "Will commitments to the 1W public sale exceed $50M?",
+      "strategy": "MAKER_SPREAD",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.41,
+      "reject_reason": "LOW_LIQUIDITY: Thanh khoản $4,291 < mức tối thiểu $5,000",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK",
+        "NO_DUPLICATE"
+      ]
+    },
+    {
+      "signal_id": "sig-maker-5786297",
+      "market_id": "5786297",
+      "question": "Will commitments to the 1W public sale exceed $40M?",
+      "strategy": "MAKER_SPREAD",
+      "approved": false,
+      "recommended_size_usdc": 0.0,
+      "shares_qty": 0.0,
+      "entry_price": 0.61,
+      "reject_reason": "DUPLICATE_POSITION: Đã có vị thế đang mở trên thị trường này",
+      "risk_checks_passed": [
+        "KILL_SWITCH_OK"
+      ]
     }
   ],
-  "audit_logs": [],
-  "ai_brain_logs": [],
-  "scanned_markets_count": 7,
+  "audit_logs": [
+    {
+      "id": 1703,
+      "timestamp": "2026-10-30T06:42:54.538033+00:00",
+      "signal_id": "sig-maker-6351848",
+      "market_id": "6351848",
+      "question": "Will commitments to the 1W public sale exceed $50M?",
+      "strategy": "MAKER_SPREAD",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.41,
+      "reason": "LOW_LIQUIDITY: Thanh khoản $4,291 < mức tối thiểu $5,000",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\"]"
+    },
+    {
+      "id": 1702,
+      "timestamp": "2026-10-30T06:42:54.535670+00:00",
+      "signal_id": "sig-bond-628941",
+      "market_id": "628941",
+      "question": "Will Xavier Becerra win the California Governor Election in 2026?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.977,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1701,
+      "timestamp": "2026-10-30T06:42:54.534068+00:00",
+      "signal_id": "sig-bond-628940",
+      "market_id": "628940",
+      "question": "Will Steve Hilton win the California Governor Election in 2026?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.976,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1700,
+      "timestamp": "2026-10-30T06:42:54.532338+00:00",
+      "signal_id": "sig-bond-5170741",
+      "market_id": "5170741",
+      "question": "Will Bitcoin dip to $72,500 in October?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.976,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1699,
+      "timestamp": "2026-10-30T06:42:54.531211+00:00",
+      "signal_id": "sig-bond-5170792",
+      "market_id": "5170792",
+      "question": "Will Ethereum dip to $2,000 in October?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.967,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1698,
+      "timestamp": "2026-10-30T06:42:54.529261+00:00",
+      "signal_id": "sig-bond-3399459",
+      "market_id": "3399459",
+      "question": "Israel x Iran ceasefire continues through October 31?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.967,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1697,
+      "timestamp": "2026-10-30T06:42:54.526205+00:00",
+      "signal_id": "sig-maker-5407574",
+      "market_id": "5407574",
+      "question": "Will Predict.fun launch a token by October 31, 2026?",
+      "strategy": "MAKER_SPREAD",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.25,
+      "reason": "LOW_LIQUIDITY: Thanh khoản $3,577 < mức tối thiểu $5,000",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\"]"
+    },
+    {
+      "id": 1696,
+      "timestamp": "2026-10-30T06:42:54.524338+00:00",
+      "signal_id": "sig-bond-6236222",
+      "market_id": "6236222",
+      "question": "Will Bitcoin dip to $72,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.962,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1695,
+      "timestamp": "2026-10-30T06:42:54.522909+00:00",
+      "signal_id": "sig-bond-6236265",
+      "market_id": "6236265",
+      "question": "Will Ethereum dip to $2,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.961,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1694,
+      "timestamp": "2026-10-30T06:42:54.521582+00:00",
+      "signal_id": "sig-bond-6084518",
+      "market_id": "6084518",
+      "question": "Will the price of Bitcoin be above $76,000 on October 30?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.961,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1693,
+      "timestamp": "2026-10-30T06:42:54.519812+00:00",
+      "signal_id": "sig-bond-6236211",
+      "market_id": "6236211",
+      "question": "Will Bitcoin reach $84,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.959,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1692,
+      "timestamp": "2026-10-30T06:42:54.516617+00:00",
+      "signal_id": "sig-bond-6367376",
+      "market_id": "6367376",
+      "question": "Israel x Iran ceasefire continues through November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.955,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1691,
+      "timestamp": "2026-10-30T06:40:39.847074+00:00",
+      "signal_id": "sig-maker-6351848",
+      "market_id": "6351848",
+      "question": "Will commitments to the 1W public sale exceed $50M?",
+      "strategy": "MAKER_SPREAD",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.41,
+      "reason": "LOW_LIQUIDITY: Thanh khoản $4,303 < mức tối thiểu $5,000",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\"]"
+    },
+    {
+      "id": 1690,
+      "timestamp": "2026-10-30T06:40:39.844223+00:00",
+      "signal_id": "sig-bond-628941",
+      "market_id": "628941",
+      "question": "Will Xavier Becerra win the California Governor Election in 2026?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.977,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1689,
+      "timestamp": "2026-10-30T06:40:39.842678+00:00",
+      "signal_id": "sig-bond-628940",
+      "market_id": "628940",
+      "question": "Will Steve Hilton win the California Governor Election in 2026?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.976,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1688,
+      "timestamp": "2026-10-30T06:40:39.840929+00:00",
+      "signal_id": "sig-bond-5170741",
+      "market_id": "5170741",
+      "question": "Will Bitcoin dip to $72,500 in October?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.976,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1687,
+      "timestamp": "2026-10-30T06:40:39.839394+00:00",
+      "signal_id": "sig-bond-5170792",
+      "market_id": "5170792",
+      "question": "Will Ethereum dip to $2,000 in October?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.967,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1686,
+      "timestamp": "2026-10-30T06:40:39.837693+00:00",
+      "signal_id": "sig-bond-3399459",
+      "market_id": "3399459",
+      "question": "Israel x Iran ceasefire continues through October 31?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.967,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1685,
+      "timestamp": "2026-10-30T06:40:39.835883+00:00",
+      "signal_id": "sig-maker-5407574",
+      "market_id": "5407574",
+      "question": "Will Predict.fun launch a token by October 31, 2026?",
+      "strategy": "MAKER_SPREAD",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.25,
+      "reason": "LOW_LIQUIDITY: Thanh khoản $3,505 < mức tối thiểu $5,000",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\"]"
+    },
+    {
+      "id": 1684,
+      "timestamp": "2026-10-30T06:40:39.834163+00:00",
+      "signal_id": "sig-bond-6236265",
+      "market_id": "6236265",
+      "question": "Will Ethereum dip to $2,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.962,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1683,
+      "timestamp": "2026-10-30T06:40:39.832249+00:00",
+      "signal_id": "sig-bond-6236222",
+      "market_id": "6236222",
+      "question": "Will Bitcoin dip to $72,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.961,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1682,
+      "timestamp": "2026-10-30T06:40:39.829665+00:00",
+      "signal_id": "sig-bond-6236211",
+      "market_id": "6236211",
+      "question": "Will Bitcoin reach $84,000 October 26-November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.961,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1681,
+      "timestamp": "2026-10-30T06:40:39.827513+00:00",
+      "signal_id": "sig-bond-6084518",
+      "market_id": "6084518",
+      "question": "Will the price of Bitcoin be above $76,000 on October 30?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.96,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1680,
+      "timestamp": "2026-10-30T06:40:39.822461+00:00",
+      "signal_id": "sig-bond-6367376",
+      "market_id": "6367376",
+      "question": "Israel x Iran ceasefire continues through November 1?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.955,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    },
+    {
+      "id": 1679,
+      "timestamp": "2026-10-30T06:40:39.818674+00:00",
+      "signal_id": "sig-bond-5957243",
+      "market_id": "5957243",
+      "question": "Will Elon Musk post 380-399 tweets from October 23 to October 30, 2026?",
+      "strategy": "BOND_CARRY",
+      "approved": 0,
+      "size_usdc": 0.0,
+      "entry_price": 0.941,
+      "reason": "EXPOSURE_LIMIT: Đã chạm trần phân bổ vốn (60% tổng tài sản)",
+      "checks_json": "[\"KILL_SWITCH_OK\", \"NO_DUPLICATE\", \"LIQUIDITY_OK\", \"SPREAD_OK\", \"ORACLE_RULES_CLEAR\"]"
+    }
+  ],
+  "ai_brain_logs": [
+    {
+      "id": 7,
+      "timestamp": "2026-10-30T04:51:51.805427+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "5786297",
+      "headline": "Will commitments to the 1W public sale exceed $40M?",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn OFFICIAL). Xác nhận lợi thế ròng +230 bps (MAKER_SPREAD).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 13.96
+    },
+    {
+      "id": 6,
+      "timestamp": "2026-10-30T04:19:46.525824+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "1393323",
+      "headline": "Predict.fun FDV above $800M one day after launch?",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (83.0/100, nguồn PRIMARY_ORACLE). Xác nhận lợi thế ròng +80 bps (MAKER_SPREAD).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 9.05
+    },
+    {
+      "id": 5,
+      "timestamp": "2026-10-30T03:44:43.925800+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "1393324",
+      "headline": "Predict.fun FDV above $1B one day after launch?",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (83.0/100, nguồn PRIMARY_ORACLE). Xác nhận lợi thế ròng +250 bps (MAKER_SPREAD).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 13.02
+    },
+    {
+      "id": 4,
+      "timestamp": "2026-10-30T03:44:43.464949+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "6139608",
+      "headline": "Will Ethereum reach $2,400 in October?",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (83.0/100, nguồn PRIMARY_ORACLE). Xác nhận lợi thế ròng +410 bps (BOND_CARRY).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 60.0
+    },
+    {
+      "id": 3,
+      "timestamp": "2026-10-30T03:44:43.130566+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "562831",
+      "headline": "2026 Balance of Power: R Senate, R House",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn OFFICIAL). Xác nhận lợi thế ròng +470 bps (BOND_CARRY).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 80.0
+    },
+    {
+      "id": 2,
+      "timestamp": "2026-10-30T03:44:42.727962+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "562803",
+      "headline": "Will the Republican Party control the House after the 2026 Midterm elections?",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn OFFICIAL). Xác nhận lợi thế ròng +470 bps (BOND_CARRY).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 80.0
+    },
+    {
+      "id": 1,
+      "timestamp": "2026-10-30T03:44:42.377383+00:00",
+      "event_type": "AI_SIGNAL_AUDIT",
+      "market_id": "562802",
+      "headline": "Will the Democratic Party control the House after the 2026 Midterm elections?",
+      "reasoning": "[account_1 STRONG_BUY] Luật phân xử định lượng rõ ràng (99.0/100, nguồn OFFICIAL). Xác nhận lợi thế ròng +470 bps (BOND_CARRY).",
+      "verdict": "STRONG_BUY",
+      "impact_usdc": 80.0
+    }
+  ],
+  "scanned_markets_count": 560,
   "scanned_markets_preview": [
     {
-      "market_id": "pm-fed-nov-hold",
-      "event_id": "evt-fed-rate-decision",
-      "event_title": "Fed Interest Rate Decision - Next FOMC Meeting",
-      "question": "Will the Fed cut rates by 25 bps at the upcoming FOMC meeting?",
-      "slug": "fed-cut-25bps-next-fomc",
-      "yes_price": 0.67,
-      "no_price": 0.33,
-      "best_bid": 0.665,
-      "best_ask": 0.675,
-      "spread": 0.01,
-      "liquidity_usd": 425000.0,
-      "volume_24h_usd": 189000.0,
-      "end_date_iso": "2026-11-07T19:00:00Z",
-      "days_to_expiry": 9.0,
-      "resolution_rules": "Resolves to YES if the Federal Open Market Committee lowers the target federal funds rate range by exactly 25 basis points in its official statement.",
-      "neg_risk": true,
-      "outcomes_count_in_event": 3,
-      "yes_token_id": "",
-      "no_token_id": "",
-      "settlement_yes": null,
-      "closed": false,
-      "resolved_outcome": null
-    },
-    {
-      "market_id": "pm-fed-nov-nochange",
-      "event_id": "evt-fed-rate-decision",
-      "event_title": "Fed Interest Rate Decision - Next FOMC Meeting",
-      "question": "Will the Fed leave interest rates unchanged at the upcoming FOMC meeting?",
-      "slug": "fed-no-change-next-fomc",
-      "yes_price": 0.25,
-      "no_price": 0.75,
-      "best_bid": 0.245,
-      "best_ask": 0.255,
-      "spread": 0.01,
-      "liquidity_usd": 310000.0,
-      "volume_24h_usd": 112000.0,
-      "end_date_iso": "2026-11-07T19:00:00Z",
-      "days_to_expiry": 9.0,
-      "resolution_rules": "Resolves to YES if the Federal Open Market Committee maintains the current target federal funds rate range in its official FOMC statement.",
-      "neg_risk": true,
-      "outcomes_count_in_event": 3,
-      "yes_token_id": "",
-      "no_token_id": "",
-      "settlement_yes": null,
-      "closed": false,
-      "resolved_outcome": null
-    },
-    {
-      "market_id": "pm-fed-nov-50bps",
-      "event_id": "evt-fed-rate-decision",
-      "event_title": "Fed Interest Rate Decision - Next FOMC Meeting",
-      "question": "Will the Fed cut rates by 50+ bps or hike at the upcoming FOMC meeting?",
-      "slug": "fed-50bps-or-hike-next-fomc",
-      "yes_price": 0.03,
-      "no_price": 0.97,
-      "best_bid": 0.028,
-      "best_ask": 0.032,
-      "spread": 0.004,
-      "liquidity_usd": 145000.0,
-      "volume_24h_usd": 44000.0,
-      "end_date_iso": "2026-11-07T19:00:00Z",
-      "days_to_expiry": 9.0,
-      "resolution_rules": "Resolves to YES if the FOMC cuts rates by 50 bps or more, or increases rates, according to the official Federal Reserve press release.",
-      "neg_risk": true,
-      "outcomes_count_in_event": 3,
-      "yes_token_id": "",
-      "no_token_id": "",
-      "settlement_yes": null,
-      "closed": false,
-      "resolved_outcome": null
-    },
-    {
-      "market_id": "pm-btc-above-55k-week",
-      "event_id": "evt-btc-weekly-floor",
-      "event_title": "Bitcoin Weekly Milestone Check",
-      "question": "Will Bitcoin close above $55,000 this Friday 23:59 UTC?",
-      "slug": "btc-close-above-55k-friday",
-      "yes_price": 0.952,
-      "no_price": 0.048,
-      "best_bid": 0.948,
-      "best_ask": 0.955,
-      "spread": 0.007,
-      "liquidity_usd": 198000.0,
-      "volume_24h_usd": 94500.0,
-      "end_date_iso": "2026-11-02T23:59:00Z",
-      "days_to_expiry": 4.5,
-      "resolution_rules": "Resolves to YES if the Coinbase BTC-USD 1-minute candle close at 23:59 UTC on Friday is strictly greater than $55,000.00.",
-      "neg_risk": false,
-      "outcomes_count_in_event": 1,
-      "yes_token_id": "",
-      "no_token_id": "",
-      "settlement_yes": null,
-      "closed": false,
-      "resolved_outcome": null
-    },
-    {
-      "market_id": "pm-us-gov-shutdown-week",
-      "event_id": "evt-us-funding-oct",
-      "event_title": "US Government Operations Status This Week",
-      "question": "Will the US Federal Government remain open through November 5?",
-      "slug": "us-gov-remain-open-nov-5",
-      "yes_price": 0.962,
-      "no_price": 0.038,
-      "best_bid": 0.958,
-      "best_ask": 0.965,
-      "spread": 0.007,
-      "liquidity_usd": 276000.0,
-      "volume_24h_usd": 83200.0,
-      "end_date_iso": "2026-11-05T23:59:00Z",
-      "days_to_expiry": 7.0,
-      "resolution_rules": "Resolves to YES if no partial or full lapse in federal appropriations occurs before November 5, 2026 11:59 PM ET per OPM announcements.",
-      "neg_risk": false,
-      "outcomes_count_in_event": 1,
-      "yes_token_id": "",
-      "no_token_id": "",
-      "settlement_yes": null,
-      "closed": false,
-      "resolved_outcome": null
-    },
-    {
-      "market_id": "pm-eth-etf-inflows-pos",
-      "event_id": "evt-eth-weekly-flows",
-      "event_title": "Spot ETH ETF Weekly Net Flows",
-      "question": "Will US Spot Ethereum ETFs record positive net inflows this week?",
-      "slug": "eth-etf-positive-net-inflows-week",
-      "yes_price": 0.61,
-      "no_price": 0.39,
-      "best_bid": 0.59,
-      "best_ask": 0.62,
-      "spread": 0.03,
-      "liquidity_usd": 84000.0,
-      "volume_24h_usd": 52000.0,
-      "end_date_iso": "2026-11-04T20:00:00Z",
-      "days_to_expiry": 6.0,
-      "resolution_rules": "Resolves to YES if aggregate net flows across all US-listed spot Ethereum ETFs for the trading week are strictly greater than $0 per Farside Investors data.",
-      "neg_risk": false,
-      "outcomes_count_in_event": 1,
-      "yes_token_id": "",
-      "no_token_id": "",
-      "settlement_yes": null,
-      "closed": false,
-      "resolved_outcome": null
-    },
-    {
-      "market_id": "pm-illiquid-meme-trap",
-      "event_id": "evt-obscure-pop-culture",
-      "event_title": "Viral Social Media Poll Outcome",
-      "question": "Will X account post a meme coin ticker before midnight?",
-      "slug": "viral-meme-ticker-midnight",
-      "yes_price": 0.89,
-      "no_price": 0.11,
-      "best_bid": 0.82,
+      "market_id": "562802",
+      "event_id": "32225",
+      "event_title": "Which party will win the House in 2026?",
+      "question": "Will the Democratic Party control the House after the 2026 Midterm elections?",
+      "slug": "will-the-democratic-party-control-the-house-after-the-2026-midterm-elections",
+      "yes_price": 0.935,
+      "no_price": 0.065,
+      "best_bid": 0.93,
       "best_ask": 0.94,
-      "spread": 0.12,
-      "liquidity_usd": 1200.0,
-      "volume_24h_usd": 450.0,
-      "end_date_iso": "2026-11-01T00:00:00Z",
-      "days_to_expiry": 2.5,
-      "resolution_rules": "Short vague rule.",
+      "spread": 0.01,
+      "liquidity_usd": 7109155.43,
+      "volume_24h_usd": 2211583.16,
+      "end_date_iso": "2026-11-04T04:59:00Z",
+      "days_to_expiry": 4.93,
+      "resolution_rules": "This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\n\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\n\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\n\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 9,
+      "yes_token_id": "83247781037352156539108067944461291821683755894607244160607042790356561625563",
+      "no_token_id": "33156410999665902694791064431724433042010245771106314074312009703157423879038",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "562803",
+      "event_id": "32225",
+      "event_title": "Which party will win the House in 2026?",
+      "question": "Will the Republican Party control the House after the 2026 Midterm elections?",
+      "slug": "will-the-republican-party-control-the-house-after-the-2026-midterm-elections",
+      "yes_price": 0.07,
+      "no_price": 0.93,
+      "best_bid": 0.06,
+      "best_ask": 0.08,
+      "spread": 0.02,
+      "liquidity_usd": 4641104.97,
+      "volume_24h_usd": 2713966.24,
+      "end_date_iso": "2026-11-04T04:59:00Z",
+      "days_to_expiry": 4.93,
+      "resolution_rules": "This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\n\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\n\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\n\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 9,
+      "yes_token_id": "65139230827417363158752884968303867495725894165574887635816574090175320800482",
+      "no_token_id": "17371217118862125782438074585166210555214661810823929795910191856905580975576",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "562828",
+      "event_id": "32228",
+      "event_title": "Balance of Power: 2026 Midterms",
+      "question": "2026 Balance of Power: D Senate, D House",
+      "slug": "2026-balance-of-power-d-senate-d-house-949",
+      "yes_price": 0.685,
+      "no_price": 0.315,
+      "best_bid": 0.68,
+      "best_ask": 0.69,
+      "spread": 0.01,
+      "liquidity_usd": 5200008.89,
+      "volume_24h_usd": 706670.06,
+      "end_date_iso": "2026-11-04T04:59:00Z",
+      "days_to_expiry": 4.93,
+      "resolution_rules": "This market will resolve according to the party that wins control of the United States Senate and the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States Senate if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the party that wins control of the chamber is the party that wins half of the voting seats and holds the Vice Presidency. If the outcome remains ambiguous after applying the above criteria, the chamber will be deemed controlled by the party with which the first selected President Pro Tempore of the Congress that convenes after the specified election is affiliated.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chambers.\n\nFor determining Senate control, all regular and special Senate elections that determine representation in the upcoming 120th Congress and are scheduled to take place in November 2026 as of October 31, 2026 are included. Vacant Senate seats for which no election or special election to fill the seat is scheduled to take place in November 2026 as of October 31, 2026 will be treated as held by the party affiliation of the most recent member to hold that seat. For determining House control, all House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a Senate or House seat is decided by a runoff, the runoff result will determine attribution of that seat, even if it takes place after November 2026.\n\nFor seats contested in the specified election, seats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected. \n\nFor seats not contested in the specified election, seats are attributed to the party that holds the seat as of the date of the election. If a current sitting member of the U.S. Senate who is not up for election changes party affiliation or vacates their seat after the date of the election, the seat is attributed to the party under which the member was affiliated at the time of the election.\n\nSenate and House members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the Senate or House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 5,
+      "yes_token_id": "34722410608062854697106861099776685947172185964394483545370684749662285977831",
+      "no_token_id": "24483563228660028121020430722896740519524131851526579619586176931221901842798",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "562829",
+      "event_id": "32228",
+      "event_title": "Balance of Power: 2026 Midterms",
+      "question": "2026 Balance of Power: D Senate, R House",
+      "slug": "2026-balance-of-power-d-senate-r-house-692",
+      "yes_price": 0.007,
+      "no_price": 0.993,
+      "best_bid": 0.006,
+      "best_ask": 0.008,
+      "spread": 0.002,
+      "liquidity_usd": 3454877.28,
+      "volume_24h_usd": 231450.46,
+      "end_date_iso": "2026-11-04T04:59:00Z",
+      "days_to_expiry": 4.93,
+      "resolution_rules": "This market will resolve according to the party that wins control of the United States Senate and the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States Senate if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the party that wins control of the chamber is the party that wins half of the voting seats and holds the Vice Presidency. If the outcome remains ambiguous after applying the above criteria, the chamber will be deemed controlled by the party with which the first selected President Pro Tempore of the Congress that convenes after the specified election is affiliated.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chambers.\n\nFor determining Senate control, all regular and special Senate elections that determine representation in the upcoming 120th Congress and are scheduled to take place in November 2026 as of October 31, 2026 are included. Vacant Senate seats for which no election or special election to fill the seat is scheduled to take place in November 2026 as of October 31, 2026 will be treated as held by the party affiliation of the most recent member to hold that seat. For determining House control, all House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a Senate or House seat is decided by a runoff, the runoff result will determine attribution of that seat, even if it takes place after November 2026.\n\nFor seats contested in the specified election, seats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected. \n\nFor seats not contested in the specified election, seats are attributed to the party that holds the seat as of the date of the election. If a current sitting member of the U.S. Senate who is not up for election changes party affiliation or vacates their seat after the date of the election, the seat is attributed to the party under which the member was affiliated at the time of the election.\n\nSenate and House members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the Senate or House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 5,
+      "yes_token_id": "70997927349469817841862065582625658840347600365813612622959588796331622340305",
+      "no_token_id": "45720947308530468765087874228584729250108790729495800420104302263408503667446",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "562830",
+      "event_id": "32228",
+      "event_title": "Balance of Power: 2026 Midterms",
+      "question": "2026 Balance of Power: R Senate, D House",
+      "slug": "2026-balance-of-power-r-senate-d-house-444",
+      "yes_price": 0.245,
+      "no_price": 0.755,
+      "best_bid": 0.24,
+      "best_ask": 0.25,
+      "spread": 0.01,
+      "liquidity_usd": 3514067.73,
+      "volume_24h_usd": 775966.29,
+      "end_date_iso": "2026-11-04T04:59:00Z",
+      "days_to_expiry": 4.93,
+      "resolution_rules": "This market will resolve according to the party that wins control of the United States Senate and the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States Senate if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the party that wins control of the chamber is the party that wins half of the voting seats and holds the Vice Presidency. If the outcome remains ambiguous after applying the above criteria, the chamber will be deemed controlled by the party with which the first selected President Pro Tempore of the Congress that convenes after the specified election is affiliated.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chambers.\n\nFor determining Senate control, all regular and special Senate elections that determine representation in the upcoming 120th Congress and are scheduled to take place in November 2026 as of October 31, 2026 are included. Vacant Senate seats for which no election or special election to fill the seat is scheduled to take place in November 2026 as of October 31, 2026 will be treated as held by the party affiliation of the most recent member to hold that seat. For determining House control, all House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a Senate or House seat is decided by a runoff, the runoff result will determine attribution of that seat, even if it takes place after November 2026.\n\nFor seats contested in the specified election, seats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected. \n\nFor seats not contested in the specified election, seats are attributed to the party that holds the seat as of the date of the election. If a current sitting member of the U.S. Senate who is not up for election changes party affiliation or vacates their seat after the date of the election, the seat is attributed to the party under which the member was affiliated at the time of the election.\n\nSenate and House members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the Senate or House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 5,
+      "yes_token_id": "6302359956133594764084277082169634158291609371270652093164054687145970756151",
+      "no_token_id": "558600218792430158020964384658762756367786275998757133304987611939841005404",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "562831",
+      "event_id": "32228",
+      "event_title": "Balance of Power: 2026 Midterms",
+      "question": "2026 Balance of Power: R Senate, R House",
+      "slug": "2026-balance-of-power-r-senate-r-house-537",
+      "yes_price": 0.065,
+      "no_price": 0.935,
+      "best_bid": 0.06,
+      "best_ask": 0.07,
+      "spread": 0.01,
+      "liquidity_usd": 5419596.31,
+      "volume_24h_usd": 1280262.86,
+      "end_date_iso": "2026-11-04T04:59:00Z",
+      "days_to_expiry": 4.93,
+      "resolution_rules": "This market will resolve according to the party that wins control of the United States Senate and the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States Senate if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the party that wins control of the chamber is the party that wins half of the voting seats and holds the Vice Presidency. If the outcome remains ambiguous after applying the above criteria, the chamber will be deemed controlled by the party with which the first selected President Pro Tempore of the Congress that convenes after the specified election is affiliated.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chambers.\n\nFor determining Senate control, all regular and special Senate elections that determine representation in the upcoming 120th Congress and are scheduled to take place in November 2026 as of October 31, 2026 are included. Vacant Senate seats for which no election or special election to fill the seat is scheduled to take place in November 2026 as of October 31, 2026 will be treated as held by the party affiliation of the most recent member to hold that seat. For determining House control, all House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a Senate or House seat is decided by a runoff, the runoff result will determine attribution of that seat, even if it takes place after November 2026.\n\nFor seats contested in the specified election, seats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected. \n\nFor seats not contested in the specified election, seats are attributed to the party that holds the seat as of the date of the election. If a current sitting member of the U.S. Senate who is not up for election changes party affiliation or vacates their seat after the date of the election, the seat is attributed to the party under which the member was affiliated at the time of the election.\n\nSenate and House members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the Senate or House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 5,
+      "yes_token_id": "103704141773947678931823410030956181918562062788486034785782641603149828893320",
+      "no_token_id": "25869296386911654049715489068824757745174681288397238521780118949553760488529",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "562832",
+      "event_id": "32228",
+      "event_title": "Balance of Power: 2026 Midterms",
+      "question": "2026 Balance of Power: Other",
+      "slug": "2026-balance-of-power-other-131",
+      "yes_price": 0.0005,
+      "no_price": 0.9995,
+      "best_bid": 0.0,
+      "best_ask": 0.001,
+      "spread": 0.001,
+      "liquidity_usd": 742825.09,
+      "volume_24h_usd": 414440.95,
+      "end_date_iso": "2026-11-04T04:59:00Z",
+      "days_to_expiry": 4.93,
+      "resolution_rules": "This market will resolve according to the party that wins control of the United States Senate and the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States Senate if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the party that wins control of the chamber is the party that wins half of the voting seats and holds the Vice Presidency. If the outcome remains ambiguous after applying the above criteria, the chamber will be deemed controlled by the party with which the first selected President Pro Tempore of the Congress that convenes after the specified election is affiliated.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chambers.\n\nFor determining Senate control, all regular and special Senate elections that determine representation in the upcoming 120th Congress and are scheduled to take place in November 2026 as of October 31, 2026 are included. Vacant Senate seats for which no election or special election to fill the seat is scheduled to take place in November 2026 as of October 31, 2026 will be treated as held by the party affiliation of the most recent member to hold that seat. For determining House control, all House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a Senate or House seat is decided by a runoff, the runoff result will determine attribution of that seat, even if it takes place after November 2026.\n\nFor seats contested in the specified election, seats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected. \n\nFor seats not contested in the specified election, seats are attributed to the party that holds the seat as of the date of the election. If a current sitting member of the U.S. Senate who is not up for election changes party affiliation or vacates their seat after the date of the election, the seat is attributed to the party under which the member was affiliated at the time of the election.\n\nSenate and House members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the Senate or House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 5,
+      "yes_token_id": "35477631289241705233759154026285946627439635224019448868888132647783862821489",
+      "no_token_id": "58154574909590813657096858535882625339077077643653677858955479541043465171526",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "6382782",
+      "event_id": "1238116",
+      "event_title": "Kings vs. Pelicans",
+      "question": "Dejounte Murray: Points O/U 17.5",
+      "slug": "nba-sac-nop-2026-10-29-points-dejounte-murray-17pt5",
+      "yes_price": 0.5,
+      "no_price": 0.5,
+      "best_bid": 0.0,
+      "best_ask": 1.0,
+      "spread": 1.0,
+      "liquidity_usd": 0.0,
+      "volume_24h_usd": 1043.82,
+      "end_date_iso": "2026-10-30T00:00:00Z",
+      "days_to_expiry": -0.28,
+      "resolution_rules": "In the upcoming NBA game, scheduled for October 29 at 8:00 PM ET:\n\nThis market will resolve to \"Yes\" if Dejounte Murray scores more than 17.5 points during the game.\n\nThis market will resolve to \"No\" if Dejounte Murray scores 17.5 points or fewer during the game.\n\nThe entire game including all overtime periods will be considered.\n\nIf the game is postponed, this market will remain open until the game has been completed. If the game is canceled entirely, with no make-up game, this market will resolve 50-50.\n\nIf the player is listed as inactive or otherwise does not take the court at any point, the market will resolve \"No\".\n\nThe resolution source will be the official NBA box score as published on NBA.com.",
       "neg_risk": false,
-      "outcomes_count_in_event": 1,
-      "yes_token_id": "",
-      "no_token_id": "",
+      "outcomes_count_in_event": 489,
+      "yes_token_id": "111496221384148153395841222066730493347426639634930523278731645265188013982627",
+      "no_token_id": "5460406729829337348826496669849839465974708127902043577348370756055164627753",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "6382784",
+      "event_id": "1238116",
+      "event_title": "Kings vs. Pelicans",
+      "question": "Dejounte Murray: Assists O/U 5.5",
+      "slug": "nba-sac-nop-2026-10-29-assists-dejounte-murray-5pt5",
+      "yes_price": 0.5,
+      "no_price": 0.5,
+      "best_bid": 0.0,
+      "best_ask": 1.0,
+      "spread": 1.0,
+      "liquidity_usd": 0.0,
+      "volume_24h_usd": 1575.43,
+      "end_date_iso": "2026-10-30T00:00:00Z",
+      "days_to_expiry": -0.28,
+      "resolution_rules": "In the upcoming NBA game, scheduled for October 29 at 8:00 PM ET:\n\nThis market will resolve to \"Yes\" if Dejounte Murray records more than 5.5 assists during the game.\n\nThis market will resolve to \"No\" if Dejounte Murray records 5.5 assists or fewer during the game.\n\nThe entire game including all overtime periods will be considered.\n\nIf the game is postponed, this market will remain open until the game has been completed. If the game is canceled entirely, with no make-up game, this market will resolve 50-50.\n\nIf the player is listed as inactive or otherwise does not take the court at any point, the market will resolve \"No\".\n\nThe resolution source will be the official NBA box score as published on NBA.com.",
+      "neg_risk": false,
+      "outcomes_count_in_event": 489,
+      "yes_token_id": "6702115657109232643575788513592992964335903229033409197344566925325327947199",
+      "no_token_id": "40402878017006134565584880055982730990327586762820276534951059957782878135452",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "682705",
+      "event_id": "81557",
+      "event_title": "Prime Minister of Israel after the next election?",
+      "question": "Will Benjamin Netanyahu be the next Prime Minister of Israel?",
+      "slug": "will-benjamin-netanyahu-be-the-next-prime-minister-of-israel",
+      "yes_price": 0.395,
+      "no_price": 0.605,
+      "best_bid": 0.39,
+      "best_ask": 0.4,
+      "spread": 0.01,
+      "liquidity_usd": 632097.01,
+      "volume_24h_usd": 1566525.69,
+      "end_date_iso": "2026-10-28T03:59:00Z",
+      "days_to_expiry": -2.11,
+      "resolution_rules": "Legislative elections are schedule to be held in Israel on October 27, 2026. \n\nThis market will resolve to the next individual who is officially appointed and sworn in as Prime Minister of Israel following the 2026 parliamentary election. If an election is called early, this market will immediately resolve to the individual who is officially appointed and sworn in after that election.\n\nTo count for resolution, the individual must be formally sworn in. Any interim or caretaker Prime Minister will not count toward the resolution of this market.\n\nIf no such Prime Minister is sworn in by December 31, 2027, 11:59 PM ET, this market will resolve to “Other”.\n\nThe primary resolution source for this market will be official information from the Government of Israel; however, a consensus of credible reporting may also be used.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 28,
+      "yes_token_id": "20006732765674855733524007935991362439352594042415161039767275461950712817548",
+      "no_token_id": "54533569528927082430133047556849600511985191158927477533124630301934489498530",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "682706",
+      "event_id": "81557",
+      "event_title": "Prime Minister of Israel after the next election?",
+      "question": "Will Naftali Bennett be the next Prime Minister of Israel?",
+      "slug": "will-naftali-bennett-be-the-next-prime-minister-of-israel",
+      "yes_price": 0.0505,
+      "no_price": 0.9495,
+      "best_bid": 0.046,
+      "best_ask": 0.055,
+      "spread": 0.009,
+      "liquidity_usd": 154609.9,
+      "volume_24h_usd": 53705.31,
+      "end_date_iso": "2026-10-28T03:59:00Z",
+      "days_to_expiry": -2.11,
+      "resolution_rules": "Legislative elections are schedule to be held in Israel on October 27, 2026. \n\nThis market will resolve to the next individual who is officially appointed and sworn in as Prime Minister of Israel following the 2026 parliamentary election. If an election is called early, this market will immediately resolve to the individual who is officially appointed and sworn in after that election.\n\nTo count for resolution, the individual must be formally sworn in. Any interim or caretaker Prime Minister will not count toward the resolution of this market.\n\nIf no such Prime Minister is sworn in by December 31, 2027, 11:59 PM ET, this market will resolve to “Other”.\n\nThe primary resolution source for this market will be official information from the Government of Israel; however, a consensus of credible reporting may also be used.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 28,
+      "yes_token_id": "58945936829392654397399777214757608864525173988558750256164021442231118224154",
+      "no_token_id": "39409206330527880169507414405291721950884951005340760541937649898052386499519",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "682707",
+      "event_id": "81557",
+      "event_title": "Prime Minister of Israel after the next election?",
+      "question": "Will Yair Lapid be the next Prime Minister of Israel?",
+      "slug": "will-yair-lapid-be-the-next-prime-minister-of-israel",
+      "yes_price": 0.0025,
+      "no_price": 0.9975,
+      "best_bid": 0.002,
+      "best_ask": 0.003,
+      "spread": 0.001,
+      "liquidity_usd": 135723.6,
+      "volume_24h_usd": 9206.4,
+      "end_date_iso": "2026-10-28T03:59:00Z",
+      "days_to_expiry": -2.11,
+      "resolution_rules": "Legislative elections are schedule to be held in Israel on October 27, 2026. \n\nThis market will resolve to the next individual who is officially appointed and sworn in as Prime Minister of Israel following the 2026 parliamentary election. If an election is called early, this market will immediately resolve to the individual who is officially appointed and sworn in after that election.\n\nTo count for resolution, the individual must be formally sworn in. Any interim or caretaker Prime Minister will not count toward the resolution of this market.\n\nIf no such Prime Minister is sworn in by December 31, 2027, 11:59 PM ET, this market will resolve to “Other”.\n\nThe primary resolution source for this market will be official information from the Government of Israel; however, a consensus of credible reporting may also be used.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 28,
+      "yes_token_id": "30912854850866302644106316438153629460678506137655559406260043509960678109607",
+      "no_token_id": "111793355166132295017239163560645146761744336187614021796771100619201573005168",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "682708",
+      "event_id": "81557",
+      "event_title": "Prime Minister of Israel after the next election?",
+      "question": "Will Gadi Eizenkot be the next Prime Minister of Israel?",
+      "slug": "will-gadi-eizenkot-be-the-next-prime-minister-of-israel",
+      "yes_price": 0.334,
+      "no_price": 0.666,
+      "best_bid": 0.329,
+      "best_ask": 0.339,
+      "spread": 0.01,
+      "liquidity_usd": 179242.12,
+      "volume_24h_usd": 280599.72,
+      "end_date_iso": "2026-10-28T03:59:00Z",
+      "days_to_expiry": -2.11,
+      "resolution_rules": "Legislative elections are schedule to be held in Israel on October 27, 2026. \n\nThis market will resolve to the next individual who is officially appointed and sworn in as Prime Minister of Israel following the 2026 parliamentary election. If an election is called early, this market will immediately resolve to the individual who is officially appointed and sworn in after that election.\n\nTo count for resolution, the individual must be formally sworn in. Any interim or caretaker Prime Minister will not count toward the resolution of this market.\n\nIf no such Prime Minister is sworn in by December 31, 2027, 11:59 PM ET, this market will resolve to “Other”.\n\nThe primary resolution source for this market will be official information from the Government of Israel; however, a consensus of credible reporting may also be used.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 28,
+      "yes_token_id": "52487256270918227930942830546248720603566203568229607048093730748840489555808",
+      "no_token_id": "1507744758511144558263623459899956467548763419522526462308518027912401299177",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "682709",
+      "event_id": "81557",
+      "event_title": "Prime Minister of Israel after the next election?",
+      "question": "Will Benny Gantz be the next Prime Minister of Israel?",
+      "slug": "will-benny-gantz-be-the-next-prime-minister-of-israel",
+      "yes_price": 0.0015,
+      "no_price": 0.9985,
+      "best_bid": 0.001,
+      "best_ask": 0.002,
+      "spread": 0.001,
+      "liquidity_usd": 127387.89,
+      "volume_24h_usd": 3989.95,
+      "end_date_iso": "2026-10-28T03:59:00Z",
+      "days_to_expiry": -2.11,
+      "resolution_rules": "Legislative elections are schedule to be held in Israel on October 27, 2026. \n\nThis market will resolve to the next individual who is officially appointed and sworn in as Prime Minister of Israel following the 2026 parliamentary election. If an election is called early, this market will immediately resolve to the individual who is officially appointed and sworn in after that election.\n\nTo count for resolution, the individual must be formally sworn in. Any interim or caretaker Prime Minister will not count toward the resolution of this market.\n\nIf no such Prime Minister is sworn in by December 31, 2027, 11:59 PM ET, this market will resolve to “Other”.\n\nThe primary resolution source for this market will be official information from the Government of Israel; however, a consensus of credible reporting may also be used.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 28,
+      "yes_token_id": "105121209501718913679835702557350272753628810249278953188501220308690716470697",
+      "no_token_id": "13959230589715260225761337964789667577085343879718375941468121776869827848866",
+      "settlement_yes": null,
+      "closed": false,
+      "resolved_outcome": null
+    },
+    {
+      "market_id": "682710",
+      "event_id": "81557",
+      "event_title": "Prime Minister of Israel after the next election?",
+      "question": "Will Avigdor Lieberman be the next Prime Minister of Israel?",
+      "slug": "will-avigdor-lieberman-be-the-next-prime-minister-of-israel",
+      "yes_price": 0.025,
+      "no_price": 0.975,
+      "best_bid": 0.024,
+      "best_ask": 0.026,
+      "spread": 0.002,
+      "liquidity_usd": 147847.37,
+      "volume_24h_usd": 45778.44,
+      "end_date_iso": "2026-10-28T03:59:00Z",
+      "days_to_expiry": -2.11,
+      "resolution_rules": "Legislative elections are schedule to be held in Israel on October 27, 2026. \n\nThis market will resolve to the next individual who is officially appointed and sworn in as Prime Minister of Israel following the 2026 parliamentary election. If an election is called early, this market will immediately resolve to the individual who is officially appointed and sworn in after that election.\n\nTo count for resolution, the individual must be formally sworn in. Any interim or caretaker Prime Minister will not count toward the resolution of this market.\n\nIf no such Prime Minister is sworn in by December 31, 2027, 11:59 PM ET, this market will resolve to “Other”.\n\nThe primary resolution source for this market will be official information from the Government of Israel; however, a consensus of credible reporting may also be used.",
+      "neg_risk": true,
+      "outcomes_count_in_event": 28,
+      "yes_token_id": "105057524965982907913786325697426001538810836564004836999292309706852745390829",
+      "no_token_id": "13887896800265966487014179943559375403384011039339488276489274832989862323735",
       "settlement_yes": null,
       "closed": false,
       "resolved_outcome": null

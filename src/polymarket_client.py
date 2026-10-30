@@ -104,7 +104,8 @@ class PolymarketClient:
             with urllib.request.urlopen(req, timeout=self.config.http_timeout_sec) as resp:
                 server_now = self._extract_server_time(resp.headers.get("Date"))
                 return resp.read(), server_now
-        except Exception:
+        except Exception as initial_error:
+            errors = [f"system resolver/HTTPS: {initial_error}"]
             parsed_url = urllib.parse.urlparse(url)
             host = parsed_url.hostname or "gamma-api.polymarket.com"
             if host not in self._dns_cache:
@@ -120,6 +121,10 @@ class PolymarketClient:
 
             for cmd in curl_cmds:
                 proc = subprocess.run(cmd, capture_output=True, timeout=12, check=False)
+                if proc.returncode != 0:
+                    stderr = proc.stderr.decode("utf-8", errors="replace").strip() if isinstance(proc.stderr, bytes) else "request failed"
+                    route = "DoH address" if "--resolve" in cmd else "system address"
+                    errors.append(f"{route}: curl {proc.returncode}: {stderr[:240]}")
                 if proc.returncode == 0 and proc.stdout:
                     parts = proc.stdout.split(b"\r\n\r\n")
                     body = parts[-1]
@@ -130,7 +135,7 @@ class PolymarketClient:
                             date_str = line.split(":", 1)[1].strip()
                     if body.strip().startswith(b"[") or body.strip().startswith(b"{"):
                         return body, self._extract_server_time(date_str)
-            raise
+            raise urllib.error.URLError(f"{host} unreachable; " + "; ".join(errors)) from initial_error
 
     @staticmethod
     def _resolve_host_via_doh(hostname: str) -> Optional[str]:

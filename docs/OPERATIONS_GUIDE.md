@@ -14,7 +14,7 @@ npm --prefix web run build
 python3 scripts/doctor.py --network
 ```
 
-`doctor` chỉ đọc trạng thái và gọi API công khai, không tạo lệnh. Mã thoát 0 với `--network` chỉ khi kiểm tra Gamma và ít nhất một sổ lệnh CLOB thành công. Tìm `LIVE_POLYMARKET_GAMMA_API` và `clob: ok`.
+`doctor` chỉ đọc trạng thái và gọi API công khai, không tạo lệnh. Mã thoát 0 với `--network` chỉ khi kiểm tra Gamma và ít nhất một phản hồi CLOB thành công. Sổ lệnh rỗng vẫn chứng minh kết nối hoạt động; `clob_probe.two_sided_liquidity_found` cho biết có tìm được sổ lệnh có cả bên mua và bán hay không. Tìm `LIVE_POLYMARKET_GAMMA_API` và `clob: ok`.
 
 Nếu DNS trả `127.0.0.1` hoặc `::1`, client thử DoH có xác thực TLS. Nếu vẫn `Connection reset by peer`, kiểm tra cấu hình DNS/proxy/firewall của máy và mạng hoặc chạy backend trên máy có quyền truy cập các endpoint đó. Không tắt xác thực SSL. Đặt ngày giờ hệ thống tự động; thời gian server chỉ hỗ trợ tính ngày và quản trị phiên giao dịch, không sửa lỗi chứng chỉ của máy.
 

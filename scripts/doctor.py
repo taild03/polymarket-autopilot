@@ -13,6 +13,29 @@ from src.config import DB_PATH, STATE_JSON_PATH
 from src.polymarket_client import PolymarketClient
 
 
+def probe_books(client, markets, max_checks=8):
+    candidates = sorted((m for m in markets if m.yes_token_id and not m.closed),
+                        key=lambda m: (m.days_to_expiry > 0, m.liquidity_usd, m.volume_24h_usd), reverse=True)
+    checked, reachable, liquid = 0, 0, False
+    seen = set()
+    for market in candidates:
+        if market.yes_token_id in seen:
+            continue
+        seen.add(market.yes_token_id)
+        book = client.fetch_clob_book_top(market.yes_token_id)
+        checked += 1
+        if book is not None:
+            reachable += 1
+            if book['bids'] and book['asks']:
+                liquid = True
+                break
+        if checked >= max_checks:
+            break
+    return {'status': 'ok' if reachable else 'unavailable',
+            'books_checked': checked, 'books_reachable': reachable,
+            'two_sided_liquidity_found': liquid}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--network', action='store_true')
@@ -41,12 +64,13 @@ def main():
             try: checks['dns'][host] = sorted({r[4][0] for r in socket.getaddrinfo(host, 443)})
             except OSError as exc: checks['dns'][host] = str(exc)
         client = PolymarketClient()
-        markets = client.fetch_active_markets(limit=2)
+        markets = client.fetch_active_markets(limit=10)
         checks['gamma'] = client.last_source
         live = client.last_source == 'LIVE_POLYMARKET_GAMMA_API'
         checks['server_time'] = client.server_now.isoformat() if client.server_now else None
-        books = [client.fetch_clob_book_top(c.yes_token_id) for c in markets[:3]] if live else []
-        checks['clob'] = 'ok' if any(book and book['bids'] and book['asks'] for book in books) else 'unavailable'
+        probe = probe_books(client, markets) if live else {'status': 'unavailable'}
+        checks['clob'] = probe['status']
+        checks['clob_probe'] = probe
         ok &= live and checks['clob'] == 'ok'
     print(json.dumps(checks, indent=2, ensure_ascii=False))
     return 0 if ok else 1

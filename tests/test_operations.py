@@ -90,6 +90,21 @@ class OperationalTests(unittest.TestCase):
         mocked.fetch_clob_book_top.return_value['min_order_size'] = 100000
         self.assertEqual(ExecutionBooks(mocked, contracts).validate(sig, decision).reject_reason, 'BELOW_MINIMUM_SHARES')
 
+    def test_doctor_distinguishes_empty_books_from_network_failure(self):
+        from scripts.doctor import probe_books
+        from unittest.mock import Mock
+        client = Mock()
+        markets = PolymarketClient()._get_fallback_contracts()
+        for i, market in enumerate(markets):
+            market.yes_token_id = str(i)
+        client.fetch_clob_book_top.return_value = {'bids': [], 'asks': []}
+        result = probe_books(client, markets, max_checks=2)
+        self.assertEqual(result['status'], 'ok')
+        self.assertFalse(result['two_sided_liquidity_found'])
+        self.assertEqual(result['books_checked'], 2)
+        client.fetch_clob_book_top.return_value = None
+        self.assertEqual(probe_books(client, markets)['status'], 'unavailable')
+
     def handler(self, headers=None, body=b'{}'):
         handler = object.__new__(AutopilotRequestHandler)
         handler.headers = headers or {}

@@ -261,11 +261,45 @@ class ArgonAccountRouter:
             )
         switched = self.activate_slot(next_slot, reason=reason)
         if not switched:
-            self.state["last_switch_reason"] = "Không có tài khoản dự phòng sẵn sàng; tạm dùng kiểm tra xác định."
+            # No usable alternate. The entry gate treats this as "accounts unavailable" and
+            # BLOCKS new entries; it never falls back to a deterministic/other-model approval.
+            self.state["last_switch_reason"] = (
+                "Không có tài khoản Argon dự phòng sẵn sàng; tạm khóa mở lệnh mới cho tới khi hết Cooldown."
+            )
         cur_acct["status"] = "COOLDOWN"
         cur_acct["cooldown_until_iso"] = cooldown_until
         self._save_state()
         return self.state["active_slot"]
+
+    def active_eligible_slot(self) -> Optional[Dict[str, Any]]:
+        """Returns a credential-free copy of the active account iff it is configured and not cooling.
+
+        Returns None when the active slot is unconfigured or in cooldown. The returned dict
+        never contains OAuth tokens/keys — only routing metadata safe to persist and display.
+        """
+        self._refresh_expired_cooldowns()
+        slot_id = self.state.get("active_slot", "account_1")
+        acct = self.state.get("accounts", {}).get(slot_id)
+        if not acct:
+            return None
+        if not acct.get("configured") or acct.get("cooldown_until_iso"):
+            return None
+        return {
+            "slot_id": slot_id,
+            "label": acct.get("label", slot_id),
+            "model_tier": acct.get("model_tier", ""),
+            "status": acct.get("status", ""),
+        }
+
+    def eligible_alternate(self) -> Optional[str]:
+        """Returns the other slot_id iff it is configured and not cooling, else None."""
+        self._refresh_expired_cooldowns()
+        current = self.state.get("active_slot", "account_1")
+        other = "account_2" if current == "account_1" else "account_1"
+        acct = self.state.get("accounts", {}).get(other, {})
+        if acct.get("configured") and not acct.get("cooldown_until_iso"):
+            return other
+        return None
 
     def get_status_summary(self) -> Dict[str, Any]:
         self._auto_enroll_primary_if_needed()

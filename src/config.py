@@ -49,6 +49,17 @@ class TradingConfig:
     allow_snapshot_trading: bool = False    # Do not open new trades on offline fallback unless in unit tests
     http_timeout_sec: float = 10.0
 
+    # Mandatory Argon entry review (genuine LLM assessment before reserving/spending paper money)
+    require_argon_entry_review: bool = True # Default: a real Argon APPROVE is required to open any new entry.
+    argon_cli_bin: str = "/Users/taileduc/.local/bin/agy"  # Antigravity/Argon CLI ("agy") used for entry review.
+    argon_model: str = "gemini-4-argon-high"               # Explicit verified Argon model tier for entry review.
+    argon_print_timeout_sec: int = 60       # Per-call CLI --print-timeout budget (seconds).
+    argon_subprocess_timeout_sec: int = 75  # Hard wall-clock kill for the CLI subprocess (> print-timeout).
+    argon_max_calls_per_cycle: int = 8      # Bound on genuine CLI invocations per scan cycle.
+    argon_cycle_time_budget_sec: float = 240.0  # Bound on total wall-clock spent on entry review per cycle.
+    argon_cache_ttl_sec: float = 90.0       # In-memory (process-local) price/side/model/account/context cache TTL.
+    argon_approval_ttl_sec: float = 600.0   # A granted entry approval expires after this; pending orders then need re-review.
+
     # API Endpoints (Public Read-Only)
     gamma_events_url: str = "https://gamma-api.polymarket.com/events"
     clob_book_url: str = "https://clob.polymarket.com/book"

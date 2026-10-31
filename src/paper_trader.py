@@ -6,6 +6,7 @@ honest mark-to-market PnL against live orderbook bids, and AI brain audit trail.
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 import sqlite3
 import uuid
 import time
@@ -137,6 +138,18 @@ class PaperTrader:
             pos_cols = {r["name"] for r in conn.execute("PRAGMA table_info(positions)")}
             if "leg_market_ids" not in pos_cols:
                 conn.execute("ALTER TABLE positions ADD COLUMN leg_market_ids TEXT NOT NULL DEFAULT '[]'")
+            # Entry-review provenance. Pre-gate rows default to '' (an honest "unreviewed"
+            # marker), never silently treated as if an Argon assessment had approved them.
+            if "entry_review_status" not in pos_cols:
+                conn.execute("ALTER TABLE positions ADD COLUMN entry_review_status TEXT NOT NULL DEFAULT ''")
+            if "entry_review_model" not in pos_cols:
+                conn.execute("ALTER TABLE positions ADD COLUMN entry_review_model TEXT NOT NULL DEFAULT ''")
+            if "entry_review_account" not in pos_cols:
+                conn.execute("ALTER TABLE positions ADD COLUMN entry_review_account TEXT NOT NULL DEFAULT ''")
+            if "entry_review_at" not in pos_cols:
+                conn.execute("ALTER TABLE positions ADD COLUMN entry_review_at TEXT NOT NULL DEFAULT ''")
+            if "entry_review_expires_at" not in pos_cols:
+                conn.execute("ALTER TABLE positions ADD COLUMN entry_review_expires_at TEXT NOT NULL DEFAULT ''")
             row = conn.execute("SELECT id FROM account_state WHERE id = 1").fetchone()
             if not row:
                 now_utc = self._now()
@@ -406,8 +419,31 @@ class PaperTrader:
         signal: TradeSignal,
         decision: RiskDecision,
         ai_audit: Optional[MarketAIAudit] = None,
+        entry_review: Optional[Any] = None,
+        approval_expires_at: str = "",
     ) -> None:
         now_iso = self._now().isoformat()
+        # Entry-review provenance stamped onto the position so the execution boundary and
+        # the dashboard can tell a genuinely Argon-approved entry from a pre-gate or
+        # deterministic/test entry. Never claim a review happened when it did not.
+        if entry_review is not None:
+            er_status = str(getattr(entry_review, "status", ""))
+            er_model = str(getattr(entry_review, "model", ""))
+            er_account = str(getattr(entry_review, "account_slot", ""))
+            er_at = str(getattr(entry_review, "timestamp", now_iso))
+        elif not self.config.require_argon_entry_review:
+            er_status, er_model, er_account, er_at = "DETERMINISTIC_TEST", "", "", now_iso
+        else:
+            er_status, er_model, er_account, er_at = "", "", "", ""
+        if self.config.require_argon_entry_review and decision.approved:
+            expiry = self._parse_iso(approval_expires_at)
+            if (er_status != "APPROVE" or er_model != self.config.argon_model
+                    or er_account not in ("account_1", "account_2")
+                    or getattr(entry_review, "provider", None) != "argon_cli"
+                    or getattr(entry_review, "chosen_side", None) != signal.side
+                    or expiry is None or expiry <= self._now()):
+                decision = replace(decision, approved=False, shares_qty=0.0,
+                                   recommended_size_usdc=0.0, reject_reason="ARGON_APPROVAL_REQUIRED")
         with self._connect() as conn:
             conn.execute(
                 """
@@ -446,6 +482,30 @@ class PaperTrader:
                     ),
                 )
 
+            if entry_review is not None:
+                risks = list(getattr(entry_review, "risks", []) or [])
+                headline = (
+                    f"[{getattr(entry_review, 'account_slot', '')}/"
+                    f"{getattr(entry_review, 'model', '')}] {signal.question}"
+                )
+                reasoning = str(getattr(entry_review, "reasoning", ""))
+                if risks:
+                    reasoning = reasoning + " | Rủi ro: " + "; ".join(risks)
+                conn.execute(
+                    """
+                    INSERT INTO ai_brain_log (timestamp, event_type, market_id, headline, reasoning, verdict, impact_usdc)
+                    VALUES (?, 'ARGON_ENTRY_REVIEW', ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        str(getattr(entry_review, "timestamp", now_iso)) or now_iso,
+                        signal.market_id,
+                        headline,
+                        reasoning,
+                        str(getattr(entry_review, "status", "")),
+                        decision.recommended_size_usdc if decision.approved else 0.0,
+                    ),
+                )
+
             if decision.approved and decision.recommended_size_usdc > 0:
                 existing_open = conn.execute(
                     "SELECT position_id FROM positions WHERE market_id = ? AND status IN ('OPEN', 'PENDING_MAKER')",
@@ -468,8 +528,10 @@ class PaperTrader:
                                 side, order_type, shares_qty, entry_price, mark_price,
                                 fair_value, cost_basis_usdc, market_value_usdc,
                                 unrealized_pnl_usdc, expected_apr_pct, days_to_expiry,
-                                rationale, opened_at, status, leg_market_ids
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                rationale, opened_at, status, leg_market_ids,
+                                entry_review_status, entry_review_model, entry_review_account,
+                                entry_review_at, entry_review_expires_at
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                             """,
                             (
                                 pos_id,
@@ -492,6 +554,11 @@ class PaperTrader:
                                 now_iso,
                                 "PENDING_MAKER" if signal.order_type == "LIMIT_MAKER" else "OPEN",
                                 json.dumps(signal.leg_market_ids),
+                                er_status,
+                                er_model,
+                                er_account,
+                                er_at,
+                                approval_expires_at,
                             ),
                         )
             conn.commit()
@@ -509,6 +576,85 @@ class PaperTrader:
             amount = conn.execute("SELECT COALESCE(SUM(cost_basis_usdc),0) FROM positions WHERE status='PENDING_MAKER'").fetchone()[0]
             conn.execute("UPDATE account_state SET cash_usdc=cash_usdc+? WHERE id=1", (amount,))
             conn.execute("UPDATE positions SET status='CANCELLED' WHERE status='PENDING_MAKER'")
+
+    @staticmethod
+    def _parse_iso(value):
+        if not value:
+            return None
+        try:
+            dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+        except (TypeError, ValueError):
+            return None
+
+    def _review_expired(self, row) -> bool:
+        """True when a pending order's Argon approval has lapsed and needs a fresh review."""
+        if not self.config.require_argon_entry_review:
+            return False
+        keys = row.keys() if hasattr(row, "keys") else row
+        expires = self._parse_iso(row["entry_review_expires_at"]) if "entry_review_expires_at" in keys else None
+        if expires is None:
+            return True  # production pending order with no bounded approval is never fill-eligible
+        return self._now() >= expires
+
+    def _pending_fill_allowed(self, row) -> bool:
+        """A PENDING_MAKER may fill only with a genuine, non-expired APPROVE (or in deterministic test mode)."""
+        if not self.config.require_argon_entry_review:
+            return True
+        keys = row.keys() if hasattr(row, "keys") else row
+        status = row["entry_review_status"] if "entry_review_status" in keys else ""
+        if status != "APPROVE":
+            return False
+        return not self._review_expired(row)
+
+    def migrate_legacy_pending_orders(self) -> int:
+        """Cancels & refunds PENDING_MAKER orders created before the Argon entry gate.
+
+        Such orders carry no genuine APPROVE marker; letting them fill on restart would
+        execute unaudited entries. Open positions, settlement and exits are untouched.
+        Only active in production mode (require_argon_entry_review); a no-op in deterministic
+        test mode. Returns the number of legacy pending orders refunded.
+        """
+        if not self.config.require_argon_entry_review:
+            return 0
+        count = 0
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT position_id, cost_basis_usdc, entry_review_status FROM positions WHERE status = 'PENDING_MAKER'"
+            ).fetchall()
+            for r in rows:
+                if r["entry_review_status"] != "APPROVE":
+                    conn.execute("UPDATE account_state SET cash_usdc = cash_usdc + ? WHERE id = 1", (r["cost_basis_usdc"],))
+                    conn.execute(
+                        "UPDATE positions SET status = 'CANCELLED_LEGACY_UNREVIEWED' WHERE position_id = ?",
+                        (r["position_id"],),
+                    )
+                    count += 1
+            conn.commit()
+        return count
+
+    def cancel_expired_pending_reviews(self) -> int:
+        """Cancels & refunds PENDING_MAKER orders whose Argon approval has expired.
+
+        Requiring a brand-new review after expiry: the order must be re-proposed and
+        re-approved by a fresh Argon assessment before it can reserve cash again.
+        Returns the number of expired pending orders refunded.
+        """
+        if not self.config.require_argon_entry_review:
+            return 0
+        count = 0
+        with self._connect() as conn:
+            rows = conn.execute("SELECT * FROM positions WHERE status = 'PENDING_MAKER'").fetchall()
+            for r in rows:
+                if self._review_expired(r):
+                    conn.execute("UPDATE account_state SET cash_usdc = cash_usdc + ? WHERE id = 1", (r["cost_basis_usdc"],))
+                    conn.execute(
+                        "UPDATE positions SET status = 'CANCELLED_REVIEW_EXPIRED' WHERE position_id = ?",
+                        (r["position_id"],),
+                    )
+                    count += 1
+            conn.commit()
+        return count
 
     def held_market_ids(self):
         result = set()
@@ -529,6 +675,10 @@ class PaperTrader:
                     if any(c.closed or c.days_to_expiry <= 0 for c in legs):
                         conn.execute("UPDATE positions SET status = 'CANCELLED' WHERE position_id = ?", (p["position_id"],))
                         conn.execute("UPDATE account_state SET cash_usdc = cash_usdc + ? WHERE id = 1", (p["cost_basis_usdc"],))
+                    elif not self._pending_fill_allowed(p):
+                        # Approval missing/expired: do NOT fill unaudited. cancel_expired_pending_reviews
+                        # (run by the cycle) refunds it so a fresh Argon review is required.
+                        continue
                     else:
                         book = books.book(p["market_id"], p["side"])
                         if book and cost_for_quantity(book["asks"], p["shares_qty"], p["entry_price"]) is not None:
@@ -578,6 +728,7 @@ class PaperTrader:
         signals: List[TradeSignal],
         decisions: List[RiskDecision],
         ai_summary: Optional[Dict[str, Any]] = None,
+        entry_review: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         metrics = self.get_account_metrics()
         with self._connect() as conn:
@@ -613,6 +764,7 @@ class PaperTrader:
             "generated_at": self._now().isoformat(),
             "data_source": data_source,
             "ai_summary": ai_summary or {},
+            "entry_review": entry_review or {},
             "config": {
                 "initial_capital_usdc": self.config.initial_capital_usdc,
                 "max_position_pct": self.config.max_position_pct,

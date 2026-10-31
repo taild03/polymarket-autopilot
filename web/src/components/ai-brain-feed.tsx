@@ -20,9 +20,9 @@ function translateLogReasoning(log: AiBrainLogItem): string {
     if (match) {
       const markCents = (parseFloat(match[1]) * 100).toFixed(1);
       const entryCents = (parseFloat(match[2]) * 100).toFixed(1);
-      return `Giá tăng từ lúc mua ${entryCents}¢ lên ${markCents}¢. Máy tự bán thu hồi vốn gốc và bỏ két +$${Math.abs(log.impact_usdc).toFixed(2)} tiền lãi thật.`;
+      return `Giá tăng từ lúc mua ${entryCents}¢ lên ${markCents}¢. Máy tự bán thu hồi vốn gốc và bỏ két +$${Math.abs(log.impact_usdc).toFixed(2)} lãi mô phỏng.`;
     }
-    return `Giá chạm mục tiêu chốt lời. Máy tự động bán thu về +$${Math.abs(log.impact_usdc).toFixed(2)} tiền lãi thật.`;
+    return `Giá chạm mục tiêu chốt lời. Máy tự động bán thu về +$${Math.abs(log.impact_usdc).toFixed(2)} lãi mô phỏng.`;
   }
 
   if (log.verdict === "VETO_TRAP") {
@@ -42,7 +42,7 @@ function translateLogReasoning(log: AiBrainLogItem): string {
   return r;
 }
 
-function getVerdictStyle(verdict: string, impact: number) {
+function getVerdictStyle(verdict: string, impact: number, eventType: string) {
   switch (verdict) {
     case "TAKE_PROFIT":
       return {
@@ -64,6 +64,34 @@ function getVerdictStyle(verdict: string, impact: number) {
         cardBg: "bg-[#FFD6D6]",
         badgeBg: "bg-[#FF3B30] text-white",
         amountText: "GIỮ TIỀN",
+      };
+    case "APPROVE":
+      return {
+        label: eventType === "ARGON_ENTRY_REVIEW" ? "ARGON ĐÃ DUYỆT" : "ĐÃ KIỂM TRA LUẬT",
+        cardBg: "bg-[#B8F397]",
+        badgeBg: "bg-[#111111] text-[#B8F397]",
+        amountText: `ĐẶT $${Math.abs(impact).toFixed(2)}`,
+      };
+    case "REJECT":
+      return {
+        label: "ARGON TỪ CHỐI",
+        cardBg: "bg-[#FFD6D6]",
+        badgeBg: "bg-[#FF3B30] text-white",
+        amountText: "GIỮ TIỀN",
+      };
+    case "INSUFFICIENT_DATA":
+      return {
+        label: "THIẾU BẰNG CHỨNG",
+        cardBg: "bg-[#FFE8C2]",
+        badgeBg: "bg-[#111111] text-white",
+        amountText: "KHÔNG VÀO",
+      };
+    case "UNAVAILABLE":
+      return {
+        label: "ARGON KHÔNG SẴN SÀNG",
+        cardBg: "bg-[#EDEDED]",
+        badgeBg: "bg-[#52514E] text-white",
+        amountText: "KHÓA LỆNH",
       };
     default:
       return {
@@ -106,7 +134,7 @@ export function AiBrainFeed() {
           </p>
         ) : (
           logs.map((log: AiBrainLogItem) => {
-            const style = getVerdictStyle(log.verdict, log.impact_usdc);
+            const style = getVerdictStyle(log.verdict, log.impact_usdc, log.event_type);
             const { title } = cleanHeadline(log.headline);
             const timeStr = (() => {
               try {

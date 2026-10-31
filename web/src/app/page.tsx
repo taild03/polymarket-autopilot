@@ -6,6 +6,7 @@ import { PortfolioKpiGrid } from "@/components/portfolio-kpi-grid";
 import { StrategyPositionsTable } from "@/components/strategy-positions-table";
 import { AiBrainFeed } from "@/components/ai-brain-feed";
 import { ArgonAccountPanel } from "@/components/argon-account-panel";
+import { EntryReviewStatus } from "@/components/entry-review-status";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,10 @@ async function AutopilotDashboardContent() {
             </div>
           </section>
 
-          {/* 3. Dual Google Argon Accounts & Server Source */}
+          {/* 3. Mandatory Argon entry-review gate status (truthful mode/status/account) */}
+          <EntryReviewStatus />
+
+          {/* 4. Dual Google Argon Accounts & Server Source */}
           <ArgonAccountPanel />
         </main>
 

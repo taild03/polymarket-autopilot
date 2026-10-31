@@ -17,8 +17,10 @@ import shutil
 import subprocess
 import sys
 import time
+from dataclasses import replace
 from typing import Dict, List, Optional
 
+from src.argon_entry import ArgonEntryGate, EntryReview
 from src.execution import ExecutionBooks
 from src.ai_analyst import AutonomousAIAnalyst
 from src.config import BASE_DIR, DEFAULT_CONFIG, LOCK_FILE_PATH, STATE_JSON_PATH, TradingConfig
@@ -69,6 +71,47 @@ def sync_web_publish_dir(auto_push: bool = False) -> None:
             sys.stderr.write(f"[git auto-push warn] {exc}\n")
 
 
+def _apply_conservative_argon_sizing(
+    sig, decision, entry_review, metrics, open_ids, risk_manager, trader,
+):
+    """Re-size an Argon-approved order conservatively using the model's chosen-side probability.
+
+    The model probability is for the CHOSEN side (YES for BUY_YES/BUY_BUNDLE legs, NO for
+    BUY_NO). We take min(strategy fair_value, model prob) as the win probability, re-run the
+    exact same risk gates, and cap the result at the original size. The allocation is NEVER
+    larger than the initial sizing, and if the conservative probability erases the edge the
+    entry is blocked.
+    """
+    prob = entry_review.chosen_side_prob
+    if prob is None:
+        return decision
+    conservative_p = min(float(sig.fair_value), float(prob))
+    resized = replace(sig, fair_value=conservative_p)
+    d2 = risk_manager.evaluate_signal(
+        signal=resized,
+        total_equity_usdc=metrics["total_equity_usdc"],
+        available_cash_usdc=metrics["cash_usdc"],
+        current_exposure_usdc=metrics["current_exposure_usdc"],
+        daily_pnl_usdc=metrics.get("daily_pnl_usdc", 0.0),
+        open_market_ids=open_ids,
+        strategy_exposure_usdc=trader.strategy_exposure(sig.strategy),
+        daily_risk_reference_usdc=metrics["daily_risk_reference_usdc"],
+    )
+    if not d2.approved:
+        return replace(
+            decision, approved=False, recommended_size_usdc=0.0, shares_qty=0.0,
+            reject_reason=f"ARGON_CONSERVATIVE_RESIZE_BLOCKED: {d2.reject_reason}",
+        )
+    capped = min(d2.recommended_size_usdc, decision.recommended_size_usdc)
+    return replace(
+        decision,
+        recommended_size_usdc=capped,
+        shares_qty=capped / decision.entry_price,
+        risk_checks_passed=decision.risk_checks_passed
+        + [f"ARGON_CONSERVATIVE_SIZED_${capped:.2f}_P{conservative_p:.3f}"],
+    )
+
+
 def run_cycle(
     limit: int = 40,
     verbose: bool = True,
@@ -93,6 +136,15 @@ def run_cycle(
         ai_analyst = AutonomousAIAnalyst(use_agy_cli=True)
         trader = PaperTrader(cfg)
 
+        # Mandatory Argon entry-review gate. Shares the dual-account router so quota failover
+        # and the honest configured/cooldown state are consistent with the rest of the system.
+        entry_gate = ArgonEntryGate(cfg, ai_analyst.account_router, clock=trader._now)
+        entry_gate.begin_cycle()
+
+        # Legacy PENDING_MAKER orders created before this gate carry no genuine APPROVE and
+        # must not fill unaudited on restart: cancel & refund them before any lifecycle step.
+        legacy_refunded = trader.migrate_legacy_pending_orders()
+
         cycle_num = trader.increment_cycle()
 
         # Step 1: Fetch active Polymarket contracts
@@ -116,18 +168,25 @@ def run_cycle(
             before = trader.get_account_metrics()
             if before["daily_pnl_usdc"] <= -before["daily_risk_reference_usdc"] * cfg.max_daily_drawdown_pct:
                 trader.cancel_pending()
+            # Expired entry approvals must be re-reviewed: refund them so they cannot fill
+            # at the execution boundary until a fresh Argon APPROVE re-proposes them.
+            expired_refunded = trader.cancel_expired_pending_reviews()
             trader.process_lifecycle(valuation_contracts, books)
             open_positions = trader.mark_with_books(books)
             exit_decisions = ai_analyst.evaluate_open_positions(open_positions)
             closed_count = trader.execute_ai_exits(exit_decisions)
         else:
             closed_count = 0
+            expired_refunded = 0
 
         # Step 3: Generate quantitative signals across 3 strategies
         signals = strategy_engine.evaluate_markets(contracts)
 
-        # Step 4: Antigravity CLI (`agy -p`) / AI Audit + 7-Gate Risk Check
+        # Step 4: 7-Gate Risk sizing + CLOB depth, THEN a mandatory genuine Argon entry review
+        # of the whole order (all legs, chosen side, live price, rules, expiry, size) before any
+        # paper money is reserved/spent. Only an Argon APPROVE opens a trade.
         decisions: List[RiskDecision] = []
+        entry_reviews = []
         for sig in signals:
             metrics = trader.get_account_metrics()
             open_ids = trader.get_open_market_ids()
@@ -137,7 +196,8 @@ def run_cycle(
             already_open = sig.market_id in (open_ids | trader.held_market_ids())
             if already_open:
                 open_ids.add(sig.market_id)
-            ai_audit = None
+            entry_review: Optional[EntryReview] = None
+            approval_expires_at = ""
 
             if not can_trade:
                 decision = RiskDecision(
@@ -169,30 +229,50 @@ def run_cycle(
                 daily_risk_reference_usdc=metrics["daily_risk_reference_usdc"],
             )
 
+            # Pre-inference CLOB depth check: cheap gate before paying for an Argon call.
             decision = books.validate(sig, decision)
-            if decision.approved:
-                for audit_id in sig.leg_market_ids or [sig.market_id]:
-                    ai_audit = ai_analyst.audit_signal(sig, contracts_by_id.get(audit_id))
-                    if ai_audit.ai_verdict == "VETO_TRAP":
-                        break
 
-            if ai_audit and ai_audit.ai_verdict == "VETO_TRAP" and decision.approved:
-                decision = RiskDecision(
-                    signal_id=sig.signal_id,
-                    market_id=sig.market_id,
-                    question=sig.question,
-                    strategy=sig.strategy,
-                    approved=False,
-                    recommended_size_usdc=0.0,
-                    shares_qty=0.0,
-                    entry_price=sig.entry_price,
-                    reject_reason=ai_audit.ai_reasoning,
-                    risk_checks_passed=decision.risk_checks_passed,
+            if decision.approved and cfg.require_argon_entry_review:
+                # Expose the proposed size to the model so it can critique risk/size context.
+                setattr(sig, "_proposed_size_usdc", decision.recommended_size_usdc)
+                entry_review = entry_gate.review_order(sig, contracts_by_id)
+                if entry_review.status != "APPROVE":
+                    reason = (
+                        f"ARGON_{entry_review.status}: "
+                        f"{entry_review.reject_reason or entry_review.reasoning}"
+                    )
+                    decision = replace(
+                        decision, approved=False, recommended_size_usdc=0.0,
+                        shares_qty=0.0, reject_reason=reason,
+                    )
+                else:
+                    decision = _apply_conservative_argon_sizing(
+                        sig, decision, entry_review, metrics, open_ids,
+                        risk_manager, trader,
+                    )
+                    if decision.approved:
+                        # Re-fetch CLOB books AFTER the slow inference and re-validate so a
+                        # stale pre-inference quote can never authorize execution.
+                        fresh_books = ExecutionBooks(client, valuation_contracts)
+                        decision = fresh_books.validate(sig, decision)
+                    if decision.approved:
+                        approval_expires_at = entry_gate.approval_expires_at(entry_review)
+            elif decision.approved and not cfg.require_argon_entry_review:
+                # Explicit deterministic mode (tests / offline): recorded honestly, never
+                # presented as a genuine AI inference.
+                decision = replace(
+                    decision,
+                    risk_checks_passed=decision.risk_checks_passed + ["DETERMINISTIC_ENTRY_MODE"],
                 )
 
+            if entry_review is not None:
+                entry_reviews.append(dict(entry_review.to_dict(), question=sig.question, market_id=sig.market_id))
             decisions.append(decision)
             if not already_open:
-                trader.record_and_execute(sig, decision, ai_audit=ai_audit)
+                trader.record_and_execute(
+                    sig, decision, entry_review=entry_review,
+                    approval_expires_at=approval_expires_at,
+                )
 
         # Step 5: Final mark-to-market & AI Self-Tuning Executive Summary
         if can_trade:
@@ -205,12 +285,28 @@ def run_cycle(
             now=trader._now(),
         )
 
+        entry_review_summary = {
+            "mode": "ARGON_REQUIRED" if cfg.require_argon_entry_review else "DETERMINISTIC_TEST",
+            "provider": "argon_cli",
+            "model": cfg.argon_model,
+            "cli_available": bool(entry_gate.binary),
+            "calls_made": entry_gate.calls_made,
+            "max_calls_per_cycle": cfg.argon_max_calls_per_cycle,
+            "approval_ttl_sec": cfg.argon_approval_ttl_sec,
+            "legacy_pending_refunded": legacy_refunded,
+            "expired_pending_refunded": expired_refunded,
+            "approved_count": sum(1 for r in entry_reviews if r["status"] == "APPROVE"),
+            "blocked_count": sum(1 for r in entry_reviews if r["status"] != "APPROVE"),
+            "reviews": entry_reviews[:25],
+        }
+
         state = trader.export_full_state(
             data_source=client.last_source,
             contracts=contracts,
             signals=signals,
             decisions=decisions,
             ai_summary=ai_summary,
+            entry_review=entry_review_summary,
         )
 
         sync_web_publish_dir(auto_push=auto_push)
@@ -222,6 +318,17 @@ def run_cycle(
             print("=" * 78)
             print(f" AGY CLI Bridge     : {ai_summary.get('agy_cli_path', 'active')}")
             print(f" Data Source        : {state['data_source']}")
+            print(
+                f" Entry Review Mode  : {entry_review_summary['mode']} "
+                f"(model {entry_review_summary['model']}, CLI {'found' if entry_review_summary['cli_available'] else 'MISSING'}, "
+                f"{entry_review_summary['calls_made']} calls, "
+                f"{entry_review_summary['approved_count']} APPROVE / {entry_review_summary['blocked_count']} blocked)"
+            )
+            if legacy_refunded or expired_refunded:
+                print(
+                    f" Pending Refunds    : {legacy_refunded} legacy unreviewed, "
+                    f"{expired_refunded} expired approvals cancelled & refunded"
+                )
             print(f" Markets Scanned    : {state['scanned_markets_count']} active contracts")
             print(f" AI Auto-Exits      : {closed_count} positions closed with profit/stop")
             approved_cnt = sum(1 for d in decisions if d.approved)

@@ -66,14 +66,33 @@ Thị trường cần thanh khoản $5.000, volume 24h $1.500, spread taker tố
 
 ## 5. AI và tài khoản
 
-Không cần đăng nhập để chạy mô hình kiểm tra điều khoản xác định (`QUANT_SEMANTIC_AI`). Đây không phải một lần gọi LLM. Tùy chọn `GEMINI_API_KEY` bật kiểm duyệt Gemini; `AUTOPILOT_ENABLE_AGY_SUBPROCESS=1` bật CLI `agy` nếu cài sẵn. Không đưa API key vào frontend hoặc Git.
+### 5.1. Cổng kiểm duyệt Argon bắt buộc trước khi vào lệnh (mặc định)
+
+Chế độ vận hành mặc định (`require_argon_entry_review=True` trong `src/config.py`) BẮT BUỘC một đánh giá Argon thật (CLI `agy`, model `gemini-4-argon-high`) cho TOÀN BỘ lệnh đề xuất — mọi chân giỏ, đúng cửa YES/NO, giá vào hiện tại, điều khoản phân xử, thời hạn/thanh khoản và bối cảnh rủi ro/khối lượng — TRƯỚC khi giữ chỗ hay giải ngân bất kỳ đồng paper nào.
+
+- Chỉ `APPROVE` mới mở lệnh. `REJECT`, `INSUFFICIENT_DATA`, `UNAVAILABLE` (JSON sai, timeout, chạm quota, thiếu đăng nhập) đều CHẶN lệnh.
+- Argon phản biện lợi thế kinh tế sau phí, không chỉ độ rõ của luật. Fair value/edge của chiến lược và giá thị trường chỉ là giả định, không phải bằng chứng.
+- **Giới hạn quan trọng:** task này KHÔNG nối nguồn tin tức/nghiên cứu độc lập. Bối cảnh gửi cho model ghi rõ `independent_research_available=false`; khi cần thông tin ngoài để xác định lợi thế, model trung thực trả `INSUFFICIENT_DATA` và hệ thống không vào lệnh. Một `APPROVE` tự nhận không có nghiên cứu độc lập sẽ bị hạ xuống `INSUFFICIENT_DATA`. Do đó với bản dựng hiện tại, APPROVE thật rất hiếm và phần lớn lệnh mới bị từ chối — đây là hành vi thận trọng có chủ đích.
+- Mỗi chu kỳ bị chặn số lần gọi (`argon_max_calls_per_cycle`) và thời gian (`argon_cycle_time_budget_sec`); vượt hạn thì các tín hiệu còn lại bị chặn chứ không treo chờ.
+- Sau khi suy luận (chậm), hệ thống TẢI LẠI sổ lệnh CLOB và kiểm tra lại độ sâu trước khi thực thi; không phóng đại khối lượng dựa trên model. Nếu dùng xác suất của model, nó là xác suất CỬA ĐÃ CHỌN; hệ thống lấy `min(fair_value, prob_model)` và định cỡ lại thận trọng, không bao giờ lớn hơn khối lượng ban đầu.
+- Không có cache cũ nào được phép cấp phép lệnh mới. Cache (nếu có) nhạy theo giá/cửa/model/tài khoản/bối cảnh và TTL ngắn trong bộ nhớ tiến trình; khởi động lại là mất.
+
+Định tuyến 2 profile: dùng tài khoản đang active đã cấu hình; khi gặp lỗi quota/rate-limit thật sẽ thử lại đúng MỘT lần sang profile dự phòng đã cấu hình và không trong cooldown. Cả hai không khả dụng thì chặn vào lệnh. Cổng không đọc/không ghi log token; không sửa `~/.gemini` ngoài cơ chế chuyển profile sẵn có.
+
+Lệnh `PENDING_MAKER` tạo trước khi có cổng này không mang dấu APPROVE thật: khi khởi động lại chúng được hủy và hoàn tiền (migration), không được khớp. Phê duyệt cho lệnh chờ có thời hạn (`argon_approval_ttl_sec`); hết hạn thì bị hủy/hoàn tiền và cần một đánh giá mới. Vị thế đang mở, thoát lệnh và tất toán được giữ nguyên.
+
+Xem quyết định: panel "CỔNG KIỂM DUYỆT ARGON" trên dashboard; các dòng `ARGON_ENTRY_REVIEW` trong `ai_brain_log`; khối `entry_review` trong `data/portfolio_state.json`; cột `entry_review_*` trong bảng `positions`. Thoát lệnh dùng quy tắc xác định (không phải suy luận AT entry) và được phân biệt rõ trên giao diện. Không coi các lệnh cũ là đã qua kiểm duyệt AI.
+
+### 5.2. Kiểm duyệt điều khoản (cũ, tách biệt với cổng vào lệnh)
+
+Không cần đăng nhập để chạy mô hình kiểm tra điều khoản xác định (`QUANT_SEMANTIC_AI`). Đây không phải một lần gọi LLM và KHÔNG được dùng để cấp phép vào lệnh ở chế độ mặc định. Tùy chọn `GEMINI_API_KEY` bật kiểm duyệt Gemini; `AUTOPILOT_ENABLE_AGY_SUBPROCESS=1` bật CLI `agy` cho lớp kiểm duyệt điều khoản này. Không đưa API key vào frontend hoặc Git.
 
 ```bash
 python3 manage_accounts.py --help
 python3 manage_accounts.py status
 ```
 
-Đăng nhập/lưu profile/chuyển tài khoản thực hiện tại máy backend theo `--help`. Dashboard chỉ hiển thị trạng thái tài khoản; không có API công khai sao chép hoặc đổi OAuth token. Không chuyển sang tài khoản chưa cấu hình/đang cooldown. Xác minh `ai_mode` và log để biết bot thực sự đã dùng LLM hay fallback; không suy ra chỉ từ tên tài khoản.
+Đăng nhập/lưu profile/chuyển tài khoản thực hiện tại máy backend theo `--help`. Dashboard chỉ hiển thị trạng thái tài khoản; không có API công khai sao chép hoặc đổi OAuth token. Không chuyển sang tài khoản chưa cấu hình/đang cooldown. Xác minh log để biết bot thực sự đã dùng LLM hay fallback; không suy ra chỉ từ tên tài khoản hay tên model hiển thị.
 
 ## 6. Sao lưu và khôi phục
 

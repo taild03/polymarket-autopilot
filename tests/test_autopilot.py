@@ -21,7 +21,10 @@ from src.strategy_engine import StrategyEngine
 
 class TestPolymarketAutopilot(unittest.TestCase):
     def setUp(self) -> None:
-        self.config = TradingConfig(allow_snapshot_trading=True)
+        # Explicit deterministic entry mode: these component tests exercise sizing, maker
+        # reservation and lifecycle fills without a live Argon CLI. The genuine entry gate is
+        # covered in tests/test_argon_entry.py.
+        self.config = TradingConfig(allow_snapshot_trading=True, require_argon_entry_review=False)
         self.client = PolymarketClient(self.config)
         self.contracts = self.client._get_fallback_contracts()
         self.contracts_by_id = {c.market_id: c for c in self.contracts}

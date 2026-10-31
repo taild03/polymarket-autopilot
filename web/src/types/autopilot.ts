@@ -60,6 +60,43 @@ export interface OpenPosition {
   rationale: string;
   opened_at: string;
   status: string;
+  entry_review_status?: string;
+  entry_review_model?: string;
+  entry_review_account?: string;
+  entry_review_at?: string;
+  entry_review_expires_at?: string;
+}
+
+export interface EntryReviewItem {
+  question?: string;
+  status: string;
+  provider: string;
+  model: string;
+  account_slot: string;
+  account_label: string;
+  timestamp: string;
+  chosen_side: string;
+  reasoning: string;
+  risks: string[];
+  chosen_side_prob: number | null;
+  has_independent_research: boolean;
+  cache_hit: boolean;
+  reject_reason: string;
+}
+
+export interface EntryReviewSummary {
+  mode?: string;
+  provider?: string;
+  model?: string;
+  cli_available?: boolean;
+  calls_made?: number;
+  max_calls_per_cycle?: number;
+  approval_ttl_sec?: number;
+  legacy_pending_refunded?: number;
+  expired_pending_refunded?: number;
+  approved_count?: number;
+  blocked_count?: number;
+  reviews?: EntryReviewItem[];
 }
 
 export interface TradeSignalItem {
@@ -112,6 +149,7 @@ export interface AutopilotState {
   runtime?: { mode: "paper" | "snapshot"; can_scan: boolean; can_switch_accounts: boolean };
   equity_history?: { cycle: number; timestamp: string; equity: number }[];
   data_source: string;
+  entry_review?: EntryReviewSummary;
   ai_summary: {
     timestamp?: string;
     ai_mode?: string;

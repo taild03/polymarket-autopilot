@@ -202,6 +202,7 @@ def run_cycle(
             final_metrics,
             len(decisions),
             data_source=client.last_source,
+            now=trader._now(),
         )
 
         state = trader.export_full_state(

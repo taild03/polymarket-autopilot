@@ -363,6 +363,7 @@ class AutonomousAIAnalyst:
         metrics: Dict[str, Any],
         decisions_count: int,
         data_source: str = "LIVE_POLYMARKET_GAMMA_API",
+        now: Optional[datetime] = None,
     ) -> Dict[str, Any]:
         total_pnl = float(metrics.get("total_pnl_usdc", 0.0))
         realized_pnl = float(metrics.get("realized_pnl_usdc", 0.0))
@@ -394,7 +395,9 @@ class AutonomousAIAnalyst:
             )
 
         return {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            # Use the caller-supplied server-derived clock so this stamp agrees with
+            # the snapshot's generated_at even when the host OS clock is skewed.
+            "timestamp": (now or datetime.now(timezone.utc)).isoformat(),
             "ai_mode": self.ai_mode,
             "agy_cli_path": self.agy_bin or "not_found",
             "regime": regime,

@@ -40,6 +40,8 @@ npm --prefix web run start
 
 Mở http://localhost:3000. File `web/.env.local` đặt `AUTOPILOT_BACKEND_URL=http://127.0.0.1:8080`. Dashboard tự đọc mỗi 5 giây; backend quét sau mỗi chu kỳ cộng khoảng nghỉ 30 giây. Một chu kỳ có thể lâu hơn 30 giây nếu nhiều API/AI cần gọi. Bấm quét yêu cầu backend chạy một chu kỳ; khóa file tránh chạy trùng. Ctrl+C để dừng mỗi tiến trình.
 
+Nếu cổng 3000 đang được ứng dụng khác sử dụng, chạy `npm --prefix web run start -- --port 3001 --hostname 127.0.0.1` và mở http://127.0.0.1:3001.
+
 `GET /health` xác nhận API đang phục vụ. `GET /api/state` trả trạng thái cuối cùng; chưa có snapshot trả 503. Không mở lệnh chỉ vì người dùng đọc dashboard.
 
 ## 3. Đọc số liệu và trạng thái
@@ -52,7 +54,7 @@ Mở http://localhost:3000. File `web/.env.local` đặt `AUTOPILOT_BACKEND_URL=
 - `SNAPSHOT_FALLBACK`: dữ liệu mẫu, giao dịch bị khóa.
 - `READONLY_SNAPSHOT`: dashboard không kết nối backend, chỉ xem bản chụp.
 - `BACKEND_UNAVAILABLE`: đã cấu hình backend nhưng không đọc được. Xem API token, URL và log backend.
-- Trạng thái quá 120 giây sẽ không được gắn nhãn live trên giao diện. Timestamp là lần ghi dữ liệu, không phải giờ trình duyệt tải lại.
+- Trạng thái quá 120 giây sẽ không được gắn nhãn live trên giao diện. Timestamp là lần ghi dữ liệu, không phải giờ trình duyệt tải lại. Thời gian tham chiếu lấy từ HTTP `Date` cộng `Age` khi phản hồi đi qua cache; điều này không làm giá Gamma trong cache trở thành giá mới. Lệnh vẫn phải qua kiểm tra CLOB.
 
 Lệnh maker chỉ khớp ở chu kỳ sau khi đủ ask tại/dưới mức đặt. Hết hạn/đóng thì hoàn tiền. Giới hạn sụt giảm sẽ hủy lệnh chờ trước khi xử lý khớp mới. Vị thế được tất toán một lần khi Gamma xác nhận kết quả; cờ `closed` riêng lẻ không đủ.
 
@@ -104,7 +106,7 @@ Chưa cấu hình backend thì dashboard hiện rõ chế độ snapshot. Không
 ## 8. Việc cần làm tiếp theo
 
 1. Khôi phục kết nối Gamma/CLOB và đồng hồ hệ thống, chạy doctor đến khi đạt.
-2. Chạy backend + dashboard theo mục 2; xác nhận timestamp, nguồn dữ liệu và vốn $1.000.
+2. Chạy backend + dashboard theo mục 2; xác nhận timestamp, nguồn dữ liệu và danh mục khớp sổ cái. $1.000 là vốn khởi tạo; danh mục đã chạy có thể khác số này. Không reset database để đưa vốn về $1.000.
 3. Để paper trading thu thập các chu kỳ, lệnh chờ/khớp/hủy và phân xử thật; đối chiếu một số lệnh với sổ lệnh. Không có số ngày cố định nào tự chứng minh lợi nhuận.
 4. Sao lưu, kiểm tra lỗi vận hành và đánh giá phí/trượt giá trước khi cân nhắc mở rộng.
 

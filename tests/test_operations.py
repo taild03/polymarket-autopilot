@@ -64,6 +64,39 @@ class OperationalTests(unittest.TestCase):
                 self.assertNotIn('-k', call.args[0])
                 self.assertNotIn('--insecure', call.args[0])
 
+    def test_server_time_adds_cache_age_and_ignores_garbage(self):
+        base = 'Wed, 21 Oct 2026 07:28:00 GMT'
+        expected = datetime(2026, 10, 21, 7, 28, tzinfo=timezone.utc)
+        # No Age header -> raw origin Date.
+        self.assertEqual(PolymarketClient._extract_server_time(base), expected)
+        # A cached response that sat 300s in a proxy must report Date + Age.
+        self.assertEqual(
+            PolymarketClient._extract_server_time(base, '300'),
+            expected + timedelta(seconds=300),
+        )
+        # Malformed / negative / absurd Age values are ignored, never subtracted.
+        for bad in ('', 'abc', '-5', '999999999', None):
+            self.assertEqual(PolymarketClient._extract_server_time(base, bad), expected)
+
+    def test_fetch_uses_cache_age_for_reference_clock(self):
+        client = PolymarketClient()
+
+        class FakeResp:
+            headers = {'Date': 'Wed, 21 Oct 2026 07:28:00 GMT', 'Age': '420'}
+
+            def read(self):
+                return b'[]'
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        with patch('src.polymarket_client.urllib.request.urlopen', return_value=FakeResp()):
+            _, server_now = client._http_get_with_clock_skew_tolerance('https://gamma-api.polymarket.com/events')
+        self.assertEqual(server_now, datetime(2026, 10, 21, 7, 35, tzinfo=timezone.utc))
+
     def test_oauth_callback_uses_state_and_correct_path(self):
         from manage_accounts import valid_oauth_callback
         self.assertTrue(valid_oauth_callback('/auth/callback?state=expected&code=abc', 'expected'))

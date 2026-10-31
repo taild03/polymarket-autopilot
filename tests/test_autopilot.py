@@ -71,6 +71,12 @@ class TestPolymarketAutopilot(unittest.TestCase):
         self.assertEqual(len(exits), 1)
         self.assertEqual(exits[0].action, "TAKE_PROFIT")
 
+    def test_self_tuning_summary_honors_server_clock(self) -> None:
+        from datetime import datetime, timezone
+        server_now = datetime(2026, 10, 21, 7, 35, tzinfo=timezone.utc)
+        summary = self.ai.generate_self_tuning_summary({}, 0, now=server_now)
+        self.assertEqual(summary["timestamp"], server_now.isoformat())
+
     def test_risk_manager_blocks_illiquid_trap(self) -> None:
         signals = self.engine.evaluate_markets(self.contracts)
         trap_sig = next(s for s in signals if s.market_id == "pm-illiquid-meme-trap")

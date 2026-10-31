@@ -13,7 +13,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, asdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from .config import DEFAULT_CONFIG, TradingConfig
@@ -102,7 +102,7 @@ class PolymarketClient:
         )
         try:
             with urllib.request.urlopen(req, timeout=self.config.http_timeout_sec) as resp:
-                server_now = self._extract_server_time(resp.headers.get("Date"))
+                server_now = self._extract_server_time(resp.headers.get("Date"), resp.headers.get("Age"))
                 return resp.read(), server_now
         except Exception as initial_error:
             errors = [f"system resolver/HTTPS: {initial_error}"]
@@ -130,11 +130,15 @@ class PolymarketClient:
                     body = parts[-1]
                     headers_raw = b"\r\n\r\n".join(parts[:-1]).decode("utf-8", errors="ignore")
                     date_str = None
+                    age_str = None
                     for line in headers_raw.splitlines():
-                        if line.lower().startswith("date:"):
+                        lowered = line.lower()
+                        if lowered.startswith("date:"):
                             date_str = line.split(":", 1)[1].strip()
+                        elif lowered.startswith("age:"):
+                            age_str = line.split(":", 1)[1].strip()
                     if body.strip().startswith(b"[") or body.strip().startswith(b"{"):
-                        return body, self._extract_server_time(date_str)
+                        return body, self._extract_server_time(date_str, age_str)
             raise urllib.error.URLError(f"{host} unreachable; " + "; ".join(errors)) from initial_error
 
     @staticmethod
@@ -163,16 +167,38 @@ class PolymarketClient:
         return None
 
     @staticmethod
-    def _extract_server_time(date_header: Optional[str]) -> datetime:
+    def _extract_server_time(date_header: Optional[str], age_header: Optional[str] = None) -> datetime:
+        """
+        Resolves the authoritative "now" from the origin's `Date` header.
+
+        A response served from a CDN/proxy cache carries the Date at which it was
+        *generated*, not the moment it reached us; the `Age` header reports how many
+        seconds it has since sat in cache. Without adding `Age` back, our reference
+        clock (and therefore `generated_at`, the dashboard freshness label, and
+        days-to-expiry math) silently lags real time by the cache residence time.
+        """
         if date_header:
             try:
                 dt = email.utils.parsedate_to_datetime(date_header)
                 if dt.tzinfo is None:
                     dt = dt.replace(tzinfo=timezone.utc)
-                return dt
+                return dt + timedelta(seconds=PolymarketClient._parse_age_seconds(age_header))
             except Exception:
                 pass
         return datetime.now(timezone.utc)
+
+    @staticmethod
+    def _parse_age_seconds(age_header: Optional[str]) -> int:
+        """Parses a non-negative HTTP `Age` value, ignoring malformed or absurd headers."""
+        if not age_header:
+            return 0
+        try:
+            age = int(str(age_header).strip())
+        except (TypeError, ValueError):
+            return 0
+        # Clamp to a sane window: a day of cache residence is already extreme and a
+        # larger/negative value almost certainly means a broken intermediary.
+        return age if 0 <= age <= 86400 else 0
 
     def fetch_clob_book_top(self, token_id: str) -> Optional[Dict[str, float]]:
         """

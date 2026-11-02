@@ -8,6 +8,8 @@ from __future__ import annotations
 import json
 from dataclasses import replace
 import sqlite3
+import math
+from .argon_entry import order_key
 import uuid
 import time
 from datetime import datetime, timezone, timedelta
@@ -140,6 +142,8 @@ class PaperTrader:
                 conn.execute("ALTER TABLE positions ADD COLUMN leg_market_ids TEXT NOT NULL DEFAULT '[]'")
             # Entry-review provenance. Pre-gate rows default to '' (an honest "unreviewed"
             # marker), never silently treated as if an Argon assessment had approved them.
+            if "entry_review_key" not in pos_cols:
+                conn.execute("ALTER TABLE positions ADD COLUMN entry_review_key TEXT NOT NULL DEFAULT ''")
             if "entry_review_status" not in pos_cols:
                 conn.execute("ALTER TABLE positions ADD COLUMN entry_review_status TEXT NOT NULL DEFAULT ''")
             if "entry_review_model" not in pos_cols:
@@ -150,6 +154,7 @@ class PaperTrader:
                 conn.execute("ALTER TABLE positions ADD COLUMN entry_review_at TEXT NOT NULL DEFAULT ''")
             if "entry_review_expires_at" not in pos_cols:
                 conn.execute("ALTER TABLE positions ADD COLUMN entry_review_expires_at TEXT NOT NULL DEFAULT ''")
+            conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS single_review_use ON positions(entry_review_key,entry_review_at) WHERE entry_review_key != ''")
             row = conn.execute("SELECT id FROM account_state WHERE id = 1").fetchone()
             if not row:
                 now_utc = self._now()
@@ -435,16 +440,35 @@ class PaperTrader:
             er_status, er_model, er_account, er_at = "DETERMINISTIC_TEST", "", "", now_iso
         else:
             er_status, er_model, er_account, er_at = "", "", "", ""
-        if self.config.require_argon_entry_review and decision.approved:
-            expiry = self._parse_iso(approval_expires_at)
-            if (er_status != "APPROVE" or er_model != self.config.argon_model
-                    or er_account not in ("account_1", "account_2")
-                    or getattr(entry_review, "provider", None) != "argon_cli"
-                    or getattr(entry_review, "chosen_side", None) != signal.side
-                    or expiry is None or expiry <= self._now()):
-                decision = replace(decision, approved=False, shares_qty=0.0,
-                                   recommended_size_usdc=0.0, reject_reason="ARGON_APPROVAL_REQUIRED")
         with self._connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            binding = ""
+            if self.config.require_argon_entry_review and decision.approved:
+                cap = getattr(entry_review, "max_size", 0.0)
+                binding = getattr(entry_review, "order_key", "")
+                issued = self._parse_iso(er_at)
+                evidence_end = self._parse_iso(getattr(entry_review, "evidence_expires_at", ""))
+                now = self._now()
+                expiry = self._parse_iso(approval_expires_at)
+                if (er_status != "APPROVE" or er_model != self.config.argon_model
+                        or er_account not in ("account_1", "account_2")
+                        or getattr(entry_review, "provider", None) != "argon_cli"
+                        or getattr(entry_review, "chosen_side", None) != signal.side
+                        or not isinstance(cap, (float, int)) or not math.isfinite(cap)
+                        or not 0 < decision.recommended_size_usdc <= cap
+                        or binding != order_key(signal, cap)
+                        or decision.market_id != signal.market_id or decision.signal_id != signal.signal_id
+                        or decision.entry_price != signal.entry_price or decision.strategy != signal.strategy
+                        or not math.isclose(decision.shares_qty * decision.entry_price, decision.recommended_size_usdc, abs_tol=0.0001)
+                        or not entry_review.has_independent_research or issued is None or issued > now
+                        or evidence_end is None or expiry is None or expiry > evidence_end
+                        or expiry > issued + timedelta(seconds=self.config.argon_approval_ttl_sec) or expiry <= now):
+                    decision = replace(decision, approved=False, shares_qty=0.0,
+                                       recommended_size_usdc=0.0, reject_reason="ARGON_APPROVAL_REQUIRED")
+            if decision.approved and binding and conn.execute(
+                    "SELECT 1 FROM positions WHERE entry_review_key=? AND entry_review_at=?", (binding, er_at)).fetchone():
+                decision = replace(decision, approved=False, shares_qty=0.0,
+                                   recommended_size_usdc=0.0, reject_reason="ARGON_APPROVAL_ALREADY_USED")
             conn.execute(
                 """
                 INSERT INTO audit_log (
@@ -530,8 +554,8 @@ class PaperTrader:
                                 unrealized_pnl_usdc, expected_apr_pct, days_to_expiry,
                                 rationale, opened_at, status, leg_market_ids,
                                 entry_review_status, entry_review_model, entry_review_account,
-                                entry_review_at, entry_review_expires_at
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                entry_review_at, entry_review_expires_at, entry_review_key
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                             """,
                             (
                                 pos_id,
@@ -558,7 +582,7 @@ class PaperTrader:
                                 er_model,
                                 er_account,
                                 er_at,
-                                approval_expires_at,
+                                approval_expires_at, binding,
                             ),
                         )
             conn.commit()
@@ -603,7 +627,7 @@ class PaperTrader:
             return True
         keys = row.keys() if hasattr(row, "keys") else row
         status = row["entry_review_status"] if "entry_review_status" in keys else ""
-        if status != "APPROVE":
+        if status != "APPROVE" or not row["entry_review_key"]:
             return False
         return not self._review_expired(row)
 
@@ -620,10 +644,10 @@ class PaperTrader:
         count = 0
         with self._connect() as conn:
             rows = conn.execute(
-                "SELECT position_id, cost_basis_usdc, entry_review_status FROM positions WHERE status = 'PENDING_MAKER'"
+                "SELECT position_id, cost_basis_usdc, entry_review_status, entry_review_key FROM positions WHERE status = 'PENDING_MAKER'"
             ).fetchall()
             for r in rows:
-                if r["entry_review_status"] != "APPROVE":
+                if r["entry_review_status"] != "APPROVE" or not r["entry_review_key"]:
                     conn.execute("UPDATE account_state SET cash_usdc = cash_usdc + ? WHERE id = 1", (r["cost_basis_usdc"],))
                     conn.execute(
                         "UPDATE positions SET status = 'CANCELLED_LEGACY_UNREVIEWED' WHERE position_id = ?",

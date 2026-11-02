@@ -131,7 +131,7 @@ export function HeaderBar() {
             <path d="M21 3v5h-5" />
           </svg>
           <span>
-            {meta.isPending ? "ĐANG QUÉT THỊ TRƯỜNG..." : "QUÉT KÈO NGAY BÂY GIỜ"}
+            {meta.isPending ? `ĐANG QUÉT${data.scan_status?.started_at ? " · " + Math.max(0, Math.floor(Date.now() / 1000 - data.scan_status.started_at)) + "s" : "..."}` : "QUÉT KÈO NGAY BÂY GIỜ"}
           </span>
         </button>
       </div>

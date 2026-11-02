@@ -95,8 +95,7 @@ export function EntryReviewStatus() {
       </div>
 
       <p className="mt-4 text-[13px] font-semibold text-[#52514E]">
-        Chưa nối nguồn tin tức/nghiên cứu độc lập: khi không đủ bằng chứng, Argon trả &quot;thiếu bằng chứng&quot; và hệ thống
-        không vào lệnh. Số liệu lịch sử trước khi có cổng này không được coi là đã qua kiểm duyệt AI.
+        Mỗi kèo cần bằng chứng độc lập còn hiệu lực do backend cung cấp. Khi thiếu bằng chứng, hệ thống chặn lệnh. Số liệu lịch sử trước khi có cổng này không được coi là đã qua kiểm duyệt AI.
       </p>
     </section>
   );

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import time
 import hmac
 import json
 import os
@@ -17,12 +18,41 @@ from src.config import STATE_JSON_PATH
 STOP = threading.Event()
 
 
-def autonomous_background_worker(interval_sec):
-    while not STOP.is_set():
+class ScanWorker:
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.thread = None
+        self.status = {"phase": "idle", "started_at": None}
+
+    def snapshot(self):
+        with self.lock:
+            return dict(self.status)
+
+    def start(self):
+        with self.lock:
+            if self.thread is None or not self.thread.is_alive():
+                self.status = {"phase": "running", "started_at": time.time()}
+                self.thread = threading.Thread(target=self._run, daemon=True)
+                self.thread.start()
+            return self.thread
+
+    def _run(self):
         try:
             run_cycle(verbose=False)
+            phase = "completed"
         except Exception as exc:
-            sys.stderr.write(f"[AUTOPILOT WORKER ERROR] {type(exc).__name__}: {exc}\n")
+            sys.stderr.write(f"[SCAN ERROR] {type(exc).__name__}: {exc}\n")
+            phase = "failed"
+        with self.lock:
+            self.status["phase"] = phase
+
+
+SCANS = ScanWorker()
+
+
+def autonomous_background_worker(interval_sec):
+    while not STOP.is_set():
+        SCANS.start().join()
         STOP.wait(max(10, interval_sec))
 
 
@@ -74,6 +104,7 @@ class AutopilotRequestHandler(BaseHTTPRequestHandler):
         elif route == '/api/state':
             try:
                 state = json.loads(STATE_JSON_PATH.read_text())
+                state['scan_status'] = SCANS.snapshot()
                 state['runtime'] = {'mode': 'paper', 'can_scan': True, 'can_switch_accounts': False}
                 self._send_json(state)
             except (OSError, ValueError):
@@ -101,7 +132,14 @@ class AutopilotRequestHandler(BaseHTTPRequestHandler):
             self._send_json({'error': 'Invalid request body'}, 400)
             return
         try:
-            state = run_cycle(verbose=False)
+            thread = SCANS.start()
+            if body.get('action') == 'scan_async':
+                self._send_json({'scan_status': SCANS.snapshot()}, 202)
+                return
+            thread.join()
+            if SCANS.snapshot()['phase'] == 'failed':
+                raise RuntimeError('Scan failed')
+            state = json.loads(STATE_JSON_PATH.read_text())
             state['runtime'] = {'mode': 'paper', 'can_scan': True, 'can_switch_accounts': False}
             self._send_json(state)
         except Exception as exc:

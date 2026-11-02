@@ -144,7 +144,10 @@ export interface AiBrainLogItem {
   impact_usdc: number;
 }
 
+export interface ScanStatus { phase: "idle" | "running" | "completed" | "failed"; started_at: number | null; }
+
 export interface AutopilotState {
+  scan_status?: ScanStatus;
   generated_at: string;
   runtime?: { mode: "paper" | "snapshot"; can_scan: boolean; can_switch_accounts: boolean };
   equity_history?: { cycle: number; timestamp: string; equity: number }[];

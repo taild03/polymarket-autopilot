@@ -9,9 +9,7 @@ economic merit of the trade, not just rule clarity.
 
 Hard honesty rules enforced here, not merely requested of the model:
   * Strategy fair_value and market price are assumptions, never independent evidence.
-  * There is no news/web research provider wired into this task; the context says so
-    explicitly. If an edge can only be justified with outside information the model does
-    not have, the honest answer is INSUFFICIENT_DATA and no trade is opened.
+  * Each leg requires current independent evidence from the backend research file.
   * An APPROVE that claims no independent research is downgraded to INSUFFICIENT_DATA.
   * Any invalid JSON, missing/NaN field, non-zero exit, timeout, quota exhaustion or
     missing credentials yields UNAVAILABLE and blocks the entry. The gate NEVER falls
@@ -27,6 +25,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
+from urllib.parse import urlsplit
 import shutil
 import subprocess
 import tempfile
@@ -62,6 +62,35 @@ REVIEW_SCHEMA: Dict[str, Any] = {
 _REQUIRED = set(REVIEW_SCHEMA["required"])
 
 
+def order_key(signal, max_size):
+    terms = [signal.signal_id, signal.market_id, signal.side, signal.order_type, signal.strategy,
+             list(signal.leg_market_ids), signal.entry_price, max_size]
+    return hashlib.sha256(json.dumps(terms, allow_nan=False).encode()).hexdigest()
+
+
+def trusted_evidence(legs, now):
+    """Operator-curated local input. Require a current, attributed record for each leg."""
+    path = os.getenv("AUTOPILOT_EVIDENCE_FILE")
+    if not path:
+        return []
+    try:
+        records = json.loads(Path(path).read_text(encoding="utf-8"))
+        result = []
+        for leg in legs:
+            record = records[leg.market_id]
+            observed = datetime.fromisoformat(record["observed_at"].replace("Z", "+00:00"))
+            expires = datetime.fromisoformat(record["expires_at"].replace("Z", "+00:00"))
+            source = urlsplit(record["source"])
+            if (not observed <= now < expires or source.scheme != "https" or not source.hostname
+                    or not isinstance(record["finding"], str) or not record["finding"].strip()):
+                return []
+            result.append({k: record[k] for k in ("source", "finding", "observed_at", "expires_at")}
+                          | {"market_id": leg.market_id})
+        return result
+    except (OSError, ValueError, TypeError, AttributeError, KeyError):
+        return []
+
+
 @dataclass
 class EntryReview:
     """A single, persisted entry-review decision over a whole proposed order."""
@@ -81,6 +110,10 @@ class EntryReview:
     cache_hit: bool = False
     attempts: int = 0
     reject_reason: str = ""
+    order_key: str = ""
+    max_size: float = 0.0
+    evidence_expires_at: str = ""
+    evidence_sources: List[str] = field(default_factory=list)
 
     @property
     def approved(self) -> bool:
@@ -219,9 +252,13 @@ class ArgonEntryGate:
                 "volume_24h_usd": round(c.volume_24h_usd, 2),
                 "closed": bool(c.closed),
             })
+        evidence = trusted_evidence(legs, self._clock())
         return {
+            "signal_id": signal.signal_id,
+            "market_id": signal.market_id,
+            "evidence": evidence,
             "paper_trading_only": True,
-            "independent_research_available": False,
+            "independent_research_available": bool(evidence),
             "proposed_order": {
                 "strategy": signal.strategy,
                 "order_side": order_side,
@@ -248,7 +285,7 @@ class ArgonEntryGate:
             "thời hạn, thanh khoản, giá vào và quy mô rủi ro.\n"
             "QUAN TRỌNG: 'ASSUMPTION_strategy_fair_value' và giá thị trường chỉ là GIẢ ĐỊNH, KHÔNG phải bằng chứng.\n"
             "Không suy ra xác suất thắng chỉ từ luật rõ ràng hay từ giá thị trường.\n"
-            "'independent_research_available' = false: KHÔNG có tin tức/nghiên cứu độc lập trong đầu vào.\n"
+            "Chỉ evidence trong DATA_JSON là nghiên cứu do backend cung cấp. Đánh giá độ liên quan và nguồn.\n"
             "Nếu cần thông tin bên ngoài để xác định lợi thế thì trả verdict=INSUFFICIENT_DATA, chosen_side_prob=null,\n"
             "has_independent_research=false. TUYỆT ĐỐI không bịa tin tức, nguồn hay xác suất.\n"
             "Chỉ trả verdict=APPROVE khi thực sự có căn cứ độc lập cho lợi thế ròng sau phí; khi đó\n"
@@ -371,16 +408,19 @@ class ArgonEntryGate:
 
             # A valid parsed response (any verdict) is a genuine success for counters.
             self.router.record_success()
-            review = self._finalize(signal, payload, slot_id, label, attempts)
+            review = self._finalize(signal, payload, slot_id, label, attempts, context)
             self._cache_put(cache_key, review)
             return review
 
         return self._unavailable(signal, "", "", "ALL_ACCOUNTS_UNAVAILABLE")
 
-    def _finalize(self, signal, payload: Dict[str, Any], slot_id: str, label: str, attempts: int) -> EntryReview:
+    def _finalize(self, signal, payload: Dict[str, Any], slot_id: str, label: str, attempts: int, context: dict) -> EntryReview:
         verdict = payload["verdict"]
         prob = payload["chosen_side_prob"]
-        has_research = bool(payload["has_independent_research"])
+        evidence = context["evidence"]
+        expires = min((datetime.fromisoformat(r["expires_at"].replace("Z", "+00:00")) for r in evidence), default=None)
+        has_research = bool(payload["has_independent_research"] and expires and expires > self._clock())
+        size = context["proposed_order"]["proposed_size_usdc"]
         reject_reason = ""
 
         # Enforce evidence honesty in code: an APPROVE must rest on genuine independent
@@ -400,13 +440,17 @@ class ArgonEntryGate:
             account_label=label,
             timestamp=self._clock().isoformat(),
             chosen_side=signal.side,
-            reasoning=str(payload["reasoning"]).strip(),
+            reasoning=(("Backend chưa xác nhận đủ bằng chứng còn hiệu lực hoặc xác suất cho kèo này. " if verdict != payload["verdict"] else "")
+                       + str(payload["reasoning"]).strip()),
             risks=[str(r) for r in payload["risks"]],
             chosen_side_prob=prob,
             clarity_score=payload.get("clarity_score"),
             has_independent_research=has_research,
             cache_hit=False,
             attempts=attempts,
+            order_key=order_key(signal, size), max_size=size,
+            evidence_expires_at=expires.isoformat() if expires else "",
+            evidence_sources=[r["source"] for r in evidence],
             reject_reason=reject_reason,
         )
 
@@ -417,4 +461,7 @@ class ArgonEntryGate:
             base = datetime.fromisoformat(review.timestamp)
         except (TypeError, ValueError):
             pass
-        return (base + timedelta(seconds=float(self.config.argon_approval_ttl_sec))).isoformat()
+        deadline = base + timedelta(seconds=float(self.config.argon_approval_ttl_sec))
+        if review.evidence_expires_at:
+            deadline = min(deadline, datetime.fromisoformat(review.evidence_expires_at))
+        return deadline.isoformat()

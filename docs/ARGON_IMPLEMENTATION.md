@@ -18,9 +18,8 @@ only rule *clarity* and silently fell back to deterministic rules.
   - Strict schema/parse validation: required fields, finite numbers, bounded ranges, typed
     `risks`. Invalid JSON / NaN / non-zero exit / timeout → `UNAVAILABLE` → entry blocked.
   - Explicit statuses: `APPROVE` / `REJECT` / `INSUFFICIENT_DATA` / `UNAVAILABLE`. Strategy
-    fair_value and market price are declared assumptions, not evidence. The context sets
-    `independent_research_available=false`; an `APPROVE` that admits no independent research
-    is downgraded to `INSUFFICIENT_DATA` in code (no invented news/sources/probabilities).
+    fair_value and market price are declared assumptions, not evidence. The backend validates current operator-curated evidence for every market in the order.
+    Without those records, an `APPROVE` is downgraded to `INSUFFICIENT_DATA`, including when the model claims to have research.
   - Two-profile routing: uses the active configured account; on a genuine quota/rate-limit
     error performs exactly one retry on the configured, non-cooling alternate; both unusable
     → block. Counters increment only on a genuinely parsed response.

@@ -9,17 +9,19 @@ blocked backup/both-cooldown, no reuse of a stale approval, legacy pending refun
 fill eligibility vs expiry, and fresh-book re-validation after slow inference.
 """
 import json
+import os
+from dataclasses import replace
 import sys
 import tempfile
 import unittest
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.account_router import ArgonAccountRouter
-from src.argon_entry import ArgonEntryGate, EntryReview, validate_review_payload, STATUS_APPROVE
+from src.argon_entry import order_key, ArgonEntryGate, EntryReview, validate_review_payload, STATUS_APPROVE
 from src.config import TradingConfig
 from src.execution import ExecutionBooks
 from src.paper_trader import PaperTrader
@@ -121,6 +123,39 @@ class FakeClock:
 class EntryGateTests(unittest.TestCase):
     def setUp(self):
         self.cfg = TradingConfig(require_argon_entry_review=True)
+
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.evidence = Path(tmp.name) / "research.json"
+        now = datetime.now(timezone.utc)
+        self.record = {"source": "https://example.org/research", "finding": "Test observation",
+                       "observed_at": (now-timedelta(minutes=1)).isoformat(),
+                       "expires_at": (now+timedelta(minutes=2)).isoformat()}
+        self.evidence.write_text(json.dumps({"m1": self.record}))
+        setting = patch.dict(os.environ, {"AUTOPILOT_EVIDENCE_FILE": str(self.evidence)})
+        setting.start()
+        self.addCleanup(setting.stop)
+
+    def test_valid_backend_evidence_can_authorize_smaller_paper_order(self):
+        sig = make_signal()
+        decision = RiskManager(self.cfg).evaluate_signal(sig, 1000, 1000, 0, 0, set())
+        self.assertTrue(decision.approved)
+        sig._proposed_size_usdc = decision.recommended_size_usdc
+        gate = self.gate([(0, response(), "")])
+        r = gate.review_order(sig, {"m1": make_contract()})
+        self.assertEqual(r.evidence_sources, [self.record["source"]])
+        with tempfile.TemporaryDirectory() as tmp:
+            trader = PaperTrader(self.cfg, Path(tmp) / "ledger.db")
+            smaller = replace(decision, recommended_size_usdc=10, shares_qty=10 / sig.entry_price)
+            trader.record_and_execute(sig, smaller, entry_review=r, approval_expires_at=gate.approval_expires_at(r))
+            self.assertEqual(trader.get_account_metrics()["cash_usdc"], 990)
+
+    def test_self_report_cannot_replace_current_market_specific_evidence(self):
+        for records in ({}, {"other": self.record}, {"m1": dict(self.record, expires_at=self.record["observed_at"])}):
+            self.evidence.write_text(json.dumps(records))
+            r = self.gate([(0, response(), "")]).review_order(make_signal(), {"m1": make_contract()})
+            self.assertEqual(r.status, "INSUFFICIENT_DATA")
+            self.assertFalse(r.has_independent_research)
 
     def gate(self, responses, router=None, clock=None):
         router = router or make_router()
@@ -229,7 +264,8 @@ class EntryGateTests(unittest.TestCase):
         leg = ctx["legs"][0]
         self.assertEqual(leg["side_bought"], "NO")
         self.assertAlmostEqual(leg["chosen_side_entry_price"], round(1 - 0.60, 4))
-        self.assertEqual(ctx["independent_research_available"], False)
+        self.assertTrue(ctx["independent_research_available"])
+        self.assertEqual(ctx["evidence"][0]["market_id"], sig.market_id)
 
     def test_bundle_context_covers_all_legs_as_yes(self):
         gate = self.gate([])
@@ -326,7 +362,10 @@ class PendingLifecycleTests(unittest.TestCase):
         return sig, decision
 
     def _review(self, when):
+        sig, decision = self._maker_signal_and_decision()
         return EntryReview(
+            order_key=order_key(sig, decision.recommended_size_usdc), max_size=decision.recommended_size_usdc,
+            evidence_expires_at=(when+timedelta(hours=1)).isoformat(),
             status="APPROVE", provider="argon_cli", model="gemini-4-argon-high",
             account_slot="account_1", account_label="Argon #1", timestamp=when.isoformat(),
             chosen_side="BUY_YES", reasoning="ok", risks=[], chosen_side_prob=0.66,
@@ -340,6 +379,27 @@ class PendingLifecycleTests(unittest.TestCase):
             trader.record_and_execute(sig, decision)
             self.assertEqual(trader.get_pending_orders(), [])
             self.assertEqual(trader.get_account_metrics()["cash_usdc"], 1000)
+
+    def test_review_cannot_authorize_different_order_or_extra_cash(self):
+        now = datetime.now(timezone.utc)
+        sig, d = self._maker_signal_and_decision()
+        review = self._review(now)
+        cases = [(replace(sig, market_id="other"), replace(d, market_id="other")),
+                 (replace(sig, entry_price=.61), replace(d, entry_price=.61)),
+                 (replace(sig, leg_market_ids=["other"]), d),
+                 (sig, replace(d, recommended_size_usdc=d.recommended_size_usdc+1)),
+                 (sig, replace(d, shares_qty=d.shares_qty+1))]
+        with tempfile.TemporaryDirectory() as tmp:
+            trader = PaperTrader(self.cfg, Path(tmp) / "ledger.db")
+            expires = (now+timedelta(minutes=1)).isoformat()
+            for other, decision in cases:
+                trader.record_and_execute(other, decision, entry_review=review, approval_expires_at=expires)
+                self.assertEqual(trader.get_account_metrics()["cash_usdc"], 1000)
+            trader.record_and_execute(sig, d, entry_review=review, approval_expires_at=expires)
+            self.assertEqual(len(trader.get_pending_orders()), 1)
+            trader.cancel_pending()
+            trader.record_and_execute(sig, d, entry_review=review, approval_expires_at=expires)
+            self.assertEqual(trader.get_pending_orders(), [])
 
     def test_legacy_unreviewed_pending_is_refunded(self):
         with tempfile.TemporaryDirectory() as tmp:

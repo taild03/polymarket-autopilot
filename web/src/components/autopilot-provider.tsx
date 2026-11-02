@@ -119,7 +119,7 @@ export function AutopilotProvider({
         const nextState = (await res.json()) as AutopilotState;
         if (!nextState.metrics || !Array.isArray(nextState.open_positions)) throw new Error("Dữ liệu backend không hợp lệ");
         if (generation !== requestGeneration.current) return;
-        setError(null);
+        setError(nextState.scan_status?.phase === "failed" ? "Vòng quét thất bại. Kiểm tra log backend." : null);
         setData(nextState);
         setLastRefreshedAt(nextState.generated_at);
         if (latestTimestamp.current !== nextState.generated_at) {
@@ -168,16 +168,15 @@ export function AutopilotProvider({
         const endpoint = customApiUrl ? `${customApiUrl}/api/scan` : "/api/autopilot";
         const res = await fetch(endpoint, {
           method: "POST",
-          signal: AbortSignal.timeout(120000),
+          signal: AbortSignal.timeout(10000),
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "scan" }),
+          body: JSON.stringify({ action: customApiUrl ? "scan_async" : "scan" }),
         });
         if (!res.ok) throw new Error((await res.json()).error || `HTTP ${res.status}`);
         if (res.ok) {
           setError(null);
-          const updated = (await res.json()) as AutopilotState;
-          setData(updated);
-          setLastRefreshedAt(updated.generated_at);
+          const { scan_status } = await res.json();
+          setData(previous => ({ ...previous, scan_status }));
           setSecondsToNextSync(POLL_INTERVAL_SECONDS);
           triggerFlash();
         }
@@ -212,7 +211,7 @@ export function AutopilotProvider({
         runAiScanNow,
         switchArgonAccount,
       },
-      meta: { isPending, isPolling },
+      meta: { isPending: isPending || data.scan_status?.phase === "running", isPolling },
     }),
     [
       data,

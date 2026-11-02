@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from src.config import TradingConfig
 from src.paper_trader import PaperTrader
@@ -147,6 +147,37 @@ class OperationalTests(unittest.TestCase):
         handler.result = None
         handler._send_json = lambda payload, status=200: setattr(handler, 'result', (status, payload))
         return handler
+
+    def test_async_scan_acknowledges_during_slow_cycle_and_deduplicates(self):
+        import threading
+        import server
+        started, release = threading.Event(), threading.Event()
+        def slow(**kwargs):
+            started.set()
+            release.wait(10)
+        with patch.object(server, "SCANS", server.ScanWorker()), patch.object(server, "run_cycle", side_effect=slow) as run:
+            # Drive actual POST handler without binding a socket.
+            import io
+            handler = object.__new__(server.AutopilotRequestHandler)
+            handler.path = "/api/scan"
+            handler.client_address = ("127.0.0.1", 1234)
+            handler.headers = {"Content-Type": "application/json"}
+            handler._send_json = Mock()
+            body = b'{"action":"scan_async"}'
+            handler.headers["Content-Length"] = str(len(body))
+            with patch.dict("os.environ", {"AUTOPILOT_API_TOKEN": ""}):
+                try:
+                    for _ in range(2):
+                        handler.rfile = io.BytesIO(body)
+                        handler.do_POST()
+                        self.assertEqual(handler._send_json.call_args.args[1], 202)
+                        self.assertEqual(handler._send_json.call_args.args[0]["scan_status"]["phase"], "running")
+                    self.assertTrue(started.wait(2))
+                    self.assertEqual(run.call_count, 1)
+                finally:
+                    release.set()
+                    server.SCANS.thread.join(2)
+            self.assertEqual(server.SCANS.snapshot()["phase"], "completed")
 
     def test_api_denies_foreign_origin_and_missing_token(self):
         with patch.dict('os.environ', {'AUTOPILOT_API_TOKEN': 'test-secret'}):
